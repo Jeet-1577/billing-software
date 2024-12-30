@@ -173,19 +173,20 @@
 
     /* Sidebar Styling */
     .selection-sidebar {
-        position: fixed;
-        top: 0;
-        right: -300px; /* Initially hidden */
-        width: 300px;
-        height: 100%;
+        position: relative; /* Change from fixed to relative */
+        width: 0; /* Start with 0 width */
+        min-width: 0;
+        height: 100vh;
         background-color: #2d3748;
         box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
-        transition: right 0.3s ease-in-out;
-        z-index: 1000;
-        padding: 20px;
+        transition: all 0.3s ease-in-out;
+        padding: 0; /* Start with no padding */
+        overflow: hidden; /* Hide content when closed */
     }
     .selection-sidebar.open {
-        right: 0; /* Slide in */
+        width: 300px; /* Expand to full width when open */
+        min-width: 300px;
+        padding: 20px; /* Restore padding when open */
     }
     .selected-item-box {
         background-color: #374151;
@@ -430,83 +431,98 @@
     }
 
     .sidebar-open .flex {
-        margin-right: 300px;
-    }
-    .hedtex {
+        width: calc(100% - 300px)    }
+    /* .hedtex {
         margin-right: 130px;
-        padding-right: -15px;
+    } */
+
+    /* Update main content wrapper */
+    .content-wrapper {
+        display: flex;
+        width: 100%;
+        transition: all 0.3s ease-in-out;
+    }
+
+    /* Update main content area */
+    .main-content {
+        flex: 1;
+        transition: all 0.3s ease-in-out;
+        padding: 20px;
     }
 </style>
 
-<div class="bg-gray-800 p-6 rounded shadow-md hover:shadow-lg transition-shadow duration-300 main-content" id="mainContent">
-    <h1 class="text-3xl font-bold mb-4">Inventory</h1>
-    <div class="search-bar">
-        <form method="get" class="flex">
-            <input type="text" id="searchInput" name="search" placeholder="Search items...">
-            <div class="search-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 4a6 6 0 100 12 6 6 0 000-12zm0 0l6 6" />
-                </svg>
+<!-- Update HTML structure -->
+<div class="content-wrapper">
+    <div class="main-content">
+        <h1 class="text-3xl font-bold mb-4">Inventory</h1>
+        <div class="search-bar">
+            <form method="get" class="flex">
+                <input type="text" id="searchInput" name="search" placeholder="Search items...">
+                <div class="search-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 4a6 6 0 100 12 6 6 0 000-12zm0 0l6 6" />
+                    </svg>
+                </div>
+            </form>
+        </div>
+        <div class="flex">
+            <div class="w-1/5 p-4 inventory-categories">
+                <h2 class="text-xl font-bold mb-4 text-white">Categories</h2>
+                <ul>
+                    {% for category in categories %}
+                    <li class="mb-2"><a href="#" class="block py-3 px-4 rounded category-link" data-category-id="{{ category.id }}">{{ category.name }}</a></li>
+                    {% endfor %}
+                </ul>
             </div>
-        </form>
+            <div id="itemsContainer" class="w-4/5 ml-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-x-1 gap-y-2"> <!-- Decreased gap between columns -->
+                <!-- Items will be loaded here dynamically -->
+            </div>
+        </div>
     </div>
-    <div class="flex">
-        <div class="w-1/5 p-4 inventory-categories">
-            <h2 class="text-xl font-bold mb-4 text-white">Categories</h2>
-            <ul>
-                {% for category in categories %}
-                <li class="mb-2"><a href="#" class="block py-3 px-4 rounded category-link" data-category-id="{{ category.id }}">{{ category.name }}</a></li>
-                {% endfor %}
+    
+    <div id="selectionSidebar" class="selection-sidebar">
+        <div class="flex justify-between items-center">
+            <h2 class="text-2xl font-bold ml-3 mr-0">Selected Items</h2>
+            <input type="checkbox" id="printButton" class="hidden">
+            <label for="printButton" class="cursor-pointer print-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9v6h12V9M6 9V5a2 2 0 012-2h8a2 2 0 012 2v4M6 9h12M6 15h12M9 18h6" />
+                </svg>
+            </label>
+        </div>
+        <div class="scrollable-content">
+            <ul id="selectedItemsList" class="space-y-2">
+                <!-- Selected items will be appended here -->
             </ul>
         </div>
-        <div id="itemsContainer" class="w-4/5 ml-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-x-1 gap-y-2"> <!-- Decreased gap between columns -->
-            <!-- Items will be loaded here dynamically -->
+        <div class="options">
+            <p id="totalAmount" class="text-sm -">Total   : ₹0.00</p>
+            <p id="gstAmount" class="text-sm ">GST (18%): ₹0.00</p>
+            <p id="grandTotal" class="text-lg font-bold">Grand Total: ₹0.00</p>
         </div>
-    </div>
-</div>
-
-<div id="selectionSidebar" class="selection-sidebar">
-    <div class="flex justify-between items-center">
-        <h2 class=" hedtex text-2xl font-bold ml-3 mr-0">Selected Items</h2>
-        <input type="checkbox" id="printButton" class="hidden">
-        <label for="printButton" class="cursor-pointer print-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9v6h12V9M6 9V5a2 2 0 012-2h8a2 2 0 012 2v4M6 9h12M6 15h12M9 18h6" />
-            </svg>
-        </label>
-    </div>
-    <div class="scrollable-content">
-        <ul id="selectedItemsList" class="space-y-2">
-            <!-- Selected items will be appended here -->
-        </ul>
-    </div>
-    <div class="options">
-        <p id="totalAmount" class="text-sm -">Total   : ₹0.00</p>
-        <p id="gstAmount" class="text-sm ">GST (18%): ₹0.00</p>
-        <p id="grandTotal" class="text-lg font-bold">Grand Total: ₹0.00</p>
-    </div>
-    <label class="m-0 p-0">Payment Type:</label>
-    <div class="options flex justify-between w-full">
-        <div class="button-group flex w-full">
-            <input type="radio" id="payment_online" name="payment_type" value="online">
-            <label for=" hedtex payment_online" class="w-1/2">Online</label>
-            <input type="radio" id="payment_cash" name="payment_type" value="cash">
-            <label for=" hedtex payment_cash" class="w-1/2">Cash</label>
+        <label class="m-0 p-0">Payment Type:</label>
+        <div class="options flex justify-between w-full">
+            <div class="button-group flex w-full">
+                <input type="radio" id="payment_online" name="payment_type" value="online">
+                <label for="payment_online" class="w-1/2">Online</label>
+                <input type="radio" id="payment_cash" name="payment_type" value="cash">
+                <label for="payment_cash" class="w-1/2">Cash</label>
+            </div>
         </div>
-    </div>
-    <label class="m-0 p-0">Order Type:</label>
-    <div class="options1">
-        <div class="button-group">
-            <input type="radio" id="order_dine_in" name="order_type" value="dine_in">
-            <label for="order_dine_in">Dine In</label>
-            <input type="radio" id="order_delivery" name="order_type" value="delivery">
-            <label for="order_delivery">Delivery</label>
-            <input type="radio" id="order_take_away" name="order_type" value="take_away">
-            <label for="order_take_away">Take Away</label>
+        <label class="m-0 p-0">Order Type:</label>
+        <div class="options1">
+            <div class="button-group">
+                <input type="radio" id="order_dine_in" name="order_type" value="dine_in">
+                <label for="order_dine_in">Dine In</label>
+                <input type="radio" id="order_delivery" name="order_type" value="delivery">
+                <label for="order_delivery">Delivery</label>
+                <input type="radio" id="order_take_away" name="order_type" value="take_away">
+                <label for="order_take_away">Take Away</label>
+            </div>
         </div>
-    </div>
-    <div class="options">
-        <button class="checkout">Checkout</button>
+        <div class="options">
+            <button class="checkout">Checkout</button>
+        </div>
     </div>
 </div>
 

@@ -44,6 +44,9 @@
         #mainContent {
             transition: margin-left 0.3s ease-in-out;
         }
+        .main-content.sidebar-open {
+            margin-left: 16rem; /* Adjust based on sidebar width */
+        }
     </style>
 </head>
 <body class="flex h-screen bg-gray-900 text-white">
@@ -69,7 +72,7 @@
     </div>
 
     <!-- Main Content -->
-    <div id="mainContent" class="flex-1 p-6 ml-0">
+    <div id="mainContent" class="flex-1 p-6 ml-0 main-content">
         {% block content %}{% endblock %}
     </div>
 

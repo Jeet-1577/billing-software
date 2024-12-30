@@ -42,22 +42,24 @@ document.addEventListener('DOMContentLoaded', function() {
             var listItem = document.createElement('li');
             listItem.classList.add('selected-item-box', 'bg-gray-600', 'p-2', 'rounded', 'shadow', 'flex', 'justify-between', 'items-center', 'text-sm');
             listItem.innerHTML = `
-                <div>
+                <div class="flex-1">
                     <h4 class="text-base font-bold">${itemName}</h4>
-                    <p id="price-${itemId}">Price: ₹${itemPrice.toFixed(2)}</p>
                 </div>
-                <div class="item-counter flex items-center space-x-2">
-                    <button onclick="decreaseQuantity(${itemId}, ${itemPrice})" class="bg-gray-800 text-white p-1 rounded hover:bg-gray-900 transition-all duration-300">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 12H6" />
-                        </svg>
-                    </button>
-                    <span id="quantity-${itemId}">1</span>
-                    <button onclick="increaseQuantity(${itemId}, ${itemPrice})" class="bg-gray-800 text-white p-1 rounded hover:bg-gray-900 transition-all duration-300">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6" />
-                        </svg>
-                    </button>
+                <div class="flex items-center gap-4">
+                    <p id="price-${itemId}" class="text-sm min-w-[80px] text-right">₹${itemPrice.toFixed(2)}</p>
+                    <div class="item-counter flex items-center space-x-2">
+                        <button onclick="decreaseQuantity(${itemId}, ${itemPrice})" class="bg-gray-800 text-white p-1 rounded hover:bg-gray-900 transition-all duration-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 12H6" />
+                            </svg>
+                        </button>
+                        <span id="quantity-${itemId}">1</span>
+                        <button onclick="increaseQuantity(${itemId}, ${itemPrice})" class="bg-gray-800 text-white p-1 rounded hover:bg-gray-900 transition-all duration-300">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-4 h-4">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             `;
             selectedItemsList.appendChild(listItem);
@@ -66,12 +68,10 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('selectedItems', JSON.stringify(selectedIds));
         if (selectedItems.length > 0) {
             selectionSidebar.classList.add('open');
-            mainContent.classList.add('sidebar-open');
-            document.querySelector('.flex').classList.add('sidebar-open');
+            // Remove mainContent class changes since we're using flex layout
         } else {
             selectionSidebar.classList.remove('open');
-            mainContent.classList.remove('sidebar-open');
-            document.querySelector('.flex').classList.remove('sidebar-open');
+            // Remove mainContent class changes since we're using flex layout
         }
     }
 
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var priceElement = document.getElementById(`price-${itemId}`);
         var quantity = parseInt(quantityElement.innerText);
         quantityElement.innerText = quantity + 1;
-        priceElement.innerText = `Price: ₹${(itemPrice * (quantity + 1)).toFixed(2)}`;
+        priceElement.innerText = `₹${(itemPrice * (quantity + 1)).toFixed(2)}`;
         updateTotalAmount();
     };
 
@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var quantity = parseInt(quantityElement.innerText);
         if (quantity > 1) {
             quantityElement.innerText = quantity - 1;
-            priceElement.innerText = `Price: ₹${(itemPrice * (quantity - 1)).toFixed(2)}`;
+            priceElement.innerText = `₹${(itemPrice * (quantity - 1)).toFixed(2)}`;
             updateTotalAmount();
         }
     };
@@ -203,8 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function closeSidebar() {
         selectionSidebar.classList.remove('open');
-        mainContent.classList.remove('sidebar-open');
-        document.querySelector('.flex').classList.remove('sidebar-open');
+        // Remove mainContent class changes since we're using flex layout
     }
 
     function clearSelectedItems() {
