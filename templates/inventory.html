@@ -401,21 +401,44 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        background-color: white;
+        background-color: #1f2937;
         padding: 20px;
         border-radius: 10px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-        z-index: 200;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        color: white;
+        text-align: center;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        border: 2px solid #2563eb;
     }
+
     .upi-qr-code img {
-        max-width: 100%;
+        max-width: 300px;
         height: auto;
+        background: white;
+        padding: 10px;
+        border-radius: 8px;
     }
+
     .upi-qr-code .close-btn {
         position: absolute;
         top: 10px;
         right: 10px;
         cursor: pointer;
+        background: #374151;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .upi-qr-code .close-btn:hover {
+        background: #4b5563;
     }
 
     .print-icon {
@@ -448,6 +471,46 @@
         flex: 1;
         transition: all 0.3s ease-in-out;
         padding: 20px;
+    }
+
+    /* Add success message styling */
+    .success-overlay {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        border-radius: 10px;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .checkmark {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: block;
+        stroke-width: 2;
+        stroke: #4BB543;
+        stroke-miterlimit: 10;
+        box-shadow: 0 0 20px #4BB543;
+        animation: scale 0.3s ease-in-out;
+    }
+
+    .success-text {
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+        text-shadow: 0 0 10px rgba(75, 181, 67, 0.5);
+    }
+
+    @keyframes scale {
+        0%, 100% { transform: none; }
+        50% { transform: scale(1.1); }
     }
 </style>
 
@@ -528,8 +591,16 @@
 
 <div id="upiQrCode" class="upi-qr-code">
     <span class="close-btn" onclick="closeQrCode()">✖</span>
-    <span class="close-btn" onclick="closeQrCode()">✖</span>
+    <h3 class="text-xl font-bold">Scan QR Code to Pay</h3>
     <img id="upiQrCodeImage" src="" alt="UPI QR Code">
+    <p class="text-sm">Scan this QR code with any UPI app to complete payment</p>
+    <div id="successOverlay" class="success-overlay">
+        <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+            <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+            <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+        </svg>
+        <p class="success-text">Payment Successful!</p>
+    </div>
 </div>
 
 <script src="{% static 'js/inventory.js' %}"></script>

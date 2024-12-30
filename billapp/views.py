@@ -83,3 +83,30 @@ def place_order(request):
         except Exception as e:
             return JsonResponse({'status': 'failed', 'error': str(e)})
     return JsonResponse({'status': 'failed'})
+
+@csrf_exempt
+def check_payment_status(request):
+    transaction_id = request.GET.get('transaction_id')
+    
+    # Import required UPI payment verification library
+    from python_upi_qr import UPIPaymentStatus  # You'll need to install this package
+    
+    try:
+        # Initialize UPI verification with your merchant credentials
+        verifier = UPIPaymentStatus(
+            merchant_id="your_merchant_id",
+            api_key="your_api_key"
+        )
+        
+        # Check actual payment status
+        status = verifier.check_payment(transaction_id)
+        
+        return JsonResponse({
+            'status': 'success' if status.is_paid else 'pending',
+            'transaction_id': transaction_id
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        })

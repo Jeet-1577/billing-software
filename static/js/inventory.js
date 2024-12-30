@@ -149,24 +149,91 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         var gstAmount = totalAmount * 0.18;
         var grandTotal = totalAmount + gstAmount;
-        var paymentType = document.querySelector('input[name="payment_type"]:checked').value;
-        var orderType = document.querySelector('input[name="order_type"]:checked').value;
+        var paymentType = document.querySelector('input[name="payment_type"]:checked');
+        if (!paymentType) {
+            alert('Please select a payment type');
+            return;
+        }
+        var orderType = document.querySelector('input[name="order_type"]:checked');
+        if (!orderType) {
+            alert('Please select an order type');
+            return;
+        }
         var orderData = {
             orderId: Date.now().toString(),
             items: orderItems,
             totalAmount: totalAmount.toFixed(2),
             gstAmount: gstAmount.toFixed(2),
             grandTotal: grandTotal.toFixed(2),
-            paymentType: paymentType,
-            orderType: orderType,
+            paymentType: paymentType.value,
+            orderType: orderType.value,
             time: new Date().toLocaleTimeString('en-US', { hour12: true }),  // Ensure time includes AM/PM
             date: new Date().toISOString().split('T')[0]
         };
-        fetch('/place-order/', {
+        if (paymentType.value === 'online') {
+            // UPI Payment Info
+            const upiId = 'mr.jac5333-1@okicici';  // Your UPI ID
+            const name = 'Your Restaurant Name';    // Your business name
+            const amount = grandTotal.toFixed(2);
+            const transactionId = Date.now().toString(); // Unique transaction ID
+            
+            // Generate direct UPI QR Code URL using a reliable QR code service
+            const upiData = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(name)}&am=${amount}&cu=INR&tr=${transactionId}`;
+            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiData)}`;
+            
+            document.getElementById('upiQrCodeImage').src = qrUrl;
+            document.getElementById('upiQrCode').style.display = 'flex';
+            
+            // Store order data
+            window.pendingOrderData = orderData;
+            window.pendingOrderData.transactionId = transactionId;
+            
+            // Start polling for payment status
+            startPaymentStatusCheck(transactionId);
+            return;
+        }
+        // Proceed with order placement for cash payments
+        placeOrder(orderData);
+    });
+
+    // Update closeQrCode function to handle order placement
+    window.closeQrCode = function() {
+        var upiQrCode = document.getElementById('upiQrCode');
+        upiQrCode.style.display = 'none';
+        
+        if (window.pendingOrderData) {
+            placeOrder(window.pendingOrderData);
+            window.pendingOrderData = null;
+            clearSelectedItems();  // Clear selected items after order placement
+        }
+    };
+
+    // Add payment success handler
+    window.handlePaymentSuccess = function() {
+        const successOverlay = document.getElementById('successOverlay');
+        successOverlay.style.display = 'flex';
+        
+        // Wait for animation and auto-close
+        setTimeout(() => {
+            var upiQrCode = document.getElementById('upiQrCode');
+            upiQrCode.style.display = 'none';
+            successOverlay.style.display = 'none';
+            
+            if (window.pendingOrderData) {
+                placeOrder(window.pendingOrderData);
+                window.pendingOrderData = null;
+                clearSelectedItems();
+            }
+        }, 2000); // Show success message for 2 seconds
+    };
+
+    // New function to handle order placement
+    function placeOrder(orderData) {
+        return fetch('/place-order/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
             },
             body: JSON.stringify(orderData)
         })
@@ -174,20 +241,71 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.status === 'success') {
                 alert('Order placed successfully!');
-                console.log(orderData);
                 if (document.getElementById('printButton').checked) {
                     generateBill(orderData);
                 }
-                clearSelectedItems();  // Clear selected items after placing the order
+                return true;
             } else {
                 alert('Failed to place order: ' + data.error);
+                return false;
             }
         })
         .catch(error => {
             console.error('Error:', error);
             alert('An error occurred while placing the order.');
+            return false;
         });
-    });
+    }
+
+    // Add payment status checking functions
+    function startPaymentStatusCheck(transactionId) {
+        let attempts = 0;
+        const maxAttempts = 60; // 1 minute (checking every second)
+        
+        const checkInterval = setInterval(async () => {
+            attempts++;
+            try {
+                const response = await fetch(`/check-payment-status/?transaction_id=${transactionId}`);
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    clearInterval(checkInterval);
+                    showPaymentSuccess();
+                } else if (data.status === 'error') {
+                    clearInterval(checkInterval);
+                    alert('Payment verification failed: ' + data.message);
+                    handlePaymentTimeout();
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(checkInterval);
+                    handlePaymentTimeout();
+                }
+            } catch (error) {
+                console.error('Error checking payment status:', error);
+            }
+        }, 1000);
+    }
+
+    function showPaymentSuccess() {
+        const successOverlay = document.getElementById('successOverlay');
+        successOverlay.style.display = 'flex';
+        
+        setTimeout(() => {
+            document.getElementById('upiQrCode').style.display = 'none';
+            successOverlay.style.display = 'none';
+            
+            if (window.pendingOrderData) {
+                placeOrder(window.pendingOrderData);
+                window.pendingOrderData = null;
+                clearSelectedItems();
+            }
+        }, 2000);
+    }
+
+    function handlePaymentTimeout() {
+        alert('Payment timeout. Please try again.');
+        document.getElementById('upiQrCode').style.display = 'none';
+        window.pendingOrderData = null;
+    }
 
     function showQrCode(upiQrCodeUrl) {
         var upiQrCode = document.getElementById('upiQrCode');
@@ -195,11 +313,6 @@ document.addEventListener('DOMContentLoaded', function() {
         upiQrCodeImage.src = upiQrCodeUrl;
         upiQrCode.style.display = 'block';
     }
-
-    window.closeQrCode = function() {
-        var upiQrCode = document.getElementById('upiQrCode');
-        upiQrCode.style.display = 'none';
-    };
 
     function closeSidebar() {
         selectionSidebar.classList.remove('open');

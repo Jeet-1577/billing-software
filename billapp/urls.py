@@ -14,4 +14,5 @@ urlpatterns = [
     path("__reload__/", include("django_browser_reload.urls")),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('place-order/', views.place_order, name='place_order'),
+    path('check-payment-status/', views.check_payment_status, name='check_payment_status'),
 ]
