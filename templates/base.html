@@ -10,58 +10,87 @@
     {% tailwind_css %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{% static 'js/script.js' %}" defer></script>
-    <script src="{% static 'js/sidebar-toggle.js' %}" defer></script>
+    <style>
+        .sidebar {
+            width: 16rem; /* Sidebar full width */
+            transition: transform 0.3s ease-in-out, margin 0.3s ease-in-out;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2); /* Sidebar shadow */
+            margin-left: 7px; /* Sidebar stays 7px open when closed */
+        }
+        .sidebar-closed {
+            transform: translateX(-100%); /* Fully close the sidebar */
+        }
+        .sidebar-open {
+            transform: translateX(0); /* Open the sidebar fully */
+        }
+        .toggle-arrow {
+            position: absolute;
+            top: 50%;
+            right: -1rem; /* Arrow positioned just outside the sidebar */
+            transform: translateY(-50%);
+            background: #1f2937; /* Arrow background color */
+            color: white;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 50;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            border: 2px solid #4b5563; /* Border color around the arrow */
+        }
+        #mainContent {
+            transition: margin-left 0.3s ease-in-out;
+        }
+    </style>
 </head>
 <body class="flex h-screen bg-gray-900 text-white">
+
     <!-- Sidebar -->
-    <div class="flex">
-        {% comment %} <div id="sidebar" class="w-64 bg-gray-800 text-white h-full p-4 hidden md:block transition-transform duration-300 ease-in-out transform -translate-x-full md:translate-x-0 shadow-lg">
-            <h2 class="text-2xl font-bold mb-4">Dashboard</h2>
-            <ul>
-                <li class="mb-2"><a href="/" class="block py-2 px-4 rounded hover:bg-gray-700">Home</a></li>
-                <li class="mb-2"><a href="{% url 'profile' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Profile</a></li>
-                <li class="mb-2"><a href="{% url 'settings' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Settings</a></li>
-                <li class="mb-2"><a href="{% url 'inventory' %}" class="block py-2 px-4 rounded hover:bg-gray-700" id="inventoryLink">Inventory</a></li>
-                <li class="mb-2"><a href="{% url 'portfolio' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Portfolio</a></li>
-                <li class="mb-2"><a href="{% url 'about_us' %}" class="block py-2 px-4 rounded hover:bg-gray-700">About Us</a></li>
-                <li class="mb-2"><a href="{% url 'contact_us' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Contact Us</a></li>
-                <li class="mb-2 relative group">
-                    <a href="#" id="customizeButton" class="block py-2 px-4 rounded hover:bg-gray-700 flex items-center justify-between">
-                        Customize
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                        </svg>
-                    </a>
-                    <!-- Dropdown Menu -->
-                    <div id="customizeDropdown" class="absolute left-full top-0 w-48 bg-gray-800 text-white p-4 rounded-lg shadow-lg hidden group-hover:block transition-all duration-300 ease-in-out opacity-0 transform scale-95 group-hover:opacity-100 group-hover:scale-100">
-                        <ul>
-                            <li class="mb-2"><a href="{% url 'customize' %}?form=category" class="block py-2 px-4 rounded hover:bg-gray-700"> Category</a></li>
-                            <li class="mb-2"><a href="{% url 'customize' %}?form=item" class="block py-2 px-4 rounded hover:bg-gray-700"> Item</a></li>
-                        </ul>
-                    </div>
-                </li>
-                <li class="mb-2"><a href="{% url 'menu' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Menu</a></li>
-                <li class="mb-2"><a href="#" class="block py-2 px-4 rounded hover:bg-gray-700">Logout</a></li>
-            </ul>
-        </div> {% endcomment %}
+    <div id="sidebar" class="sidebar bg-gray-800 h-full p-4 fixed shadow-lg sidebar-open">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-bold">Dashboard</h2>
+        </div>
+        <ul>
+            <li class="mb-2"><a href="/" class="block py-2 px-4 rounded hover:bg-gray-700">Home</a></li>
+            <li class="mb-2"><a href="{% url 'profile' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Profile</a></li>
+            <li class="mb-2"><a href="{% url 'settings' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Settings</a></li>
+            <li class="mb-2"><a href="{% url 'inventory' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Inventory</a></li>
+            <li class="mb-2"><a href="{% url 'portfolio' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Portfolio</a></li>
+            <li class="mb-2"><a href="{% url 'about_us' %}" class="block py-2 px-4 rounded hover:bg-gray-700">About Us</a></li>
+            <li class="mb-2"><a href="{% url 'contact_us' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Contact Us</a></li>
+        </ul>
+        <!-- Toggle Arrow -->
+        <div id="toggleArrow" class="toggle-arrow">
+            <span id="arrowIcon">></span>
+        </div>
     </div>
-    
-    <!-- Sidebar Toggle Button -->
-    {% comment %} <div id="sidebarToggle" class="fixed top-4 left-4 z-50 text-white bg-gray-700 p-2 rounded cursor-pointer md:hidden">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-        </svg>
-    </div>
-    
-    <!-- Sidebar Close Button -->
-    <div id="sidebarClose" class="fixed top-4 left-64 z-50 text-white bg-gray-700 p-2 rounded cursor-pointer hidden md:block">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-    </div> {% endcomment %}
-    
-    <div class="flex-1 p-6 transition-all duration-300 ease-in-out">
+
+    <!-- Main Content -->
+    <div id="mainContent" class="flex-1 p-6 ml-0">
         {% block content %}{% endblock %}
-    </div> 
+    </div>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const toggleArrow = document.getElementById('toggleArrow');
+        const arrowIcon = document.getElementById('arrowIcon');
+
+        // Toggle sidebar visibility
+        toggleArrow.addEventListener('click', () => {
+            const isOpen = sidebar.classList.contains('sidebar-open');
+            sidebar.classList.toggle('sidebar-open', !isOpen);
+            sidebar.classList.toggle('sidebar-closed', isOpen);
+
+            // Update main content margin to avoid overlap
+            mainContent.style.marginLeft = isOpen ? '0' : '16rem';
+
+            // Update the arrow direction
+            arrowIcon.textContent = isOpen ? '>' : '<';
+        });
+    </script>
 </body>
 </html>
