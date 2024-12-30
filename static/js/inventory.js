@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
             selectedIds.push(itemId);
             totalAmount += itemPrice;
             var listItem = document.createElement('li');
-            listItem.classList.add('selected-item-box', 'bg-gray-600', 'p-2', 'rounded', 'shadow', 'flex', 'justify-between', 'items-center', 'text-sm', 'space-x-2');
+            listItem.classList.add('selected-item-box', 'bg-gray-600', 'p-2', 'rounded', 'shadow', 'flex', 'justify-between', 'items-center', 'text-sm');
             listItem.innerHTML = `
                 <div>
                     <h4 class="text-base font-bold">${itemName}</h4>
