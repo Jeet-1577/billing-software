@@ -1,0 +1,20 @@
+{% comment %} 
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block header %}Dashboard{% endblock %}
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+    <div class="bg-gray-700 p-4 rounded shadow hover:shadow-lg transition-shadow duration-300">
+        <h2 class="text-xl font-bold mb-2">Total Revenue</h2>
+        <canvas id="revenueChart"></canvas>
+    </div>
+    <div class="bg-gray-700 p-4 rounded shadow hover:shadow-lg transition-shadow duration-300">
+        <h2 class="text-xl font-bold mb-2">Total Orders</h2>
+        <canvas id="ordersChart"></canvas>
+    </div>
+    <div class="bg-gray-700 p-4 rounded shadow hover:shadow-lg transition-shadow duration-300">
+        <h2 class="text-xl font-bold mb-2">Order Types</h2>
+        <canvas id="orderTypesChart"></canvas>
+    </div>
+</div>
+{% endblock %} {% endcomment %}

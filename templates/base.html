@@ -1,0 +1,67 @@
+{% load static tailwind_tags %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard{% endblock %}</title>
+    {% tailwind_css %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{% static 'js/script.js' %}" defer></script>
+    <script src="{% static 'js/sidebar-toggle.js' %}" defer></script>
+</head>
+<body class="flex h-screen bg-gray-900 text-white">
+    <!-- Sidebar -->
+    <div class="flex">
+        {% comment %} <div id="sidebar" class="w-64 bg-gray-800 text-white h-full p-4 hidden md:block transition-transform duration-300 ease-in-out transform -translate-x-full md:translate-x-0 shadow-lg">
+            <h2 class="text-2xl font-bold mb-4">Dashboard</h2>
+            <ul>
+                <li class="mb-2"><a href="/" class="block py-2 px-4 rounded hover:bg-gray-700">Home</a></li>
+                <li class="mb-2"><a href="{% url 'profile' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Profile</a></li>
+                <li class="mb-2"><a href="{% url 'settings' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Settings</a></li>
+                <li class="mb-2"><a href="{% url 'inventory' %}" class="block py-2 px-4 rounded hover:bg-gray-700" id="inventoryLink">Inventory</a></li>
+                <li class="mb-2"><a href="{% url 'portfolio' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Portfolio</a></li>
+                <li class="mb-2"><a href="{% url 'about_us' %}" class="block py-2 px-4 rounded hover:bg-gray-700">About Us</a></li>
+                <li class="mb-2"><a href="{% url 'contact_us' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Contact Us</a></li>
+                <li class="mb-2 relative group">
+                    <a href="#" id="customizeButton" class="block py-2 px-4 rounded hover:bg-gray-700 flex items-center justify-between">
+                        Customize
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </a>
+                    <!-- Dropdown Menu -->
+                    <div id="customizeDropdown" class="absolute left-full top-0 w-48 bg-gray-800 text-white p-4 rounded-lg shadow-lg hidden group-hover:block transition-all duration-300 ease-in-out opacity-0 transform scale-95 group-hover:opacity-100 group-hover:scale-100">
+                        <ul>
+                            <li class="mb-2"><a href="{% url 'customize' %}?form=category" class="block py-2 px-4 rounded hover:bg-gray-700"> Category</a></li>
+                            <li class="mb-2"><a href="{% url 'customize' %}?form=item" class="block py-2 px-4 rounded hover:bg-gray-700"> Item</a></li>
+                        </ul>
+                    </div>
+                </li>
+                <li class="mb-2"><a href="{% url 'menu' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Menu</a></li>
+                <li class="mb-2"><a href="#" class="block py-2 px-4 rounded hover:bg-gray-700">Logout</a></li>
+            </ul>
+        </div> {% endcomment %}
+    </div>
+    
+    <!-- Sidebar Toggle Button -->
+    {% comment %} <div id="sidebarToggle" class="fixed top-4 left-4 z-50 text-white bg-gray-700 p-2 rounded cursor-pointer md:hidden">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+        </svg>
+    </div>
+    
+    <!-- Sidebar Close Button -->
+    <div id="sidebarClose" class="fixed top-4 left-64 z-50 text-white bg-gray-700 p-2 rounded cursor-pointer hidden md:block">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+    </div> {% endcomment %}
+    
+    <div class="flex-1 p-6 transition-all duration-300 ease-in-out">
+        {% block content %}{% endblock %}
+    </div> 
+</body>
+</html>

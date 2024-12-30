@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Portfolio{% endblock %}
+{% block header %}Portfolio{% endblock %}
+{% block content %}
+<div class="bg-gray-800 p-6 rounded shadow-md hover:shadow-lg transition-shadow duration-300">
+    <h1 class="text-3xl font-bold mb-4">Portfolio</h1>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+        <div class="bg-gray-700 p-4 rounded shadow hover:shadow-lg transition-shadow duration-300">
+            <h2 class="text-xl font-bold mb-2">Project 1</h2>
+            <p class="mb-4">Description of project 1.</p>
+            <canvas id="project1Chart"></canvas>
+        </div>
+        <div class="bg-gray-700 p-4 rounded shadow hover:shadow-lg transition-shadow duration-300">
+            <h2 class="text-xl font-bold mb-2">Project 2</h2>
+            <p class="mb-4">Description of project 2.</p>
+            <canvas id="project2Chart"></canvas>
+        </div>
+        <div class="bg-gray-700 p-4 rounded shadow hover:shadow-lg transition-shadow duration-300">
+            <h2 class="text-xl font-bold mb-2">Project 3</h2>
+            <p class="mb-4">Description of project 3.</p>
+            <canvas id="project3Chart"></canvas>
+        </div>
+        <!-- Add more projects as needed -->
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var ctx1 = document.getElementById('project1Chart').getContext('2d');
+        new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+                datasets: [{
+                    label: 'Project 1 Progress',
+                    data: [65, 59, 80, 81, 56, 55, 40],
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Month'
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Progress (%)'
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeInOutQuad'
+                }
+            }
+        });
+
+        var ctx2 = document.getElementById('project2Chart').getContext('2d');
+        new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+                datasets: [{
+                    label: 'Project 2 Progress',
+                    data: [28, 48, 40, 19, 86, 27, 90],
+                    backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                    borderColor: 'rgba(153, 102, 255, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Month'
+                        }
+                    },
+                    y: {
+                        display: true,
+                        title: {
+                            display: true,
+                            text: 'Progress (%)'
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeInOutQuad'
+                }
+            }
+        });
+
+        var ctx3 = document.getElementById('project3Chart').getContext('2d');
+        new Chart(ctx3, {
+            type: 'doughnut',
+            data: {
+                labels: ['Completed', 'In Progress', 'Pending'],
+                datasets: [{
+                    label: 'Project 3 Status',
+                    data: [50, 30, 20],
+                    backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(255, 206, 86, 0.2)'],
+                    borderColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                animation: {
+                    duration: 1000,
+                    easing: 'easeInOutQuad'
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

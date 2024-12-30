@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            width: 58mm; /* Adjust width for 58mm to 80mm thermal printer */
+            margin: 0;
+            padding: 0;
+        }
+        .bill-container {
+            padding: 10px;
+        }
+        .bill-header, .bill-footer {
+            text-align: center;
+        }
+        .bill-header h1, .bill-footer p {
+            margin: 0;
+        }
+        .bill-details, .bill-items {
+            width: 100%;
+            margin-top: 10px;
+        }
+        .bill-items th, .bill-items td {
+            text-align: left;
+            padding: 5px;
+            border-bottom: 1px solid #000;
+        }
+        .bill-items th {
+            background-color: #f0f0f0;
+        }
+        .bill-total {
+            text-align: right;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="bill-container">
+        <div class="bill-header">
+            <h1>Bill</h1>
+            <p>Order ID: {{ order.order_id }}</p>
+            <p>Date: {{ order.date }}</p>
+            <p>Time: {{ order.time }}</p>
+        </div>
+        <table class="bill-details">
+            <tr>
+                <td>Payment Type:</td>
+                <td>{{ order.payment_type }}</td>
+            </tr>
+            <tr>
+                <td>Order Type:</td>
+                <td>{{ order.order_type }}</td>
+            </tr>
+        </table>
+        <table class="bill-items">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Qty</th>
+                    <th>Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.items %}
+                <tr>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>₹{{ item.price }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="bill-total">
+            <p>Total: ₹{{ order.total_amount }}</p>
+            <p>GST (18%): ₹{{ order.gst_amount }}</p>
+            <p>Grand Total: ₹{{ order.grand_total }}</p>
+        </div>
+        <div class="bill-footer">
+            <p>Thank you for your order!</p>
+        </div>
+    </div>
+</body>
+</html>

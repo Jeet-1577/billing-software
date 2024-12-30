@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Menu{% endblock %}
+{% block header %}Menu{% endblock %}
+{% block content %}
+<div class="bg-gray-800 p-6 rounded shadow-md hover:shadow-lg transition-shadow duration-300">
+    <h1 class="text-3xl font-bold mb-4">Menu</h1>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+        <div class="bg-gray-700 p-4 rounded shadow hover:shadow-lg transition-shadow duration-300">
+            <img src="{% static 'images/pizza.jpg' %}" alt="Pizza" class="w-full h-32 object-cover rounded mb-4">
+            <h2 class="text-xl font-bold mb-2">Pizza</h2>
+            <p class="mb-4">Delicious cheese pizza with a crispy crust.</p>
+            <button class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition-colors duration-300">Add to Cart</button>
+        </div>
+        <div class="bg-gray-700 p-4 rounded shadow hover:shadow-lg transition-shadow duration-300">
+            <img src="{% static 'images/burger.jpg' %}" alt="Burger" class="w-full h-32 object-cover rounded mb-4">
+            <h2 class="text-xl font-bold mb-2">Burger</h2>
+            <p class="mb-4">Juicy beef burger with fresh lettuce and tomato.</p>
+            <button class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition-colors duration-300">Add to Cart</button>
+        </div>
+        <div class="bg-gray-700 p-4 rounded shadow hover:shadow-lg transition-shadow duration-300">
+            <img src="{% static 'images/pasta.jpg' %}" alt="Pasta" class="w-full h-32 object-cover rounded mb-4">
+            <h2 class="text-xl font-bold mb-2">Pasta</h2>
+            <p class="mb-4">Creamy Alfredo pasta with grilled chicken.</p>
+            <button class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition-colors duration-300">Add to Cart</button>
+        </div>
+        <!-- Add more food items as needed -->
+    </div>
+    <div class="mt-6">
+        <h2 class="text-xl font-bold mb-2">Cart</h2>
+        <div class="bg-gray-700 p-4 rounded shadow hover:shadow-lg transition-shadow duration-300">
+            <p class="mb-4">Your cart is empty.</p>
+            <button class="bg-green-500 text-white p-2 rounded hover:bg-green-600 transition-colors duration-300">Checkout</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

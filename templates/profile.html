@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Profile{% endblock %}
+{% block header %}Profile{% endblock %}
+{% block content %}
+<div class="bg-gray-800 p-6 rounded shadow-md hover:shadow-lg transition-shadow duration-300">
+    <h1 class="text-3xl font-bold mb-4">Profile</h1>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+            <h2 class="text-xl font-bold mb-2">User Information</h2>
+            <p><strong>Name:</strong> John Doe</p>
+            <p><strong>Email:</strong> john.doe@example.com</p>
+            <p><strong>Joined:</strong> January 1, 2020</p>
+            <button class="bg-blue-500 text-white p-2 rounded mt-4 hover:bg-blue-600 transition-colors duration-300">Edit Profile</button>
+        </div>
+        <div>
+            <h2 class="text-xl font-bold mb-2">Settings</h2>
+            <form>
+                <div class="mb-4">
+                    <label class="block text-gray-300">Change Password</label>
+                    <input type="password" class="w-full p-2 border border-gray-600 rounded mt-1 bg-gray-700 text-white" placeholder="New Password">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-gray-300">Confirm Password</label>
+                    <input type="password" class="w-full p-2 border border-gray-600 rounded mt-1 bg-gray-700 text-white" placeholder="Confirm Password">
+                </div>
+                <button type="submit" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition-colors duration-300">Update Password</button>
+            </form>
+        </div>
+    </div>
+    <div class="mt-6">
+        <h2 class="text-xl font-bold mb-2">Account Settings</h2>
+        <form>
+            <div class="mb-4">
+                <label class="block text-gray-300">Email Notifications</label>
+                <select class="w-full p-2 border border-gray-600 rounded mt-1 bg-gray-700 text-white">
+                    <option>Enabled</option>
+                    <option>Disabled</option>
+                </select>
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300">Privacy Settings</label>
+                <select class="w-full p-2 border border-gray-600 rounded mt-1 bg-gray-700 text-white">
+                    <option>Public</option>
+                    <option>Private</option>
+                </select>
+            </div>
+            <button type="submit" class="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition-colors duration-300">Save Settings</button>
+        </form>
+    </div>
+    <div class="mt-6">
+        <h2 class="text-xl font-bold mb-2">Connected Accounts</h2>
+        <p><strong>Google:</strong> Connected</p>
+        <p><strong>Facebook:</strong> Not Connected</p>
+        <button class="bg-blue-500 text-white p-2 rounded mt-4 hover:bg-blue-600 transition-colors duration-300">Manage Connections</button>
+    </div>
+</div>
+{% endblock %}

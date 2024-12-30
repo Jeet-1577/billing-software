@@ -1,0 +1,772 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Inventory{% endblock %}
+{% block header %}Inventory{% endblock %}
+{% block content %}
+
+<style>
+    /* Disable scrolling on the entire page */
+    html, body {
+        overflow: hidden;
+    }
+
+    /* Scrollbar Styling */
+    .inventory-categories::-webkit-scrollbar {
+        width: 8px; /* Slim scrollbar width */
+    }
+    
+    .inventory-categories::-webkit-scrollbar-track {
+        background: transparent; /* Transparent track */
+    }
+    
+    .inventory-categories::-webkit-scrollbar-thumb {
+        background: #4b5563; /* Thumb color */
+        border-radius: 10px; /* Rounded scrollbar */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4); /* Add shadow to scrollbar */
+    }
+    
+    .inventory-categories::-webkit-scrollbar-thumb:hover {
+        background: #374151; /* Darker color on hover */
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6); /* Stronger shadow on hover */
+    }
+    
+    /* Firefox scrollbar */
+    .inventory-categories {
+        scrollbar-width: thin; /* Thin scrollbar */
+        scrollbar-color: #4b5563 transparent; /* Thumb and track color */
+    }
+
+    /* Category Container Styling */
+    .inventory-categories {
+        background-color: #2d3748; /* Subtle dark gray background */
+        border-radius: 10px; /* Rounded corners */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Shadow for the container */
+        transition: box-shadow 0.3s ease-in-out;
+        max-height: 80vh; /* Restored original height */
+        overflow-y: auto; /* Enable vertical scrolling */
+        padding: 10px; /* Added padding */
+    }
+    .inventory-categories:hover {
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Elevate on hover */
+    }
+
+    /* Category Item Styling */
+    .inventory-categories ul li a {
+        background-color: #4a5568; /* Subtle gray background */
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2); /* Shadow for each item */
+        transition: all 0.3s ease;
+        color: white; /* Text color */
+        padding: 10px; /* Added padding */
+        margin-bottom: 10px; /* Added margin */
+        border-radius: 5px; /* Added border radius */
+    }
+    .inventory-categories ul li a:hover {
+        background-color: #2d3748; /* Darker background on hover */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Elevate on hover */
+        transform: scale(1.05); /* Slight zoom effect */
+    }
+
+    /* Item Cube Styling */
+    .item-cube {
+        background-color: #4a5568; /* Subtle gray background */
+        border-radius: 10px; /* Rounded corners */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Shadow for the container */
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        margin: 10px; /* Added margin */
+        text-align: center;
+        cursor: pointer;
+        width: 120px; /* Increased width */
+        height: 120px; /* Increased height */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        position: relative;
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 0.5s forwards;
+    }
+    .item-cube img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover; /* Ensure images fit within the box */
+        border-radius: 10px; /* Match the border radius of the box */
+    }
+    .item-cube h3 {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.288); /* Darkish background */
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px; /* Match the border radius of the box */
+        margin: 0;
+    }
+    .item-cube:hover {
+        transform: scale(1.05); /* Slight zoom effect */
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.47); /* Elevate on hover */
+    }
+
+    .item-cube.selected {
+        border: 2px solid #2563eb; /* Blue neon border */
+        box-shadow: 0 0 10px #2563eb; /* Neon glow effect */
+    }
+
+    /* Adjust grid to fit six items in a row */
+    #itemsContainer {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px;
+    }
+
+    @keyframes fadeInUp {
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Search Bar Styling */
+    .search-bar {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 20px;
+        margin-top: -30px;
+    }
+    .search-bar input[type="text"] {
+        width: 200px; /* Smaller width */
+        padding: 8px; /* Smaller padding */
+        border: 2px solid #4a5568;
+        border-right: none;
+        border-radius: 20px 0 0 20px;
+        background-color: #2d3748;
+        color: white;
+        outline: none;
+        transition: all 0.3s ease;
+    }
+    .search-bar input[type="text"]:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
+    }
+    .search-bar .search-icon {
+        padding: 8px 16px; /* Smaller padding */
+        border: 2px solid #4a5568;
+        border-left: none;
+        border-radius: 0 20px 20px 0;
+        background-color: #2563eb;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .search-bar .search-icon:hover {
+        background-color: #1e40af;
+        border-color: #1e40af;
+    }
+
+    /* Sidebar Styling */
+    .selection-sidebar {
+        position: fixed;
+        top: 0;
+        right: -300px; /* Initially hidden */
+        width: 300px;
+        height: 100%;
+        background-color: #2d3748;
+        box-shadow: -2px 0 10px rgba(0, 0, 0, 0.5);
+        transition: right 0.3s ease-in-out;
+        z-index: 100;
+        padding: 20px;
+        color: white;
+    }
+    .selection-sidebar.open {
+        right: 0; /* Slide in */
+    }
+    .selected-item-box {
+        background-color: #374151;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        padding: 10px;
+        margin-bottom: 10px;
+        animation: fadeIn 0.5s ease-in-out;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.75rem; /* Smaller font size */
+    }
+    .selected-item-box h4 {
+        margin: 0;
+        font-size: 0.875rem; /* Smaller font size */
+    }
+    .selected-item-box p {
+        margin: 5px 0;
+        font-size: 0.75rem; /* Smaller font size */
+    }
+    .item-counter {
+        display: flex;
+        align-items: center;
+    }
+    .item-counter button {
+        background-color: #1f2937; /* Darker background color */
+        color: white;
+        border: none;
+        padding: 5px;
+        border-radius: 4px; /* Square shape */
+        cursor: pointer;
+        margin: 5px;
+        font-size: 0.75rem; /* Smaller font size */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 0 5px #2563eb; /* Neon glow effect */
+    }
+    .item-counter button:hover {
+        background-color: #111827; /* Darker hover background color */
+        box-shadow: 0 0 10px #1e40af; /* Stronger neon glow effect */
+    }
+    .item-counter button svg {
+        width: 12px;
+        height: 12px;
+    }
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Adjust main content area when sidebar is open */
+    .main-content {
+        transition: margin-right 0.3s ease-in-out;
+    }
+    .main-content.sidebar-open {
+        margin-right: 300px; /* Adjust based on sidebar width */
+    }
+
+    /* Fixed size for scrollbar in the sidebar for items */
+    .selection-sidebar .scrollable-content {
+        max-height: 45vh; /* Half height */
+        overflow-y: auto; /* Enable vertical scrolling */
+        padding-right: 10px; /* Added padding */
+    }
+    .selection-sidebar .scrollable-content::-webkit-scrollbar {
+        width: 6px; /* Smaller scrollbar width */
+    }
+    .selection-sidebar .scrollable-content::-webkit-scrollbar-track {
+        background: #2d3748; /* Match sidebar background */
+    }
+    .selection-sidebar .scrollable-content::-webkit-scrollbar-thumb {
+        background: #4a5568; /* Match item background */
+        border-radius: 6px; /* Rounded scrollbar */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4); /* Add shadow to scrollbar */
+    }
+    .selection-sidebar .scrollable-content::-webkit-scrollbar-thumb:hover {
+        background: #374151; /* Darker color on hover */
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6); /* Stronger shadow on hover */
+    }
+    .selection-sidebar .scrollable-content {
+        scrollbar-width: thin; /* Thin scrollbar */
+        scrollbar-color: #4a5568 #2d3748; /* Thumb and track color */
+    }
+
+    /* Additional options styling */
+    .options {
+        margin-top: 5px;
+        padding: 5px; /* Added padding */
+    }
+    .options label {
+        display: inline-block;
+        margin-bottom: 5px;
+        cursor: pointer;
+        padding: 5px; /* Reduced padding */
+        border-radius: 5px;
+        background-color: transparent;
+        color: white;
+        transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        font-size: 0.75rem; /* Smaller font size */
+    }
+
+    .options input[type="radio"] {
+        display: none;
+    }
+
+    /* .options input[type="radio"]:checked + label {
+        background-color: #2563eb;
+        box-shadow: 0 0 10px #2563eb;
+    } */
+
+    .options label:hover {
+        background-color: #374151;
+    }
+
+    /* Radio button styling */
+    .options input[type="radio"] {
+        display: none;
+    }
+    .options1 input[type="radio"] {
+        display: none;
+    }
+
+    .options label {
+        display: inline-block;
+        margin-bottom: 5px;
+        margin: 5px;
+        cursor: pointer;
+        padding: 5px; /* Reduced padding */
+        border-radius: 5px;
+        background-color: #4a5568;
+        color: white;
+        transition: box-shadow 0.3s ease;
+        border: 2px solid transparent;
+        font-size: 0.75rem; /* Smaller font size */
+        width: 48%; /* Take half the width */
+        text-align: center; /* Center the text */
+    }
+
+    .options1 label {
+        display: inline-block;
+        /* margin-bottom: 5px; */
+        margin: 3px;
+        cursor: pointer;
+        padding: 5px; /* Reduced padding */
+        border-radius: 5px;
+        background-color: #4a5568;
+        color: white;
+        transition: box-shadow 0.3s ease;
+        border: 2px solid transparent;
+        font-size: 0.75rem; /* Smaller font size */
+        width: 28%; /* Take half the width */
+        text-align: center; /* Center the text */
+    }
+
+
+    .options input[type="radio"]:checked + label {
+        border-color: #2563eb;
+        box-shadow: 0 0 10px #2563eb;
+    }
+    .options1 input[type="radio"]:checked + label {
+        border-color: #2563eb;
+        box-shadow: 0 0 10px #2563eb;
+    }
+
+    .options label:hover {
+        background-color: #374151;
+    }
+    .options1 label:hover {
+        background-color: #374151;
+    }
+
+    /* Checkout button styling */
+    .options button.checkout {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        background-color: #2563eb;
+        color: white;
+        cursor: pointer;
+        transition: background-color 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 0 5px #2563eb; /* Neon glow effect */
+    }
+
+    .options button.checkout:hover {
+        background-color: #1e40af;
+        box-shadow: 0 0 10px #1e40af; /* Stronger neon glow effect */
+    }
+
+    /* Amounts font size */
+    #totalAmount, #gstAmount, #grandTotal {
+        font-size: 0.875rem; /* Smaller font size */
+        margin-bottom: 5px; /* Reduced margin */
+    }
+
+    .upi-qr-code {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        z-index: 200;
+    }
+    .upi-qr-code img {
+        max-width: 100%;
+        height: auto;
+    }
+    .upi-qr-code .close-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        cursor: pointer;
+    }
+</style>
+
+<div class="bg-gray-800 p-6 rounded shadow-md hover:shadow-lg transition-shadow duration-300 main-content" id="mainContent">
+    <h1 class="text-3xl font-bold mb-4">Inventory</h1>
+    <div class="search-bar">
+        <form method="get" class="flex">
+            <input type="text" id="searchInput" name="search" placeholder="Search items...">
+            <div class="search-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 4a6 6 0 100 12 6 6 0 000-12zm0 0l6 6" />
+                </svg>
+            </div>
+        </form>
+    </div>
+    <div class="flex">
+        <div class="w-1/5 p-4 inventory-categories">
+            <h2 class="text-xl font-bold mb-4 text-white">Categories</h2>
+            <ul>
+                {% for category in categories %}
+                <li class="mb-2"><a href="#" class="block py-3 px-4 rounded category-link" data-category-id="{{ category.id }}">{{ category.name }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div id="itemsContainer" class="w-4/5 ml-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-x-1 gap-y-2"> <!-- Decreased gap between columns -->
+            <!-- Items will be loaded here dynamically -->
+        </div>
+    </div>
+</div>
+
+<div id="selectionSidebar" class="selection-sidebar">
+    <h2 class="text-2xl font-bold ">Selected Items</h2>
+    <div class="scrollable-content">
+        <ul id="selectedItemsList">
+            <!-- Selected items will be appended here -->
+        </ul>
+    </div>
+    <div class="options">
+        <p id="totalAmount" class="text-sm -">Total   : ₹0.00</p>
+        <p id="gstAmount" class="text-sm ">GST (18%): ₹0.00</p>
+        <p id="grandTotal" class="text-lg font-bold">Grand Total: ₹0.00</p>
+    </div>
+    <label class="m-0 p-0">Payment Type:</label>
+    <div class="options flex justify-between">
+        <div class="button-group flex w-full">
+            <input type="radio" id="payment_online" name="payment_type" value="online">
+            <label for="payment_online" class="w-1/2">Online</label>
+            <input type="radio" id="payment_cash" name="payment_type" value="cash">
+            <label for="payment_cash" class="w-1/2">Cash</label>
+        </div>
+    </div>
+    <label class="m-0 p-0">Order Type:</label>
+    <div class="options1">
+        <div class="button-group">
+            <input type="radio" id="order_dine_in" name="order_type" value="dine_in">
+            <label for="order_dine_in">Dine In</label>
+            <input type="radio" id="order_delivery" name="order_type" value="delivery">
+            <label for="order_delivery">Delivery</label>
+            <input type="radio" id="order_take_away" name="order_type" value="take_away">
+            <label for="order_take_away">Take Away</label>
+        </div>
+    </div>
+    <div class="options">
+        <button class="checkout">Checkout</button>
+    </div>
+</div>
+
+<div id="upiQrCode" class="upi-qr-code">
+    <span class="close-btn" onclick="closeQrCode()">✖</span>
+    <span class="close-btn" onclick="closeQrCode()">✖</span>
+    <img id="upiQrCodeImage" src="" alt="UPI QR Code">
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var sidebar = document.getElementById('sidebar');
+        var sidebarToggle = document.getElementById('sidebarToggle');
+        var searchInput = document.getElementById('searchInput');
+        var itemsContainer = document.getElementById('itemsContainer');
+        var selectionSidebar = document.getElementById('selectionSidebar');
+        var selectedItemsList = document.getElementById('selectedItemsList');
+        var mainContent = document.getElementById('mainContent');
+
+        searchInput.addEventListener('input', function() {
+            var searchQuery = searchInput.value.toLowerCase();
+            var items = itemsContainer.getElementsByClassName('item-cube');
+            for (var i = 0; i < items.length; i++) {
+                var itemName = items[i].getElementsByTagName('h3')[0].innerText.toLowerCase();
+                if (itemName.startsWith(searchQuery)) {
+                    items[i].style.display = 'block';
+                } else {
+                    items[i].style.display = 'none';
+                }
+            }
+        });
+
+        // Shortcut key to focus on the search bar
+        document.addEventListener('keydown', function(event) {
+            if (event.ctrlKey && event.key === 'f') {
+                event.preventDefault();
+                searchInput.focus();
+            }
+        });
+
+        function updateSidebar() {
+            var selectedItems = document.getElementsByClassName('item-cube selected');
+            selectedItemsList.innerHTML = '';
+            var selectedIds = [];
+            var totalAmount = 0;
+            for (var i = 0; i < selectedItems.length; i++) {
+                var itemName = selectedItems[i].getAttribute('data-item-name');
+                var itemPrice = parseFloat(selectedItems[i].getAttribute('data-item-price'));
+                var itemId = selectedItems[i].getAttribute('data-item-id');
+                selectedIds.push(itemId);
+                totalAmount += itemPrice;
+                var listItem = document.createElement('li');
+                listItem.classList.add('selected-item-box');
+                listItem.innerHTML = `
+                    <div>
+                        <h4>${itemName}</h4>
+                        <p id="price-${itemId}">Price: ₹${itemPrice.toFixed(2)}</p>
+                    </div>
+                    <div class="item-counter">
+                        <button onclick="decreaseQuantity(${itemId}, ${itemPrice})">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 12H6" />
+                            </svg>
+                        </button>
+                        <span id="quantity-${itemId}">1</span>
+                        <button onclick="increaseQuantity(${itemId}, ${itemPrice})">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v12m6-6H6" />
+                            </svg>
+                        </button>
+                    </div>
+                `;
+                selectedItemsList.appendChild(listItem);
+            }
+            updateTotalAmount();
+            localStorage.setItem('selectedItems', JSON.stringify(selectedIds));
+            if (selectedItems.length > 0) {
+                selectionSidebar.classList.add('open');
+                mainContent.classList.add('sidebar-open');
+            } else {
+                selectionSidebar.classList.remove('open');
+                mainContent.classList.remove('sidebar-open');
+            }
+        }
+
+        window.selectItem = function(element) {
+            element.classList.toggle('selected');
+            updateSidebar();
+        };
+
+        window.increaseQuantity = function(itemId, itemPrice) {
+            var quantityElement = document.getElementById(`quantity-${itemId}`);
+            var priceElement = document.getElementById(`price-${itemId}`);
+            var quantity = parseInt(quantityElement.innerText);
+            quantityElement.innerText = quantity + 1;
+            priceElement.innerText = `Price: ₹${(itemPrice * (quantity + 1)).toFixed(2)}`;
+            updateTotalAmount();
+        };
+
+        window.decreaseQuantity = function(itemId, itemPrice) {
+            var quantityElement = document.getElementById(`quantity-${itemId}`);
+            var priceElement = document.getElementById(`price-${itemId}`);
+            var quantity = parseInt(quantityElement.innerText);
+            if (quantity > 1) {
+                quantityElement.innerText = quantity - 1;
+                priceElement.innerText = `Price: ₹${(itemPrice * (quantity - 1)).toFixed(2)}`;
+                updateTotalAmount();
+            }
+        };
+
+        function updateTotalAmount() {
+            var selectedItems = document.getElementsByClassName('item-cube selected');
+            var totalAmount = 0;
+            for (var i = 0; i < selectedItems.length; i++) {
+                var itemPrice = parseFloat(selectedItems[i].getAttribute('data-item-price'));
+                var itemId = selectedItems[i].getAttribute('data-item-id');
+                var quantity = parseInt(document.getElementById(`quantity-${itemId}`).innerText);
+                totalAmount += itemPrice * quantity;
+            }
+            var gstAmount = totalAmount * 0.18;
+            var grandTotal = totalAmount + gstAmount;
+            document.getElementById('totalAmount').innerText = `Total: ₹${totalAmount.toFixed(2)}`;
+            document.getElementById('gstAmount').innerText = `GST (18%): ₹${gstAmount.toFixed(2)}`;
+            document.getElementById('grandTotal').innerText = `Grand Total: ₹${grandTotal.toFixed(2)}`;
+        }
+
+        function restoreSelectedItems() {
+            var selectedIds = JSON.parse(localStorage.getItem('selectedItems')) || [];
+            var items = itemsContainer.getElementsByClassName('item-cube');
+            for (var i = 0; i < items.length; i++) {
+                var itemId = items[i].getAttribute('data-item-id');
+                if (selectedIds.includes(itemId)) {
+                    items[i].classList.add('selected');
+                }
+            }
+            updateSidebar();
+        }
+
+        restoreSelectedItems();
+
+        document.querySelector('.checkout').addEventListener('click', function() {
+            var selectedItems = document.getElementsByClassName('item-cube selected');
+            var orderItems = [];
+            var totalAmount = 0;
+            for (var i = 0; i < selectedItems.length; i++) {
+                var itemId = selectedItems[i].getAttribute('data-item-id');
+                var itemName = selectedItems[i].getAttribute('data-item-name');
+                var itemPrice = parseFloat(selectedItems[i].getAttribute('data-item-price'));
+                var quantity = parseInt(document.getElementById(`quantity-${itemId}`).innerText);
+                totalAmount += itemPrice * quantity;
+                orderItems.push({
+                    id: itemId,
+                    name: itemName,
+                    price: itemPrice,
+                    quantity: quantity
+                });
+            }
+            var gstAmount = totalAmount * 0.18;
+            var grandTotal = totalAmount + gstAmount;
+            var paymentType = document.querySelector('input[name="payment_type"]:checked').value;
+            var orderType = document.querySelector('input[name="order_type"]:checked').value;
+            var orderData = {
+                orderId: Date.now().toString(),
+                items: orderItems,
+                totalAmount: totalAmount.toFixed(2),
+                gstAmount: gstAmount.toFixed(2),
+                grandTotal: grandTotal.toFixed(2),
+                paymentType: paymentType,
+                orderType: orderType,
+                time: new Date().toLocaleTimeString('en-US', { hour12: true }),  // Ensure time includes AM/PM
+                date: new Date().toISOString().split('T')[0]
+            };
+            fetch('/place-order/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify(orderData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    if (paymentType === 'online') {
+                        showQrCode(data.upi_qr_code_url);
+                    } else {
+                        alert('Order placed successfully!');
+                        console.log(orderData);
+                        generateBill(orderData);
+                        clearSelectedItems();  // Clear selected items after placing the order
+                    }
+                } else {
+                    alert('Failed to place order: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while placing the order.');
+            });
+        });
+
+        function showQrCode(upiQrCodeUrl) {
+            var upiQrCode = document.getElementById('upiQrCode');
+            var upiQrCodeImage = document.getElementById('upiQrCodeImage');
+            upiQrCodeImage.src = upiQrCodeUrl;
+            upiQrCode.style.display = 'block';
+        }
+
+        window.closeQrCode = function() {
+            var upiQrCode = document.getElementById('upiQrCode');
+            upiQrCode.style.display = 'none';
+        };
+
+        function closeSidebar() {
+            selectionSidebar.classList.remove('open');
+            mainContent.classList.remove('sidebar-open');
+        }
+
+        function clearSelectedItems() {
+            var selectedItems = document.getElementsByClassName('item-cube selected');
+            while (selectedItems.length > 0) {
+                selectedItems[0].classList.remove('selected');
+            }
+            selectedItemsList.innerHTML = '';
+            localStorage.removeItem('selectedItems');
+            updateTotalAmount();
+            closeSidebar();
+        }
+
+        function generateBill(orderData) {
+            var billWindow = window.open('', 'PRINT', 'height=400,width=600');
+            billWindow.document.write('<html><head><title>Bill</title>');
+            billWindow.document.write('<style>body { font-family: Arial, sans-serif; width: 58mm; margin: 0; padding: 0; } .bill-container { padding: 10px; } .bill-header, .bill-footer { text-align: center; } .bill-header h1, .bill-footer p { margin: 0; } .bill-details, .bill-items { width: 100%; margin-top: 10px; } .bill-items th, .bill-items td { text-align: left; padding: 5px; border-bottom: 1px solid #000; } .bill-items th { background-color: #f0f0f0; } .bill-total { text-align: right; margin-top: 10px; }</style>');
+            billWindow.document.write('</head><body>');
+            billWindow.document.write('<div class="bill-container">');
+            billWindow.document.write('<div class="bill-header"><h1>Bill</h1><p>Order ID: ' + orderData.orderId + '</p><p>Date: ' + orderData.date + '</p><p>Time: ' + orderData.time + '</p></div>');
+            billWindow.document.write('<table class="bill-details"><tr><td>Payment Type:</td><td>' + orderData.paymentType + '</td></tr><tr><td>Order Type:</td><td>' + orderData.orderType + '</td></tr></table>');
+            billWindow.document.write('<table class="bill-items"><thead><tr><th>Item</th><th>Qty</th><th>Price</th></tr></thead><tbody>');
+            orderData.items.forEach(function(item) {
+                billWindow.document.write('<tr><td>' + item.name + '</td><td>' + item.quantity + '</td><td>₹' + item.price + '</td></tr>');
+            });
+            billWindow.document.write('</tbody></table>');
+            billWindow.document.write('<div class="bill-total"><p>Total: ₹' + orderData.totalAmount + '</p><p>GST (18%): ₹' + orderData.gstAmount + '</p><p>Grand Total: ₹' + orderData.grandTotal + '</p></div>');
+            billWindow.document.write('<div class="bill-footer"><p>Thank you for your order!</p></div>');
+            billWindow.document.write('</div>');
+            billWindow.document.write('</body></html>');
+            billWindow.document.close();
+            billWindow.print();
+        }
+
+        // Load items for the selected category without reloading the page
+        document.querySelectorAll('.category-link').forEach(function(link) {
+            link.addEventListener('click', function(event) {
+                event.preventDefault();
+                var categoryId = this.getAttribute('data-category-id');
+                fetch(`/inventory/?category=${categoryId}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    var selectedIds = JSON.parse(localStorage.getItem('selectedItems')) || [];
+                    itemsContainer.innerHTML = '';
+                    data.items.forEach(function(item) {
+                        var itemCube = document.createElement('div');
+                        itemCube.classList.add('item-cube');
+                        itemCube.setAttribute('data-item-id', item.id);
+                        itemCube.setAttribute('data-item-name', item.name);
+                        itemCube.setAttribute('data-item-price', item.price);
+                        itemCube.innerHTML = `
+                            <h3 class="text-xl font-bold mb-2">${item.name}</h3>
+                            <img src="${item.image}" alt="${item.name}">
+                        `;
+                        if (selectedIds.includes(item.id.toString())) {
+                            itemCube.classList.add('selected');
+                        }
+                        itemCube.addEventListener('click', function() {
+                            selectItem(this);
+                        });
+                        itemsContainer.appendChild(itemCube);
+                    });
+                    updateSidebar();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            });
+        });
+    });
+</script>
+
+{% endblock %}
