@@ -34,8 +34,6 @@ document.addEventListener('DOMContentLoaded', function() {
         var selectedIds = [];
         var totalAmount = 0;
 
-        console.log("Number of selected items:", selectedItems.length);
-
         if (selectedItems.length > 0) {
             selectionSidebar.classList.add('open');
         } else {
@@ -376,8 +374,6 @@ document.addEventListener('DOMContentLoaded', function() {
         var selectedItems = document.getElementsByClassName('item-cube selected');
         var totalAmount = 0;
 
-        console.log("Calculating total for", selectedItems.length, "items");
-
         for (var i = 0; i < selectedItems.length; i++) {
             var item = selectedItems[i];
             var uniqueItemId = item.getAttribute('data-unique-id') || `${item.getAttribute('data-item-id')}-basic`;
@@ -399,8 +395,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             var itemTotal = totalItemPrice * quantity;
             totalAmount += itemTotal;
-
-            console.log(`Item: ${item.getAttribute('data-item-name')}, Price: ${totalItemPrice}, Qty: ${quantity}, Total: ${itemTotal}`);
         }
 
         var gstAmount = totalAmount * 0.18;
@@ -493,6 +487,8 @@ document.addEventListener('DOMContentLoaded', function() {
             date: new Date().toISOString().split('T')[0]
         };
 
+        console.log("Order data being sent:", orderData);  // Debug print
+
         placeOrder(orderData);
     });
 
@@ -509,6 +505,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
+            console.log("Response from server:", data);  // Debug print
             if (data.status === 'success') {
                 alert('Order placed successfully!');
                 if (document.getElementById('printButton').checked) {
@@ -528,19 +525,29 @@ document.addEventListener('DOMContentLoaded', function() {
     function clearSelectedItems() {
         var selectedItems = document.getElementsByClassName('item-cube selected');
         while (selectedItems.length > 0) {
-            selectedItems[0].classList.remove('selected');
-            selectedItems[0].removeAttribute('data-selected-customizations');
-            selectedItems[0].removeAttribute('data-total-price');
-            selectedItems[0].removeAttribute('data-unique-id');
+            var item = selectedItems[0];
+            if (item) {
+                item.classList.remove('selected');
+                item.removeAttribute('data-selected-customizations');
+                item.removeAttribute('data-total-price');
+                item.removeAttribute('data-unique-id');
+            }
         }
-        document.getElementById('selectedItemsList').innerHTML = '';
+        var selectedItemsList = document.getElementById('selectedItemsList');
+        if (selectedItemsList) {
+            selectedItemsList.innerHTML = '';
+        }
         localStorage.removeItem('selectedItemsData');
         updateTotalAmount();
     }
 
     function generateBill(orderData) {
         var billWindow = window.open('', 'PRINT', 'height=600,width=800');
-        
+        if (!billWindow) {
+            console.error('Failed to open bill window');
+            return;
+        }
+
         var billContent = `
             <html>
             <head>

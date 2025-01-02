@@ -104,6 +104,9 @@ def place_order(request):
             data = json.loads(request.body)
             print("Received order data:", data)  # Debug print
 
+            payment_type = data.get('paymentType')
+            print("Payment Type:", payment_type)  # Debug print
+
             # Prepare order details with only necessary information
             order_details = [
                 {
@@ -121,11 +124,12 @@ def place_order(request):
                 subtotal=Decimal(str(data['totalAmount'])),
                 gst_amount=Decimal(str(data['gstAmount'])),
                 grand_total=Decimal(str(data['grandTotal'])),
-                payment_type=data['paymentType'],
+                payment_type=payment_type,
                 order_type=data['orderType'],
                 order_details=order_details  # Save the simplified order details
             )
             order.save()
+            print("Order saved:", order)  # Debug print
 
             # Create order items with full details
             for item_data in data['items']:
@@ -138,6 +142,7 @@ def place_order(request):
                     total_price=Decimal(str(item_data['totalPrice']))  # Correct key used here
                 )
                 order_item.save()
+                print("Order item saved:", order_item)  # Debug print
                 
                 # Store the complete item details in the order_item
                 order_item.item_details = item_data
@@ -148,6 +153,7 @@ def place_order(request):
                 order.items.add(order_item)
 
             order.save()
+            print("Final order saved with items:", order)  # Debug print
 
             return JsonResponse({
                 'status': 'success',

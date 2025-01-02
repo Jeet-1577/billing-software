@@ -213,22 +213,67 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    function updateTotalAmount() {
+        var selectedItems = document.getElementsByClassName('item-cube selected');
+        var totalAmount = 0;
+
+        for (var i = 0; i < selectedItems.length; i++) {
+            var item = selectedItems[i];
+            var uniqueItemId = item.getAttribute('data-unique-id') || `${item.getAttribute('data-item-id')}-basic`;
+            var basePrice = parseFloat(item.getAttribute('data-item-price'));
+            var totalItemPrice = basePrice;
+
+            if (item.hasAttribute('data-selected-customizations')) {
+                const customizations = JSON.parse(item.getAttribute('data-selected-customizations'));
+                const customizationPrice = customizations.reduce((sum, opt) => sum + parseFloat(opt.price), 0);
+                totalItemPrice += customizationPrice;
+            }
+
+            var quantityElement = document.getElementById(`quantity-${uniqueItemId}`);
+            if (!quantityElement) {
+                console.error(`Quantity element not found for item ID: ${uniqueItemId}`);
+                continue;
+            }
+            var quantity = parseInt(quantityElement.innerText);
+
+            var itemTotal = totalItemPrice * quantity;
+            totalAmount += itemTotal;
+        }
+
+        var gstAmount = totalAmount * 0.18;
+        var grandTotal = totalAmount + gstAmount;
+
+        document.getElementById('totalAmount').innerText = `Total: ₹${totalAmount.toFixed(2)}`;
+        document.getElementById('gstAmount').innerText = `GST (18%): ₹${gstAmount.toFixed(2)}`;
+        document.getElementById('grandTotal').innerText = `Grand Total: ₹${grandTotal.toFixed(2)}`;
+    }
+
     function clearSelectedItems() {
         var selectedItems = document.getElementsByClassName('item-cube selected');
         while (selectedItems.length > 0) {
             var item = selectedItems[0];
-            item.classList.remove('selected');
-            item.removeAttribute('data-selected-customizations');
-            item.removeAttribute('data-total-price');
-            item.removeAttribute('data-unique-id');
+            if (item) {
+                item.classList.remove('selected');
+                item.removeAttribute('data-selected-customizations');
+                item.removeAttribute('data-total-price');
+                item.removeAttribute('data-unique-id');
+            }
         }
-        document.getElementById('selectedItemsList').innerHTML = '';
+        var selectedItemsList = document.getElementById('selectedItemsList');
+        if (selectedItemsList) {
+            selectedItemsList.innerHTML = '';
+        }
         localStorage.removeItem('selectedItemsData');
         updateTotalAmount();
     }
 
     function generateBill(orderData) {
         var billWindow = window.open('', 'PRINT', 'height=400,width=600');
+        if (!billWindow) {
+            console.error('Failed to open bill window');
+            return;
+        }
+
         billWindow.document.write('<html><head><title>Bill</title>');
         billWindow.document.write('<style>body { font-family: Arial, sans-serif; width: 58mm; margin: 0; padding: 0; } .bill-container { padding: 10px; } .bill-header, .bill-footer { text-align: center; } .bill-header h1, .bill-footer p { margin: 0; } .bill-details, .bill-items { width: 100%; margin-top: 10px; } .bill-items th, .bill-items td { text-align: left; padding: 5px; border-bottom: 1px solid #000; } .bill-items th { background-color: #f0f0f0; } .bill-total { text-align: right; margin-top: 10px; }</style>');
         billWindow.document.write('</head><body>');
@@ -245,6 +290,8 @@ document.addEventListener('DOMContentLoaded', function() {
         billWindow.document.write('</div>');
         billWindow.document.write('</body></html>');
         billWindow.document.close();
-        billWindow.print();
+        setTimeout(() => {
+            billWindow.print();
+        }, 250);
     }
 });
