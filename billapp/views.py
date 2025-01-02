@@ -8,6 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from decimal import Decimal
 from django.db import transaction
 from .models import Order, OrderItem
+from django.db import models  # Ensure this import is present
 
 def index(request):
     return render(request, 'base.html')
@@ -24,48 +25,56 @@ def inventory(request):
     selected_category_id = request.GET.get('category')
     search_query = request.GET.get('search')
     
-    if selected_category_id:
-        items = Item.objects.filter(category_id=selected_category_id)
-    else:
-        items = Item.objects.all()
-    
-    if search_query:
-        items = items.filter(name__icontains=search_query).order_by('name')
-    
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        items_data = []
-        for item in items:
-            item_data = {
-                'id': item.id,
-                'name': item.name,
-                'price': str(item.price),
-                'image': item.image.url if item.image else '',
-                'has_customization': item.has_customization,
-                'customization_options': []
-            }
-            if item.has_customization:
-                item_data['customization_options'] = [
-                    {
-                        'id': opt.id,
-                        'name': opt.name,
-                        'price': str(opt.price),
-                        'category': opt.category.name
-                    }
-                    for opt in item.customization_options.all()
-                ]
-            items_data.append(item_data)
+    try:
+        if search_query:
+            items = Item.objects.filter(
+                models.Q(name__icontains=search_query) | 
+                models.Q(short_code__icontains=search_query)
+            ).order_by('name')
+        elif selected_category_id:
+            items = Item.objects.filter(category_id=selected_category_id)
+        else:
+            items = Item.objects.all()
         
-        return JsonResponse({
-            'categories': list(categories.values()),
-            'items': items_data,
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            items_data = []
+            for item in items:
+                item_data = {
+                    'id': item.id,
+                    'name': item.name,
+                    'price': str(item.price),
+                    'image': item.image.url if item.image else '',
+                    'has_customization': item.has_customization,
+                    'customization_options': []
+                }
+                if item.has_customization:
+                    item_data['customization_options'] = [
+                        {
+                            'id': opt.id,
+                            'name': opt.name,
+                            'price': str(opt.price),
+                            'category': opt.category.name
+                        }
+                        for opt in item.customization_options.all()
+                    ]
+                items_data.append(item_data)
+            
+            return JsonResponse({
+                'categories': list(categories.values()),
+                'items': items_data,
+                'selected_category_id': selected_category_id
+            })
+        
+        return render(request, 'inventory.html', {
+            'categories': categories,
+            'items': items,
             'selected_category_id': selected_category_id
         })
-    
-    return render(request, 'inventory.html', {
-        'categories': categories,
-        'items': items,
-        'selected_category_id': selected_category_id
-    })
+    except Exception as e:
+        import traceback
+        print("Error in inventory view:", str(e))
+        print(traceback.format_exc())
+        return JsonResponse({'error': str(e)}, status=500)
 
 def portfolio(request):
     return render(request, 'portfolio.html')

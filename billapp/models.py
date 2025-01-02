@@ -31,6 +31,7 @@ class Item(models.Model):
     image = models.ImageField(upload_to='items/', blank=True, null=True)
     has_customization = models.BooleanField(default=False)
     customization_options = models.ManyToManyField(CustomizationOption, blank=True)
+    short_code = models.CharField(max_length=100, blank=True, null=True)  # Add this line
 
     def __str__(self):
         return self.name

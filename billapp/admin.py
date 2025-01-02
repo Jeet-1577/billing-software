@@ -11,10 +11,10 @@ class CustomizationCategoryAdmin(admin.ModelAdmin):
     search_fields = ('name',)
 
 class ItemAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'price', 'has_customization')
+    list_display = ('name', 'category', 'price', 'has_customization', 'short_code')  # Add short_code here
     list_filter = ('category', 'has_customization')
     filter_horizontal = ('customization_options',)
-    search_fields = ('name',)
+    search_fields = ('name', 'short_code')  # Add short_code here
 
 class OrderItemInline(admin.TabularInline):
     model = Order.items.through

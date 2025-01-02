@@ -17,11 +17,11 @@
     /* Disable scrolling on the entire page */
     html, body {
         overflow: hidden;
+        font-family: 'Inter', sans-serif; /* Use Inter font for a professional look */
     }
 
     /* Scrollbar Styling */
     .inventory-categories::-webkit-scrollbar {
-        width: 8px; /* Slim scrollbar width */
     }
     
     .inventory-categories::-webkit-scrollbar-track {
@@ -51,9 +51,15 @@
         border-radius: 10px; /* Rounded corners */
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Shadow for the container */
         transition: box-shadow 0.3s ease-in-out;
-        max-height: 80vh; /* Restored original height */
+        max-height: calc(100vh - 4rem); /* Adjust height to fit below navbar */
         overflow-y: auto; /* Enable vertical scrolling */
         padding: 10px; /* Added padding */
+        margin-top: 0; /* Remove top margin */
+        position: fixed; /* Fix position */
+        top: 4rem; /* Align with navbar */
+        left: 0; /* Align to the left side of the page */
+        width: 14rem; /* Adjusted width */
+        z-index: 10; /* Ensure category section is below the sidebar */
     }
     .inventory-categories:hover {
         box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Elevate on hover */
@@ -124,12 +130,14 @@
         box-shadow: 0 0 10px #2563eb; /* Neon glow effect */
     }
 
-    /* Adjust grid to fit six items in a row */
+    /* Adjust grid to fit eight items in a row */
     #itemsContainer {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
         gap: 10px;
         transition: all 0.3s ease-in-out;
+        margin-left: 0; /* Remove left margin */
+        margin-top: 2rem;
     }
 
     @keyframes fadeInUp {
@@ -137,48 +145,6 @@
             opacity: 1;
             transform: translateY(0);
         }
-    }
-
-    /* Search Bar Styling */
-    .search-bar {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        margin-bottom: 20px;
-        margin-top: -30px;
-    }
-    .search-bar input[type="text"] {
-        width: 200px; /* Smaller width */
-        padding: 8px; /* Smaller padding */
-        border: 2px solid #4a5568;
-        border-right: none;
-        border-radius: 20px 0 0 20px;
-        background-color: #2d3748;
-        color: white;
-        outline: none;
-        transition: all 0.3s ease;
-        aria-label:"Search items";
-    }
-    .search-bar input[type="text"]:focus {
-        border-color: #2563eb;
-        box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
-    }
-    .search-bar .search-icon {
-        padding: 8px 16px; /* Smaller padding */
-        border: 2px solid #4a5568;
-        border-left: none;
-        border-radius: 0 20px 20px 0;
-        background-color: #2563eb;
-        color: white;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .search-bar .search-icon:hover {
-        background-color: #1e40af;
-        border-color: #1e40af;
     }
 
     /* Sidebar Styling */
@@ -193,11 +159,13 @@
         padding: 0;
         overflow: hidden;
         border-left: 1px solid rgba(59, 130, 246, 0.2); /* Subtle blue border */
+        z-index: 20; /* Ensure sidebar is above the category section */
     }
     .selection-sidebar.open {
         width: 450px; /* Reduced from 600px */
         min-width: 450px; /* Reduced from 600px */
         padding: 20px;
+        left: 0px; /* Move sidebar 20px to the left */
     }
     .selected-item-box {
         background-color: #374151;
@@ -294,14 +262,16 @@
     .main-content {
         transition: all 0.3s ease-in-out;
         width: 100%;
+        margin-left: 7rem; /* Adjust based on sidebar width */
     }
     .main-content.sidebar-open {
         width: calc(100% - 450px); /* Adjusted for new sidebar width */
+        margin-left: 0; /* Remove left margin */
     }
 
     /* Fixed size for scrollbar in the sidebar for items */
     .selection-sidebar .scrollable-content {
-        max-height: 55vh; /* Slightly reduced from 60vh */
+        max-height: 40vh; /* Decreased from 55vh */
         overflow-y: auto; /* Enable vertical scrolling */
         padding-right: 10px; /* Added padding */
     }
@@ -384,7 +354,7 @@
         /* margin-bottom: 5px; */
         margin: 2px; /* Reduced margin */
         cursor: pointer;
-        padding: 4px; /* Reduced padding */
+        padding: 2px; /* Reduced padding */
         border-radius: 5px;
         background-color: #4a5568;
         color: white;
@@ -510,6 +480,9 @@
         display: flex;
         width: 100%;
         transition: all 0.3s ease-in-out;
+        /* margin-top: -43px; Move content-wrapper to the top and touch it with the navbar */
+        margin-top: -6px;
+        /* margin-left: -5px; */
     }
 
     /* Update main content area */
@@ -811,20 +784,6 @@
 <!-- Update HTML structure -->
 <div class="content-wrapper">
     <div class="main-content">
-        <h1 class="text-3xl font-bold mb-4">Inventory</h1>
-        <div class="search-bar">
-            <form method="get" class="flex" role="search" accept-charset="utf-8">
-                <div class="relative flex items-center">
-                    <label for="searchInput" class="sr-only">Search items</label>
-                    <input type="text" id="searchInput" name="search" placeholder="Search items..." aria-label="Search items" title="Search items" class="search-input">
-                    <button type="submit" aria-label="Search" class="search-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 4a6 6 0 100 12 6 6 0 000-12zm0 0l6 6" />
-                        </svg>
-                    </button>
-                </div>
-            </form>
-        </div>
         <div class="flex">
             <div class="w-1/5 p-4 inventory-categories">
                 <h2 class="text-xl font-bold mb-4 text-white">Categories</h2>
@@ -834,13 +793,28 @@
                     {% endfor %}
                 </ul>
             </div>
-            <div id="itemsContainer" class="w-4/5 ml-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-x-1 gap-y-2">
-                {% for item in items %}
-                <div class="item-cube" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-price="{{ item.price }}" data-has-customization="{{ item.has_customization }}" data-customization-options='{{ item.customization_options|safe }}'>
-                    <h3 class="text-xl font-bold mb-2">{{ item.name }}</h3>
-                    <img src="{{ item.image.url }}" alt="{{ item.name }}">
+            <div class="w-11/12 ml-4">
+                <div class="search-bar mb-4">
+                    <form method="get" class="flex" role="search" accept-charset="utf-8">
+                        <div class="relative flex items-center">
+                            <label for="searchInput" class="sr-only">Search items by name or short code</label>
+                            <input type="text" id="searchInput" name="search" placeholder="Search items by name or short code..." aria-label="Search items by name or short code" title="Search items by name or short code" class="search-input">
+                            <button type="submit" aria-label="Search" class="search-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 4a6 6 0 100 12 6 6 0 000-12zm0 0l6 6" />
+                                </svg>
+                            </button>
+                        </div>
+                    </form>
                 </div>
-                {% endfor %}
+                <div id="itemsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-8 gap-x-1 gap-y-2">
+                    {% for item in items %}
+                    <div class="item-cube" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-code="{{ item.short_code }}" data-item-price="{{ item.price }}" data-has-customization="{{ item.has_customization }}" data-customization-options='{{ item.customization_options|safe }}'>
+                        <h3 class="text-xl font-bold mb-2">{{ item.name }}</h3>
+                        <img src="{{ item.image.url }}" alt="{{ item.name }}">
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </div>

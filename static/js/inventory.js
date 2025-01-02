@@ -9,13 +9,52 @@ document.addEventListener('DOMContentLoaded', function() {
 
     searchInput.addEventListener('input', function() {
         var searchQuery = searchInput.value.toLowerCase();
-        var items = itemsContainer.getElementsByClassName('item-cube');
-        for (var i = 0; i < items.length; i++) {
-            var itemName = items[i].getElementsByTagName('h3')[0].innerText.toLowerCase();
-            if (itemName.startsWith(searchQuery)) {
-                items[i].style.display = 'block';
-            } else {
-                items[i].style.display = 'none';
+        fetch(`/inventory/?search=${searchQuery}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            itemsContainer.innerHTML = '';
+            data.items.forEach(function(item) {
+                var itemCube = document.createElement('div');
+                itemCube.classList.add('item-cube');
+                itemCube.setAttribute('data-item-id', item.id);
+                itemCube.setAttribute('data-item-name', item.name);
+                itemCube.setAttribute('data-item-price', item.price);
+                itemCube.setAttribute('data-item-code', item.short_code);
+                itemCube.setAttribute('data-has-customization', item.has_customization);
+                if (item.has_customization) {
+                    itemCube.setAttribute('data-customization-options', JSON.stringify(item.customization_options));
+                }
+                itemCube.innerHTML = `
+                    <h3 class="text-xl font-bold mb-2">${item.name}</h3>
+                    <img src="${item.image}" alt="${item.name}">
+                `;
+                itemCube.addEventListener('click', function() {
+                    selectItem(this);
+                });
+                itemsContainer.appendChild(itemCube);
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while fetching items.');
+        });
+    });
+
+    searchInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            var firstItem = itemsContainer.querySelector('.item-cube');
+            if (firstItem) {
+                selectItem(firstItem);
             }
         }
     });
@@ -503,7 +542,12 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify(orderData)
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
             console.log("Response from server:", data);  // Debug print
             if (data.status === 'success') {
@@ -627,7 +671,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
             .then(data => {
                 var selectedItemsData = [];
                 var selectedItems = document.querySelectorAll('.item-cube.selected');
@@ -665,6 +714,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .catch(error => {
                 console.error('Error:', error);
+                alert('An error occurred while fetching items.');
             });
         });
     });

@@ -7,6 +7,8 @@ class CategoryForm(forms.ModelForm):
         fields = ['name']
 
 class ItemForm(forms.ModelForm):
+    short_code = forms.CharField(max_length=100, required=False, label='Short Code')
+
     class Meta:
         model = Item
-        fields = ['name', 'category', 'price', 'image']
+        fields = ['name', 'category', 'price', 'image', 'short_code']

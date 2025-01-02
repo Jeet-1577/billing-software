@@ -11,11 +11,18 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{% static 'js/script.js' %}" defer></script>
     <style>
+        html, body {
+            overflow: hidden; /* Prevent scrolling on the entire page */
+            height: 100%; /* Ensure the body takes full height */
+            font-family: 'Inter', sans-serif; /* Use Inter font for a professional look */
+        }
         .sidebar {
             width: 16rem; /* Sidebar full width */
-            transition: transform 0.3s ease-in-out, margin 0.3s ease-in-out;
+            transition: transform 0.3s ease-in-out;
             box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2); /* Sidebar shadow */
-            margin-left: 7px; /* Sidebar stays 7px open when closed */
+            top: 4rem; /* Align with navbar */
+            height: calc(100vh - 4rem); /* Adjust height to fit below navbar */
+            z-index: 20; /* Ensure sidebar is above the category section */
         }
         .sidebar-closed {
             transform: translateX(-100%); /* Fully close the sidebar */
@@ -23,76 +30,148 @@
         .sidebar-open {
             transform: translateX(0); /* Open the sidebar fully */
         }
-        .toggle-arrow {
-            position: absolute;
-            top: 50%;
-            right: -1rem; /* Arrow positioned just outside the sidebar */
-            transform: translateY(-50%);
-            background: #1f2937; /* Arrow background color */
+        #mainContent {
+            margin-top: 0rem; /* Adjust based on navbar height */
+            flex: 1; /* Allow main content to take remaining space */
+            overflow: hidden; /* Prevent scrolling */
+            {% comment %} padding-left: -3rem; {% endcomment %}
+            {% comment %} margin-left: 0; /* Adjust based on sidebar width */ {% endcomment %}
+        }
+        .navbar {
+            background-color: #1f2937; /* Dark background color */
             color: white;
-            width: 2rem;
-            height: 2rem;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* Navbar shadow */
+            width: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+        .navbar .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .navbar .menu-toggle {
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            transform: scale(0.8); /* Make the hamburger menu smaller */
+        }
+        .navbar .menu-toggle span {
+            background: white;
+            height: 2px;
+            width: 25px;
+            margin: 3px 0;
+            transition: all 0.3s ease;
+        }
+        .search-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .search-bar input[type="text"] {
+            width: 200px; /* Smaller width */
+            padding: 8px; /* Smaller padding */
+            border: 2px solid #4a5568;
+            border-right: none;
+            border-radius: 20px 0 0 20px;
+            background-color: #2d3748;
+            color: white;
+            outline: none;
+            transition: all 0.3s ease;
+            aria-label:"Search items";
+        }
+        .search-bar input[type="text"]:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
+        }
+        .search-bar .search-icon {
+            padding: 8px 16px; /* Smaller padding */
+            border: 2px solid #4a5568;
+            border-left: none;
+            border-radius: 0 20px 20px 0;
+            background-color: #2563eb;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 50%;
-            cursor: pointer;
-            z-index: 50;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-            border: 2px solid #4b5563; /* Border color around the arrow */
         }
-        #mainContent {
-            transition: margin-left 0.3s ease-in-out;
+        .search-bar .search-icon:hover {
+            background-color: #1e40af;
+            border-color: #1e40af;
         }
-        .main-content.sidebar-open {
-            margin-left: 16rem; /* Adjust based on sidebar width */
+        @media (max-width: 768px) {
+            .navbar .menu-toggle {
+                display: flex;
+            }
+        }
+        body {
+            padding-top: 4rem; /* Adjust based on navbar height */
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden; /* Prevent body overflow */
+        }
+        .content-wrapper {
+            display: flex;
+            flex: 1; /* Allow content wrapper to take remaining space */
+            overflow: hidden; /* Prevent content overflow */
         }
     </style>
 </head>
-<body class="flex h-screen bg-gray-900 text-white">
-
-    <!-- Sidebar -->
-    <div id="sidebar" class="sidebar bg-gray-800 h-full p-4 fixed shadow-lg sidebar-open">
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-2xl font-bold">Dashboard</h2>
+<body class="bg-gray-900 text-white">
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="flex items-center">
+            <div class="menu-toggle" id="menuToggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="ml-4 text-xl font-bold">BillMaker</div> <!-- Add this line -->
         </div>
-        <ul>
-            <li class="mb-2"><a href="/" class="block py-2 px-4 rounded hover:bg-gray-700">Home</a></li>
-            <li class="mb-2"><a href="{% url 'profile' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Profile</a></li>
-            <li class="mb-2"><a href="{% url 'settings' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Settings</a></li>
-            <li class="mb-2"><a href="{% url 'inventory' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Inventory</a></li>
-            <li class="mb-2"><a href="{% url 'portfolio' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Portfolio</a></li>
-            <li class="mb-2"><a href="{% url 'about_us' %}" class="block py-2 px-4 rounded hover:bg-gray-700">About Us</a></li>
-            <li class="mb-2"><a href="{% url 'contact_us' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Contact Us</a></li>
-        </ul>
-        <!-- Toggle Arrow -->
-        <div id="toggleArrow" class="toggle-arrow">
-            <span id="arrowIcon">></span>
-        </div>
-    </div>
+        <div class="logo">MyApp</div>
+        <!-- Removed search bar -->
+    </nav>
 
-    <!-- Main Content -->
-    <div id="mainContent" class="flex-1 p-6 ml-0 main-content">
-        {% block content %}{% endblock %}
+    <div class="content-wrapper">
+        <!-- Sidebar -->
+        <div id="sidebar" class="sidebar bg-gray-800 p-4 fixed shadow-lg sidebar-open">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Dashboard</h2>
+            </div>
+            <ul>
+                <li class="mb-2"><a href="/" class="block py-2 px-4 rounded hover:bg-gray-700">Home</a></li>
+                <li class="mb-2"><a href="{% url 'profile' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Profile</a></li>
+                <li class="mb-2"><a href="{% url 'settings' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Settings</a></li>
+                <li class="mb-2"><a href="{% url 'inventory' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Inventory</a></li>
+                <li class="mb-2"><a href="{% url 'portfolio' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Portfolio</a></li>
+                <li class="mb-2"><a href="{% url 'about_us' %}" class="block py-2 px-4 rounded hover:bg-gray-700">About Us</a></li>
+                <li class="mb-2"><a href="{% url 'contact_us' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Contact Us</a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div id="mainContent" class="flex-1 p-6 ml-0 main-content">
+            {% block content %}{% endblock %}
+        </div>
     </div>
 
     <script>
         const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('mainContent');
-        const toggleArrow = document.getElementById('toggleArrow');
-        const arrowIcon = document.getElementById('arrowIcon');
+        const menuToggle = document.getElementById('menuToggle');
 
-        // Toggle sidebar visibility
-        toggleArrow.addEventListener('click', () => {
+        // Toggle sidebar visibility on hamburger menu click
+        menuToggle.addEventListener('click', () => {
             const isOpen = sidebar.classList.contains('sidebar-open');
             sidebar.classList.toggle('sidebar-open', !isOpen);
             sidebar.classList.toggle('sidebar-closed', isOpen);
-
-            // Update main content margin to avoid overlap
-            mainContent.style.marginLeft = isOpen ? '0' : '16rem';
-
-            // Update the arrow direction
-            arrowIcon.textContent = isOpen ? '>' : '<';
         });
     </script>
     <script src="http://localhost:8000/__reload__/reload.js"></script>
