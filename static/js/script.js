@@ -146,7 +146,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('keydown', function(event) {
         if (event.ctrlKey && event.key === 'f') {
             event.preventDefault();
-            searchInput.focus();
+            var searchInput = document.getElementById('searchInput'); // Ensure searchInput is defined
+            if (searchInput) {
+                searchInput.focus();
+            }
         }
     });
 
@@ -158,14 +161,17 @@ document.addEventListener('DOMContentLoaded', function() {
             var itemId = selectedItems[i].getAttribute('data-item-id');
             var itemName = selectedItems[i].getAttribute('data-item-name');
             var itemPrice = parseFloat(selectedItems[i].getAttribute('data-item-price'));
-            var quantity = parseInt(document.getElementById(`quantity-${itemId}`).innerText);
-            totalAmount += itemPrice * quantity;
-            orderItems.push({
-                id: itemId,
-                name: itemName,
-                price: itemPrice,
-                quantity: quantity
-            });
+            var quantityElement = document.getElementById(`quantity-${itemId}`);
+            if (quantityElement) {
+                var quantity = parseInt(quantityElement.innerText);
+                totalAmount += itemPrice * quantity;
+                orderItems.push({
+                    id: itemId,
+                    name: itemName,
+                    price: itemPrice,
+                    quantity: quantity
+                });
+            }
         }
         var gstAmount = totalAmount * 0.18;
         var grandTotal = totalAmount + gstAmount;
@@ -196,6 +202,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Order placed successfully!');
                 console.log(orderData);
                 generateBill(orderData);
+                clearSelectedItems();
             } else {
                 alert('Failed to place order: ' + data.error);
             }
@@ -205,6 +212,20 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('An error occurred while placing the order.');
         });
     });
+
+    function clearSelectedItems() {
+        var selectedItems = document.getElementsByClassName('item-cube selected');
+        while (selectedItems.length > 0) {
+            var item = selectedItems[0];
+            item.classList.remove('selected');
+            item.removeAttribute('data-selected-customizations');
+            item.removeAttribute('data-total-price');
+            item.removeAttribute('data-unique-id');
+        }
+        document.getElementById('selectedItemsList').innerHTML = '';
+        localStorage.removeItem('selectedItemsData');
+        updateTotalAmount();
+    }
 
     function generateBill(orderData) {
         var billWindow = window.open('', 'PRINT', 'height=400,width=600');
