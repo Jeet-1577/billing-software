@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .models import Category, Item, Order
+from .models import Category, Item, Order, Table, TableOrder
 from .forms import CategoryForm, ItemForm
 from django.http import JsonResponse
 import json
@@ -105,6 +105,10 @@ def menu(request):
 def dashboard(request):
     return render(request, 'dashboard.html')
 
+def tabel(request):
+    table_numbers = range(1, 21)
+    return render(request, 'tabel.html', {'table_numbers': table_numbers})
+
 @csrf_exempt
 @transaction.atomic
 def place_order(request):
@@ -179,3 +183,129 @@ def place_order(request):
             }, status=400)
 
     return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
+
+@csrf_exempt
+@transaction.atomic
+def save_order(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            print("Received order data:", data)  # Debug print
+
+            table_number = data['tableId'].replace('table-', '')
+            table, created = Table.objects.get_or_create(number=table_number)
+
+            # Prepare order details with all necessary information
+            order_details = [
+                {
+                    'name': item['name'],
+                    'price': item['price'],
+                    'customizations': item.get('customizations', []),
+                    'quantity': item['quantity'],
+                    'totalPrice': item['totalPrice']
+                }
+                for item in data['items']
+            ]
+
+            # Create the order first
+            order = Order(
+                order_id=data['orderId'],
+                subtotal=Decimal(str(data['totalAmount'])),
+                gst_amount=Decimal(str(data['gstAmount'])),
+                grand_total=Decimal(str(data['grandTotal'])),
+                payment_type='N/A',  # Placeholder as payment type is not required for saving
+                order_type='N/A',  # Placeholder as order type is not required for saving
+                order_details=order_details  # Save the order details
+            )
+            order.save()
+            print("Order saved:", order)  # Debug print
+
+            # Create order items with full details
+            for item_data in data['items']:
+                # Create OrderItem with all details
+                order_item = OrderItem(
+                    name=item_data['name'],
+                    price=Decimal(str(item_data['price'])),
+                    quantity=item_data['quantity'],
+                    customizations=item_data.get('customizations', []),
+                    total_price=Decimal(str(item_data['totalPrice']))  # Correct key used here
+                )
+                order_item.save()
+                print("Order item saved:", order_item)  # Debug print
+                
+                # Store the complete item details in the order_item
+                order_item.item_details = item_data
+                order_item.base_price = Decimal(str(item_data['price']))  # Assuming base_price is the same as price
+                order_item.customization_price = Decimal(str(item_data.get('customizationPrice', 0)))
+                order_item.save()
+                
+                order.items.add(order_item)
+
+            order.save()
+
+            # Save the order to the TableOrder model
+            table_order, created = TableOrder.objects.get_or_create(table=table)
+            table_order.orders.add(order)
+            table_order.save()
+
+            print("Final order saved with items:", order)  # Debug print
+
+            return JsonResponse({
+                'status': 'success',
+                'order_id': order.order_id
+            })
+            
+        except Exception as e:
+            import traceback
+            print("Error saving order:", str(e))
+            print(traceback.format_exc())
+            return JsonResponse({
+                'status': 'failed',
+                'error': str(e)
+            }, status=400)
+
+    return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
+
+@csrf_exempt
+def release_table(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            table_number = data['tableId'].replace('table-', '')
+            table = Table.objects.get(number=table_number)
+            table.orders.clear()
+            table.save()
+            return JsonResponse({'status': 'success'})
+        except Table.DoesNotExist:
+            return JsonResponse({'status': 'failed', 'error': 'Table not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
+    return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
+
+def view_table_orders(request, table_number):
+    try:
+        table = Table.objects.get(number=table_number)
+        orders = table.orders.all()
+        orders_data = []
+        for order in orders:
+            orders_data.append({
+                'order_id': order.order_id,
+                'subtotal': str(order.subtotal),
+                'gst_amount': str(order.gst_amount),
+                'grand_total': str(order.grand_total),
+                'items': [
+                    {
+                        'name': item.name,
+                        'price': str(item.price),
+                        'quantity': item.quantity,
+                        'customizations': item.customizations,
+                        'total_price': str(item.total_price)
+                    }
+                    for item in order.items.all()
+                ]
+            })
+        return JsonResponse({'status': 'success', 'orders': orders_data})
+    except Table.DoesNotExist:
+        return JsonResponse({'status': 'failed', 'error': 'Table not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)

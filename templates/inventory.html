@@ -779,6 +779,14 @@
     .item-cube {
         position: relative;
     }
+
+    .selected-table {
+        font-size: 1.2rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+
 </style>
 
 <!-- Update HTML structure -->
@@ -821,15 +829,7 @@
     
     <!-- Make sure this element exists and has the correct ID -->
     <div id="selectionSidebar" class="selection-sidebar">
-        <div class="flex justify-between items-center">
-            <h2 class="text-2xl font-bold ml-3 mr-0">Selected Items</h2>
-            <input type="checkbox" id="printButton" class="hidden">
-            <label for="printButton" class="cursor-pointer print-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9v6h12V9M6 9V5a2 2 0 012-2h8a2 2 0 012 2v4M6 9h12M6 15h12M9 18h6" />
-                </svg>
-            </label>
-        </div>
+        <div id="selectedTable" class="selected-table"></div>
         <div class="scrollable-content">
             <ul id="selectedItemsList" class="space-y-2">
                 <!-- Selected items will be appended here -->
@@ -905,5 +905,67 @@
 </div>
 
 <script src="{% static 'js/inventory.js' %}"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const selectedTable = localStorage.getItem('selectedTable');
+        if (selectedTable) {
+            document.getElementById('selectedTable').innerText = `Table: ${selectedTable.replace('table-', '')}`;
+        }
+
+        const orderData = localStorage.getItem('orderData');
+        if (orderData) {
+            const orders = JSON.parse(orderData);
+            loadOrderToSidebar(orders);
+            localStorage.removeItem('orderData');
+        }
+    });
+
+    function loadOrderToSidebar(orders) {
+        const selectedItemsList = document.getElementById('selectedItemsList');
+        selectedItemsList.innerHTML = '';
+
+        orders.forEach(order => {
+            order.items.forEach(item => {
+                const listItem = document.createElement('li');
+                listItem.classList.add('selected-item-box', 'bg-gray-600', 'p-2', 'rounded', 'shadow', 'flex', 'flex-col');
+
+                listItem.innerHTML = `
+                    <div class="selected-item-content">
+                        <div class="selected-item-header">
+                            <div class="flex items-center gap-2">
+                                <h4 class="text-sm font-semibold">${item.name}</h4>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <p class="text-sm">₹${parseFloat(item.price).toFixed(2)}</p>
+                                <div class="item-counter flex items-center space-x-1">
+                                    <span class="w-4 text-center">${item.quantity}</span>
+                                </div>
+                            </div>
+                        </div>
+                        ${item.customizations.length > 0 ? `
+                            <div class="selected-item-customizations">
+                                ${item.customizations.map(opt => `
+                                    <div>
+                                        <span>• ${opt.name}</span>
+                                        <span>+₹${opt.price.toFixed(2)}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+
+                selectedItemsList.appendChild(listItem);
+            });
+
+            document.getElementById('totalAmount').innerText = `Total: ₹${order.subtotal}`;
+            document.getElementById('gstAmount').innerText = `GST (18%): ₹${order.gst_amount}`;
+            document.getElementById('grandTotal').innerText = `Grand Total: ₹${order.grand_total}`;
+        });
+
+        document.querySelector('.selection-sidebar').classList.add('open');
+    }
+</script>
 
 {% endblock %}

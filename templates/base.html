@@ -123,6 +123,40 @@
             flex: 1; /* Allow content wrapper to take remaining space */
             overflow: hidden; /* Prevent content overflow */
         }
+        .dark-button {
+            background-color: #1f2937; /* Dark color */ 
+            color: white;
+            padding: 5px 10px; /* Decreased padding */
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block; /* Ensure the button is displayed as an inline-block element */
+            {% comment %} margin-top: px; /* Add some margin to separate the buttons */  {% endcomment %}
+        }
+        .dark-button:hover {
+            background-color: #111827; /* Darker color on hover */
+        }
+        .dark-button.green {
+            border: 2px solid transparent;
+        }
+        .dark-button.green:hover {
+            border-color: #10b981; /* Green border on hover */
+            color: #10b981; /* Green text color on hover */
+        }
+        .dark-button.red {
+            border: 2px solid transparent;
+        }
+        .dark-button.red:hover {
+            border-color: #ef4444; /* Red border on hover */
+            color: #ef4444; /* Red text color on hover */
+        }
+        .dark-button.yellow {
+            border: 2px solid transparent;
+        }
+        .dark-button.yellow:hover {
+            border-color: #f59e0b; /* Yellow border on hover */
+            color: #f59e0b; /* Yellow text color on hover */
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-white">
@@ -134,10 +168,14 @@
                 <span></span>
                 <span></span>
             </div>
-            <div class="ml-4 text-xl font-bold">BillMaker</div> <!-- Add this line -->
+            <div class="ml-4 text-xl font-bold">BillMaker</div>
         </div>
-        <div class="logo">MyApp</div>
-        <!-- Removed search bar -->
+        <div class="flex items-center">
+            <a href="{% url 'tabel' %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Table</a>
+            <button class="dark-button green ml-2" onclick="saveOrder()">Save</button>
+            <button class="dark-button red ml-2">Button 2</button>
+            <button class="dark-button yellow ml-2">Button 3</button>
+        </div>
     </nav>
 
     <div class="content-wrapper">
@@ -173,6 +211,131 @@
             sidebar.classList.toggle('sidebar-open', !isOpen);
             sidebar.classList.toggle('sidebar-closed', isOpen);
         });
+
+        function saveOrder() {
+            const selectedTable = localStorage.getItem('selectedTable');
+            if (!selectedTable) {
+                alert('Please select a table first.');
+                return;
+            }
+
+            const selectedItems = document.getElementsByClassName('item-cube selected');
+            const orderItems = [];
+            let totalAmount = 0;
+
+            for (let i = 0; i < selectedItems.length; i++) {
+                const item = selectedItems[i];
+                const itemId = item.getAttribute('data-item-id');
+                const itemName = item.getAttribute('data-item-name');
+                const basePrice = parseFloat(item.getAttribute('data-item-price'));
+                const uniqueItemId = item.getAttribute('data-unique-id') || `${itemId}-basic`;
+
+                const quantityElement = document.getElementById(`quantity-${uniqueItemId}`);
+                if (quantityElement) {
+                    const quantity = parseInt(quantityElement.innerText);
+                    const customizations = [];
+                    let customizationPrice = 0;
+
+                    if (item.hasAttribute('data-selected-customizations')) {
+                        customizations.push(...JSON.parse(item.getAttribute('data-selected-customizations')));
+                        customizationPrice = customizations.reduce((sum, opt) => sum + parseFloat(opt.price), 0);
+                    }
+
+                    const itemTotalPrice = (basePrice + customizationPrice) * quantity;
+                    totalAmount += itemTotalPrice;
+
+                    orderItems.push({
+                        id: itemId,
+                        name: itemName,
+                        price: basePrice + customizationPrice,
+                        quantity: quantity,
+                        customizations: customizations,
+                        totalPrice: itemTotalPrice
+                    });
+                }
+            }
+
+            const gstAmount = totalAmount * 0.18;
+            const grandTotal = totalAmount + gstAmount;
+
+            const orderData = {
+                orderId: Date.now().toString(),
+                items: orderItems,
+                totalAmount: totalAmount.toFixed(2),
+                gstAmount: gstAmount.toFixed(2),
+                grandTotal: grandTotal.toFixed(2),
+                time: new Date().toLocaleTimeString('en-US', { hour12: true }),
+                date: new Date().toISOString().split('T')[0],
+                tableId: selectedTable
+            };
+
+            console.log("Order data being sent:", orderData);  // Debug print
+
+            saveOrderToTable(orderData);
+        }
+
+        function saveOrderToTable(orderData) {
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            fetch('/save-order/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify(orderData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Response from server:", data);  // Debug print
+                if (data.status === 'success') {
+                    alert('Order saved successfully!');
+                    clearSelectedItems();
+                    localStorage.removeItem('selectedTable');
+                    document.getElementById('selectedTable').innerText = '';
+                    document.getElementById('totalAmount').innerText = 'Total: ₹0.00';
+                    document.getElementById('gstAmount').innerText = 'GST (18%): ₹0.00';
+                    document.getElementById('grandTotal').innerText = 'Grand Total: ₹0.00';
+                    location.reload();
+                } else {
+                    alert('Failed to save order: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while saving the order.');
+            });
+        }
+
+        function clearSelectedItems() {
+            const selectedItems = document.getElementsByClassName('item-cube selected');
+            while (selectedItems.length > 0) {
+                const item = selectedItems[0];
+                if (item) {
+                    item.classList.remove('selected');
+                    item.removeAttribute('data-selected-customizations');
+                    item.removeAttribute('data-total-price');
+                    item.removeAttribute('data-unique-id');
+                }
+            }
+            const selectedItemsList = document.getElementById('selectedItemsList');
+            if (selectedItemsList) {
+                selectedItemsList.innerHTML = '';
+            }
+            localStorage.removeItem('selectedItemsData');
+            updateTotalAmount();
+        }
+
+        function updateTotalAmount() {
+            document.getElementById('totalAmount').innerText = 'Total: ₹0.00';
+            document.getElementById('gstAmount').innerText = 'GST (18%): ₹0.00';
+            document.getElementById('grandTotal').innerText = 'Grand Total: ₹0.00';
+        }
     </script>
     <script src="http://localhost:8000/__reload__/reload.js"></script>
 </body>

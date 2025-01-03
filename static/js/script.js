@@ -153,65 +153,69 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    document.querySelector('.checkout').addEventListener('click', function() {
-        var selectedItems = document.getElementsByClassName('item-cube selected');
-        var orderItems = [];
-        var totalAmount = 0;
-        for (var i = 0; i < selectedItems.length; i++) {
-            var itemId = selectedItems[i].getAttribute('data-item-id');
-            var itemName = selectedItems[i].getAttribute('data-item-name');
-            var itemPrice = parseFloat(selectedItems[i].getAttribute('data-item-price'));
-            var quantityElement = document.getElementById(`quantity-${itemId}`);
-            if (quantityElement) {
-                var quantity = parseInt(quantityElement.innerText);
-                totalAmount += itemPrice * quantity;
-                orderItems.push({
-                    id: itemId,
-                    name: itemName,
-                    price: itemPrice,
-                    quantity: quantity
-                });
+    // Ensure the checkout button exists before adding the event listener
+    var checkoutButton = document.querySelector('.checkout');
+    if (checkoutButton) {
+        checkoutButton.addEventListener('click', function() {
+            var selectedItems = document.getElementsByClassName('item-cube selected');
+            var orderItems = [];
+            var totalAmount = 0;
+            for (var i = 0; i < selectedItems.length; i++) {
+                var itemId = selectedItems[i].getAttribute('data-item-id');
+                var itemName = selectedItems[i].getAttribute('data-item-name');
+                var itemPrice = parseFloat(selectedItems[i].getAttribute('data-item-price'));
+                var quantityElement = document.getElementById(`quantity-${itemId}`);
+                if (quantityElement) {
+                    var quantity = parseInt(quantityElement.innerText);
+                    totalAmount += itemPrice * quantity;
+                    orderItems.push({
+                        id: itemId,
+                        name: itemName,
+                        price: itemPrice,
+                        quantity: quantity
+                    });
+                }
             }
-        }
-        var gstAmount = totalAmount * 0.18;
-        var grandTotal = totalAmount + gstAmount;
-        var paymentType = document.querySelector('input[name="payment_type"]:checked').value;
-        var orderType = document.querySelector('input[name="order_type"]:checked').value;
-        var orderData = {
-            orderId: Date.now().toString(),
-            items: orderItems,
-            totalAmount: totalAmount.toFixed(2),
-            gstAmount: gstAmount.toFixed(2),
-            grandTotal: grandTotal.toFixed(2),
-            paymentType: paymentType,
-            orderType: orderType,
-            time: new Date().toLocaleTimeString('en-US', { hour12: true }),  // Ensure time includes AM/PM
-            date: new Date().toISOString().split('T')[0]
-        };
-        fetch('/place-order/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify(orderData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                alert('Order placed successfully!');
-                console.log(orderData);
-                generateBill(orderData);
-                clearSelectedItems();
-            } else {
-                alert('Failed to place order: ' + data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while placing the order.');
+            var gstAmount = totalAmount * 0.18;
+            var grandTotal = totalAmount + gstAmount;
+            var paymentType = document.querySelector('input[name="payment_type"]:checked').value;
+            var orderType = document.querySelector('input[name="order_type"]:checked').value;
+            var orderData = {
+                orderId: Date.now().toString(),
+                items: orderItems,
+                totalAmount: totalAmount.toFixed(2),
+                gstAmount: gstAmount.toFixed(2),
+                grandTotal: grandTotal.toFixed(2),
+                paymentType: paymentType,
+                orderType: orderType,
+                time: new Date().toLocaleTimeString('en-US', { hour12: true }),  // Ensure time includes AM/PM
+                date: new Date().toISOString().split('T')[0]
+            };
+            fetch('/place-order/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify(orderData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Order placed successfully!');
+                    console.log(orderData);
+                    generateBill(orderData);
+                    clearSelectedItems();
+                } else {
+                    alert('Failed to place order: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while placing the order.');
+            });
         });
-    });
+    }
 
     function updateTotalAmount() {
         var selectedItems = document.getElementsByClassName('item-cube selected');

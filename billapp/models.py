@@ -77,3 +77,17 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order {self.order_id} - ₹{self.grand_total}"
+
+class Table(models.Model):
+    number = models.IntegerField(unique=True)
+    orders = models.ManyToManyField(Order, blank=True)
+
+    def __str__(self):
+        return f"Table {self.number}"
+
+class TableOrder(models.Model):
+    table = models.OneToOneField(Table, on_delete=models.CASCADE, related_name='table_order')
+    orders = models.ManyToManyField(Order, blank=True)
+
+    def __str__(self):
+        return f"TableOrder for Table {self.table.number}"
