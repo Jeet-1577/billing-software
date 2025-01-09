@@ -1,0 +1,12 @@
+<!-- ...existing code... -->
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ category_form.as_p }}
+    {{ item_form.as_p }}
+    <div class="form-group">
+        <label for="id_short_code">Short Code:</label>
+        <input type="text" name="short_code" id="id_short_code" class="form-control">
+    </div>
+    <button type="submit" class="btn btn-primary">Save</button>
+</form>
+<!-- ...existing code... -->

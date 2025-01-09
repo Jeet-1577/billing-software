@@ -146,68 +146,138 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('keydown', function(event) {
         if (event.ctrlKey && event.key === 'f') {
             event.preventDefault();
-            searchInput.focus();
+            var searchInput = document.getElementById('searchInput'); // Ensure searchInput is defined
+            if (searchInput) {
+                searchInput.focus();
+            }
         }
     });
 
-    document.querySelector('.checkout').addEventListener('click', function() {
-        var selectedItems = document.getElementsByClassName('item-cube selected');
-        var orderItems = [];
-        var totalAmount = 0;
-        for (var i = 0; i < selectedItems.length; i++) {
-            var itemId = selectedItems[i].getAttribute('data-item-id');
-            var itemName = selectedItems[i].getAttribute('data-item-name');
-            var itemPrice = parseFloat(selectedItems[i].getAttribute('data-item-price'));
-            var quantity = parseInt(document.getElementById(`quantity-${itemId}`).innerText);
-            totalAmount += itemPrice * quantity;
-            orderItems.push({
-                id: itemId,
-                name: itemName,
-                price: itemPrice,
-                quantity: quantity
+    // Ensure the checkout button exists before adding the event listener
+    var checkoutButton = document.querySelector('.checkout');
+    if (checkoutButton) {
+        checkoutButton.addEventListener('click', function() {
+            var selectedItems = document.getElementsByClassName('item-cube selected');
+            var orderItems = [];
+            var totalAmount = 0;
+            for (var i = 0; i < selectedItems.length; i++) {
+                var itemId = selectedItems[i].getAttribute('data-item-id');
+                var itemName = selectedItems[i].getAttribute('data-item-name');
+                var itemPrice = parseFloat(selectedItems[i].getAttribute('data-item-price'));
+                var quantityElement = document.getElementById(`quantity-${itemId}`);
+                if (quantityElement) {
+                    var quantity = parseInt(quantityElement.innerText);
+                    totalAmount += itemPrice * quantity;
+                    orderItems.push({
+                        id: itemId,
+                        name: itemName,
+                        price: itemPrice,
+                        quantity: quantity
+                    });
+                }
+            }
+            var gstAmount = totalAmount * 0.18;
+            var grandTotal = totalAmount + gstAmount;
+            var paymentType = document.querySelector('input[name="payment_type"]:checked').value;
+            var orderType = document.querySelector('input[name="order_type"]:checked').value;
+            var orderData = {
+                orderId: Date.now().toString(),
+                items: orderItems,
+                totalAmount: totalAmount.toFixed(2),
+                gstAmount: gstAmount.toFixed(2),
+                grandTotal: grandTotal.toFixed(2),
+                paymentType: paymentType,
+                orderType: orderType,
+                time: new Date().toLocaleTimeString('en-US', { hour12: true }),  // Ensure time includes AM/PM
+                date: new Date().toISOString().split('T')[0]
+            };
+            fetch('/place-order/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify(orderData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Order placed successfully!');
+                    console.log(orderData);
+                    generateBill(orderData);
+                    clearSelectedItems();
+                } else {
+                    alert('Failed to place order: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while placing the order.');
             });
+        });
+    }
+
+    function updateTotalAmount() {
+        var selectedItems = document.getElementsByClassName('item-cube selected');
+        var totalAmount = 0;
+
+        for (var i = 0; i < selectedItems.length; i++) {
+            var item = selectedItems[i];
+            var uniqueItemId = item.getAttribute('data-unique-id') || `${item.getAttribute('data-item-id')}-basic`;
+            var basePrice = parseFloat(item.getAttribute('data-item-price'));
+            var totalItemPrice = basePrice;
+
+            if (item.hasAttribute('data-selected-customizations')) {
+                const customizations = JSON.parse(item.getAttribute('data-selected-customizations'));
+                const customizationPrice = customizations.reduce((sum, opt) => sum + parseFloat(opt.price), 0);
+                totalItemPrice += customizationPrice;
+            }
+
+            var quantityElement = document.getElementById(`quantity-${uniqueItemId}`);
+            if (!quantityElement) {
+                console.error(`Quantity element not found for item ID: ${uniqueItemId}`);
+                continue;
+            }
+            var quantity = parseInt(quantityElement.innerText);
+
+            var itemTotal = totalItemPrice * quantity;
+            totalAmount += itemTotal;
         }
+
         var gstAmount = totalAmount * 0.18;
         var grandTotal = totalAmount + gstAmount;
-        var paymentType = document.querySelector('input[name="payment_type"]:checked').value;
-        var orderType = document.querySelector('input[name="order_type"]:checked').value;
-        var orderData = {
-            orderId: Date.now().toString(),
-            items: orderItems,
-            totalAmount: totalAmount.toFixed(2),
-            gstAmount: gstAmount.toFixed(2),
-            grandTotal: grandTotal.toFixed(2),
-            paymentType: paymentType,
-            orderType: orderType,
-            time: new Date().toLocaleTimeString('en-US', { hour12: true }),  // Ensure time includes AM/PM
-            date: new Date().toISOString().split('T')[0]
-        };
-        fetch('/place-order/', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify(orderData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                alert('Order placed successfully!');
-                console.log(orderData);
-                generateBill(orderData);
-            } else {
-                alert('Failed to place order: ' + data.error);
+
+        document.getElementById('totalAmount').innerText = `Total: ₹${totalAmount.toFixed(2)}`;
+        document.getElementById('gstAmount').innerText = `GST (18%): ₹${gstAmount.toFixed(2)}`;
+        document.getElementById('grandTotal').innerText = `Grand Total: ₹${grandTotal.toFixed(2)}`;
+    }
+
+    function clearSelectedItems() {
+        var selectedItems = document.getElementsByClassName('item-cube selected');
+        while (selectedItems.length > 0) {
+            var item = selectedItems[0];
+            if (item) {
+                item.classList.remove('selected');
+                item.removeAttribute('data-selected-customizations');
+                item.removeAttribute('data-total-price');
+                item.removeAttribute('data-unique-id');
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while placing the order.');
-        });
-    });
+        }
+        var selectedItemsList = document.getElementById('selectedItemsList');
+        if (selectedItemsList) {
+            selectedItemsList.innerHTML = '';
+        }
+        localStorage.removeItem('selectedItemsData');
+        updateTotalAmount();
+    }
 
     function generateBill(orderData) {
         var billWindow = window.open('', 'PRINT', 'height=400,width=600');
+        if (!billWindow) {
+            console.error('Failed to open bill window');
+            return;
+        }
+
         billWindow.document.write('<html><head><title>Bill</title>');
         billWindow.document.write('<style>body { font-family: Arial, sans-serif; width: 58mm; margin: 0; padding: 0; } .bill-container { padding: 10px; } .bill-header, .bill-footer { text-align: center; } .bill-header h1, .bill-footer p { margin: 0; } .bill-details, .bill-items { width: 100%; margin-top: 10px; } .bill-items th, .bill-items td { text-align: left; padding: 5px; border-bottom: 1px solid #000; } .bill-items th { background-color: #f0f0f0; } .bill-total { text-align: right; margin-top: 10px; }</style>');
         billWindow.document.write('</head><body>');
@@ -224,6 +294,8 @@ document.addEventListener('DOMContentLoaded', function() {
         billWindow.document.write('</div>');
         billWindow.document.write('</body></html>');
         billWindow.document.close();
-        billWindow.print();
+        setTimeout(() => {
+            billWindow.print();
+        }, 250);
     }
 });

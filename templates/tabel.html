@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% load static %}
+{% load custom_tags %}
+
+{% block title %}Tables{% endblock %}
+{% block header %}Tables{% endblock %}
+{% block content %}
+<style>
+    .table-container {
+        margin-top: 25px;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 20px;
+        padding: 20px;
+        position: relative; /* For positioning the button */
+    }
+    .table-box {
+        background-color: #4a5568; /* Subtle gray background */
+        border-radius: 10px; /* Rounded corners */
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); /* Shadow for the container */
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        text-align: center;
+        cursor: pointer;
+        padding: 20px;
+        margin-top: 30px;
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+        width: 100px; /* Fixed width */
+        height: 100px; /* Increased height to make it vertical rectangle */
+        position: relative; /* For positioning the button */
+    }
+    .table-box:hover {
+        transform: scale(1.05); /* Slight zoom effect */
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Elevate on hover */
+    }
+    .table-box.selected {
+        box-shadow: 0 0 20px yellow; /* Yellow glow effect */
+        border: 2px solid yellow; /* Yellow border */
+    }
+    .table-box.booked {
+        box-shadow: 0 0 20px green; /* Green glow effect */
+        border: 2px solid green; /* Green border */
+    }
+    .book-button, .release-button {
+        position: absolute;
+        top: 100px; /* Adjust this value based on the height of your navbar */
+        background-color: #2563eb;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 1; /* Ensure it is behind the sidebar */
+    }
+    .book-button {
+        left: 10px; /* Position at the left */
+    }
+    .release-button {
+        left: 100px; /* Position to the right of the book button */
+    }
+    .book-button:hover, .release-button:hover {
+        background-color: #1e40af;
+    }
+    .eye-icon {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .eye-icon:hover {
+        transform: scale(1.2);
+    }
+</style>
+
+<button class="book-button" onclick="bookTable()">Book</button>
+<button class="release-button" onclick="releaseTable()">Release</button>
+<div class="table-container">
+    {% for i in table_numbers %}
+    <div class="table-box" id="table-{{ i }}" onclick="selectTable(this)">
+        {{ i }}
+        <svg xmlns="http://www.w3.org/2000/svg" class="eye-icon h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" onclick="viewOrder(event, '{{ i }}')">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm-3-9a9 9 0 00-9 9 9 9 0018 0 9 9 0 00-9-9z" />
+        </svg>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', (event) => {
+        // Load booked tables from localStorage
+        const bookedTables = JSON.parse(localStorage.getItem('bookedTables')) || [];
+        bookedTables.forEach(tableId => {
+            const tableElement = document.getElementById(tableId);
+            if (tableElement) {
+                tableElement.classList.add('booked');
+            }
+        });
+    });
+
+    function selectTable(element) {
+        // Remove the 'selected' class from all table boxes
+        document.querySelectorAll('.table-box').forEach(box => {
+            box.classList.remove('selected');
+        });
+
+        // Add the 'selected' class to the clicked table box
+        element.classList.add('selected');
+    }
+
+    function bookTable() {
+        const selectedBox = document.querySelector('.table-box.selected');
+        if (selectedBox) {
+            selectedBox.classList.remove('selected');
+            selectedBox.classList.add('booked');
+            saveBookedTable(selectedBox.id);
+            localStorage.setItem('selectedTable', selectedBox.id);
+            window.location.href = '/inventory/';
+        }
+    }
+
+    function releaseTable() {
+        const selectedBox = document.querySelector('.table-box.selected.booked');
+        if (selectedBox) {
+            selectedBox.classList.remove('booked');
+            selectedBox.classList.remove('selected');
+            removeBookedTable(selectedBox.id);
+        }
+    }
+
+    function saveBookedTable(tableId) {
+        let bookedTables = JSON.parse(localStorage.getItem('bookedTables')) || [];
+        if (!bookedTables.includes(tableId)) {
+            bookedTables.push(tableId);
+            localStorage.setItem('bookedTables', JSON.stringify(bookedTables));
+        }
+    }
+
+    function removeBookedTable(tableId) {
+        let bookedTables = JSON.parse(localStorage.getItem('bookedTables')) || [];
+        bookedTables = bookedTables.filter(id => id !== tableId);
+        localStorage.setItem('bookedTables', JSON.stringify(bookedTables));
+    }
+
+    function viewOrder(event, tableId) {
+        event.stopPropagation();
+        const tableNumber = tableId.replace('table-', '');
+        fetch(`/view-table-orders/${tableNumber}/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                localStorage.setItem('orderData', JSON.stringify(data.orders));
+                window.location.href = '/inventory/';
+            } else {
+                alert('Failed to fetch orders: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while fetching the orders.');
+        });
+    }
+</script>
+
+{% endblock %}
