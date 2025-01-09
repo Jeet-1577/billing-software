@@ -85,6 +85,17 @@ def about_us(request):
 def contact_us(request):
     return render(request, 'contact.html')
 
+def Privacy_Policy(request):
+    return render(request, 'Privacy_Policy.html')
+
+
+def Refund(request):
+    return render(request, 'Refund.html')
+
+
+def Terms_Conditions(request):
+    return render(request, 'Terms_Conditions.html')
+
 def customize(request):
     if request.method == 'POST':
         category_form = CategoryForm(request.POST)
