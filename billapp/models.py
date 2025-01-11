@@ -87,7 +87,8 @@ class Order(models.Model):
     ORDER_STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('completed', 'Completed'),
-        ('cancelled', 'Cancelled')
+        ('cancelled', 'Cancelled'),
+        ('deleted', 'Deleted'),  # Ensure 'deleted' status is included
     ]
 
     order_id = models.CharField(max_length=100, unique=True)
@@ -99,6 +100,8 @@ class Order(models.Model):
     payment_type = models.CharField(max_length=50)
     order_type = models.CharField(max_length=50)
     status = models.CharField(max_length=20, choices=ORDER_STATUS_CHOICES, default='pending')
+    deletion_reason = models.TextField(null=True, blank=True)  # New field for deletion reason
+    deleted_by = models.CharField(max_length=100, null=True, blank=True)  # New field to store employee ID
     time = models.TimeField(auto_now_add=True)
     date = models.DateField(auto_now_add=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -134,7 +137,7 @@ class TableOrder(models.Model):
     table = models.OneToOneField(Table, on_delete=models.CASCADE, related_name='table_order')
     orders = models.ManyToManyField(Order, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"TableOrder for Table {self.table.number}"

@@ -15,6 +15,7 @@
                 <option value="pending">Pending</option>
                 <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
+                <option value="deleted">Deleted</option>
             </select>
             <select id="filterPaymentType" class="bg-gray-800 text-white rounded-lg p-2">
                 <option value="">All Payment Types</option>
@@ -55,8 +56,14 @@
             </thead>
             <tbody class="overflow-y-auto max-h-[500px]" style="display: block; scrollbar-width: none; -ms-overflow-style: none;">
                 {% for order in orders %}
-                <tr class="hover:bg-gray-700" style="display: table; width: 100%; table-layout: fixed;">
-                    <td class="py-2 px-4 border-b border-gray-700 text-center">{{ order.order_id }}</td>
+                <tr class="hover:bg-gray-700 {% if order.status == 'deleted' %}bg-red-700{% endif %}" style="display: table; width: 100%; table-layout: fixed;">
+                    <td class="py-2 px-4 border-b border-gray-700 text-center">
+                        {% if order.status == 'deleted' and order.deletion_reason %}
+                            <a href="#" class="deleted-order-id hover:text-blue-500 underline" data-deletion-reason="{{ order.deletion_reason }}" data-deleted-by="{{ order.deleted_by }}">{{ order.order_id }}</a>
+                        {% else %}
+                            {{ order.order_id }}
+                        {% endif %}
+                    </td>
                     <td class="py-2 px-4 border-b border-gray-700 text-center">₹{{ order.subtotal }}</td>
                     <td class="py-2 px-4 border-b border-gray-700 text-center">₹{{ order.gst_amount }}</td>
                     <td class="py-2 px-4 border-b border-gray-700 text-center">₹{{ order.grand_total }}</td>
@@ -86,7 +93,7 @@
 
 <!-- Modal Popup for Order Details -->
 <div id="orderDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-gray-800 rounded-lg p-6 w-[600px] max-h-[80vh] overflow-y-auto">
+    <div class="bg-gray-800 rounded-lg p-6 w-[600px] max-h-[80vh] overflow-y-auto shadow-lg">
         <div class="flex justify-between items-center mb-4">
             <h3 class="text-xl font-bold text-white">Order Details</h3>
             <button onclick="closeOrderDetailsModal()" class="text-gray-400 hover:text-white" aria-label="Close order details popup">
@@ -95,9 +102,47 @@
                 </svg>
             </button>
         </div>
-        <div id="orderDetailsContent" class="space-y-4">
+        <div id="orderDetailsContent" class="space-y-4 text-white">
             <!-- Order details will be dynamically added here -->
         </div>
+    </div>
+</div>
+
+<!-- Modal Structure -->
+<div id="deletionReasonModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40   hidden transition-opacity duration-300">
+    <div class="bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md transform transition-all scale-95">
+        <h2 class="text-xl font-semibold mb-4 text-white">Deletion Reason</h2>
+        <p id="deletionReasonContent" class="text-gray-300 mb-6"></p>
+        <div class="flex justify-end">
+            <button id="closeModal" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Combined Password, Employee ID, and Reason Modal -->
+<div id="deleteOrderModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 hidden transition-opacity duration-300">
+    <div class="bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md transform transition-all scale-95">
+        <h2 class="text-xl font-semibold mb-4 text-white">Delete Order</h2>
+        <form id="deleteOrderForm">
+            <div class="mb-4">
+                <label for="password" class="block text-white mb-2">Password:</label>
+                <input type="password" id="password" name="password" required class="w-full p-2 rounded bg-gray-700 text-white">
+            </div>
+            <div class="mb-4">
+                <label for="employeeId" class="block text-white mb-2">Employee ID:</label>
+                <input type="text" id="employeeId" name="employeeId" required class="w-full p-2 rounded bg-gray-700 text-white">
+            </div>
+            <div class="mb-4">
+                <label for="reason" class="block text-white mb-2">Reason for Deletion:</label>
+                <textarea id="reason" name="reason" required class="w-full p-2 rounded bg-gray-700 text-white" rows="3"></textarea>
+            </div>
+            <div class="flex justify-end">
+                <button type="button" id="cancelDelete" class="px-4 py-2 mr-2 bg-gray-600 text-white rounded hover:bg-gray-700">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Delete</button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -192,9 +237,134 @@
         document.querySelectorAll('.delete-order').forEach(button => {
             button.addEventListener('click', function() {
                 const orderId = this.getAttribute('data-order-id');
-                // Implement delete order functionality here
-                alert(`Delete order with Order ID: ${orderId}`);
+                openDeleteOrderModal(orderId);
             });
+        });
+
+        let currentOrderId = null;
+
+        function openDeleteOrderModal(orderId) {
+            currentOrderId = orderId;
+            document.getElementById('deleteOrderModal').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('deleteOrderModal').classList.add('opacity-100', 'scale-100');
+            }, 10);
+        }
+
+        // Handle form submission
+        document.getElementById('deleteOrderForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const password = document.getElementById('password').value;
+            const employeeId = document.getElementById('employeeId').value;
+            const reason = document.getElementById('reason').value;
+
+            if (reason) {
+                deleteOrder(currentOrderId, reason, password, employeeId);
+            } else {
+                alert('Deletion reason is required.');
+            }
+        });
+
+        // Handle modal cancellation
+        document.getElementById('cancelDelete').addEventListener('click', function() {
+            closeDeleteOrderModal();
+        });
+
+        function closeDeleteOrderModal() {
+            document.getElementById('deleteOrderModal').classList.remove('opacity-100', 'scale-100');
+            setTimeout(() => {
+                document.getElementById('deleteOrderModal').classList.add('hidden');
+                document.getElementById('deleteOrderForm').reset();
+                currentOrderId = null;
+            }, 300);
+        }
+
+        function deleteOrder(orderId, reason, password, employeeId) {
+            fetch(`/delete-order/${orderId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ reason: reason, employee_id: employeeId, password: password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const row = document.querySelector(`button[data-order-id="${orderId}"]`).closest('tr');
+                    row.classList.add('bg-red-700');
+
+                    // Update the Order ID cell to be a clickable link
+                    const orderIdCell = row.querySelector('td:nth-child(1)');
+                    orderIdCell.innerHTML = `
+                        <a href="#" class="deleted-order-id hover:text-blue-500 underline" 
+                           data-deletion-reason="${reason}" 
+                           data-deleted-by="${employeeId}">
+                           ${orderId}
+                        </a>
+                    `;
+
+                    // Re-bind the event listener to the new link
+                    orderIdCell.querySelector('.deleted-order-id').addEventListener('click', function(event) {
+                        event.preventDefault();
+                        const reason = this.getAttribute('data-deletion-reason');
+                        const employeeId = this.getAttribute('data-deleted-by');
+                        const displayText = `Reason: ${reason || 'No reason provided.'}\nDeleted by Employee ID: ${employeeId || 'N/A'}`;
+                        document.getElementById('deletionReasonContent').innerText = displayText;
+                        document.getElementById('deletionReasonModal').classList.remove('hidden');
+                        setTimeout(() => {
+                            document.getElementById('deletionReasonModal').classList.add('opacity-100', 'scale-100');
+                        }, 10);
+                    });
+
+                    closeDeleteOrderModal();
+                    alert('Order deleted successfully!');
+                } else {
+                    alert('Failed to delete order: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the order.');
+            });
+        }
+
+        // Implement event delegation for deleted-order-id links
+        document.body.addEventListener('click', function(event) {
+            if (event.target.matches('.deleted-order-id')) {
+                event.preventDefault();
+                const reason = event.target.getAttribute('data-deletion-reason');
+                const employeeId = event.target.getAttribute('data-deleted-by');
+                const displayText = `Reason: ${reason || 'No reason provided.'}\nDeleted by Employee ID: ${employeeId || 'N/A'}`;
+                document.getElementById('deletionReasonContent').innerText = displayText;
+                document.getElementById('deletionReasonModal').classList.remove('hidden');
+                setTimeout(() => {
+                    document.getElementById('deletionReasonModal').classList.add('opacity-100', 'scale-100');
+                }, 10);
+            }
+        });
+
+        // Event listener for deleted order IDs to display employee ID
+        document.querySelectorAll('.deleted-order-id').forEach(function(element) {
+            element.addEventListener('click', function(event) {
+                event.preventDefault();
+                const reason = this.getAttribute('data-deletion-reason');
+                const employeeId = this.getAttribute('data-deleted-by');  // Assuming this attribute is set
+                const displayText = `Reason: ${reason || 'No reason provided.'}\nDeleted by Employee ID: ${employeeId || 'N/A'}`;
+                document.getElementById('deletionReasonContent').innerText = displayText;
+                document.getElementById('deletionReasonModal').classList.remove('hidden');
+                setTimeout(() => {
+                    document.getElementById('deletionReasonModal').classList.add('opacity-100', 'scale-100');
+                }, 10);
+            });
+        });
+
+        // Event listener to close the modal
+        document.getElementById('closeModal').addEventListener('click', function() {
+            document.getElementById('deletionReasonModal').classList.remove('opacity-100', 'scale-100');
+            setTimeout(() => {
+                document.getElementById('deletionReasonModal').classList.add('hidden');
+            }, 300);
         });
     });
 
@@ -217,24 +387,26 @@
     function displayOrderDetails(order) {
         const orderDetailsContent = document.getElementById('orderDetailsContent');
         orderDetailsContent.innerHTML = `
-            <div>
+            <div class="border-b border-gray-700 pb-2 mb-2">
                 <h4 class="text-lg font-bold">Order ID: ${order.order_id}</h4>
-                <p><strong>Date:</strong> ${order.date}</p>
-                <p><strong>Time:</strong> ${order.time}</p>
-                <p><strong>Payment Type:</strong> ${order.payment_type}</p>
-                <p><strong>Order Type:</strong> ${order.order_type}</p>
-                <p><strong>Status:</strong> ${order.status}</p>
+                <div class="grid grid-cols-2 gap-4">
+                    <p><strong>Date:</strong> ${order.date}</p>
+                    <p><strong>Time:</strong> ${order.time}</p>
+                    <p><strong>Payment Type:</strong> ${order.payment_type}</p>
+                    <p><strong>Order Type:</strong> ${order.order_type}</p>
+                    <p><strong>Status:</strong> ${order.status}</p>
+                </div>
             </div>
-            <div>
+            <div class="border-b border-gray-700 pb-2 mb-2">
                 <h4 class="text-lg font-bold">Items:</h4>
-                <ul class="list-disc pl-5">
+                <ul class="list-disc pl-5 space-y-2">
                     ${order.items.map(item => `
                         <li>
-                            <p><strong>${item.name}</strong> (x${item.quantity}) - ₹${item.total_price.toFixed(2)}</p>
+                            <p><strong>${item.name}</strong> (x${item.quantity}) - ₹${parseFloat(item.total_price).toFixed(2)}</p>
                             ${item.customizations.length > 0 ? `
-                                <ul class="list-disc pl-5">
+                                <ul class="list-disc pl-5 space-y-1">
                                     ${item.customizations.map(c => `
-                                        <li>${c.name} - ₹${c.price.toFixed(2)}</li>
+                                        <li>${c.name} - ₹${parseFloat(c.price).toFixed(2)}</li>
                                     `).join('')}
                                 </ul>
                             ` : ''}
@@ -242,10 +414,10 @@
                     `).join('')}
                 </ul>
             </div>
-            <div>
-                <p><strong>Subtotal:</strong> ₹${order.subtotal.toFixed(2)}</p>
-                <p><strong>GST Amount:</strong> ₹${order.gst_amount.toFixed(2)}</p>
-                <p><strong>Grand Total:</strong> ₹${order.grand_total.toFixed(2)}</p>
+            <div class="grid grid-cols-2 gap-4">
+                <p><strong>Subtotal:</strong> ₹${parseFloat(order.subtotal).toFixed(2)}</p>
+                <p><strong>GST Amount:</strong> ₹${parseFloat(order.gst_amount).toFixed(2)}</p>
+                <p><strong>Grand Total:</strong> ₹${parseFloat(order.grand_total).toFixed(2)}</p>
             </div>
         `;
 
@@ -258,6 +430,68 @@
         const modal = document.getElementById('orderDetailsModal');
         modal.classList.remove('flex');
         modal.classList.add('hidden');
+    }
+
+    function promptForPassword(orderId) {
+        const password = prompt("Enter your password to delete this order:");
+        if (password) {
+            verifyPassword(password, orderId);
+        }
+    }
+
+    function verifyPassword(password, orderId) {
+        fetch(`/verify-password/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ password: password })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                promptForReason(orderId);
+            } else {
+                alert('Password incorrect. Cannot delete the order.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while verifying the password.');
+        });
+    }
+
+    function promptForReason(orderId) {
+        const reason = prompt("Enter the reason for deleting this order:");
+        if (reason) {
+            deleteOrder(orderId, reason);
+        }
+    }
+
+    function deleteOrder(orderId, reason) {
+        fetch(`/delete-order/${orderId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ reason: reason })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const row = document.querySelector(`button[data-order-id="${orderId}"]`).closest('tr');
+                row.classList.add('bg-red-700');
+                alert('Order deleted successfully!');
+            } else {
+                alert('Failed to delete order: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while deleting the order.');
+        });
     }
 </script>
 {% endblock %}

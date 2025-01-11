@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from .models import Category, Item, Order, Table, TableOrder
 from .forms import CategoryForm, ItemForm
 from django.http import JsonResponse
@@ -13,6 +13,8 @@ from django.template import loader
 from django.views.decorators.http import require_POST
 from django.utils import timezone
 from datetime import timedelta
+from django.contrib.auth import authenticate
+from django.contrib.auth.decorators import login_required
 
 
 def index(request):
@@ -345,5 +347,70 @@ def get_table_status(request):
     return JsonResponse(list(tables), safe=False)
 
 def order_data(request):
-    orders = Order.objects.all()  # Fetch all orders
+    status_filter = request.GET.get('status', '')
+    orders = Order.objects.all()
+
+    if status_filter:
+        orders = orders.filter(status=status_filter)
+
     return render(request, 'order_data.html', {'orders': orders})
+
+def order_details(request, order_id):
+    try:
+        order = get_object_or_404(Order, order_id=order_id)
+        order_items = order.items.all()
+        order_data = {
+            'order_id': order.order_id,
+            'date': order.date,
+            'time': order.time,
+            'payment_type': order.payment_type,
+            'order_type': order.order_type,
+            'status': order.status,
+            'subtotal': order.subtotal,
+            'gst_amount': order.gst_amount,
+            'grand_total': order.grand_total,
+            'items': [
+                {
+                    'name': item.name,
+                    'quantity': item.quantity,
+                    'total_price': item.total_price,
+                    'customizations': item.customizations
+                }
+                for item in order_items
+            ]
+        }
+        return JsonResponse({'status': 'success', 'order': order_data})
+    except Order.DoesNotExist:
+        return JsonResponse({'status': 'failed', 'error': 'Order not found'}, status=404)
+
+@csrf_exempt
+@require_POST
+def delete_order(request, order_id):
+    try:
+        data = json.loads(request.body)
+        reason = data.get('reason', '')
+        employee_id = data.get('employee_id', '')  # Retrieve employee ID from the request
+        order = get_object_or_404(Order, order_id=order_id)
+        order.status = 'deleted'
+        order.deletion_reason = reason
+        order.deleted_by = employee_id  # Save the employee ID
+        order.save()
+        return JsonResponse({'status': 'success'})
+    except Order.DoesNotExist:
+        return JsonResponse({'status': 'failed', 'error': 'Order not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
+
+@csrf_exempt
+@require_POST
+def verify_password(request):
+    try:
+        data = json.loads(request.body)
+        password = data.get('password', '')
+        user = authenticate(username=request.user.username, password=password)
+        if user is not None:
+            return JsonResponse({'status': 'success'})
+        else:
+            return JsonResponse({'status': 'failed'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)

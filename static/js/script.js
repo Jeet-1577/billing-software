@@ -277,4 +277,73 @@ document.addEventListener('DOMContentLoaded', function() {
             bookTable(tableId);
         });
     });
+
+    // Ensure the modal and close button are handled here if not already in order_data.html
+    // If the modal is fully handled in order_data.html, this section can remain unchanged
 });
+
+function promptForPassword(orderId) {
+    const password = prompt("Enter your password to delete this order:");
+    if (password) {
+        verifyPassword(password, orderId);
+    }
+}
+
+function verifyPassword(password, orderId) {
+    fetch(`/verify-password/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({ password: password })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            promptForReason(orderId);
+        } else {
+            alert('Password incorrect. Cannot delete the order.');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while verifying the password.');
+    });
+}
+
+function promptForReason(orderId) {
+    const reason = prompt("Enter the reason for deleting this order:");
+    if (reason) {
+        deleteOrder(orderId, reason);
+    }
+}
+
+function deleteOrder(orderId, reason) {
+    fetch(`/delete-order/${orderId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({ reason: reason })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const row = document.querySelector(`button[data-order-id="${orderId}"]`).closest('tr');
+            row.classList.add('bg-red-700');
+            alert('Order deleted successfully!');
+        } else {
+            alert('Failed to delete order: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while deleting the order.');
+    });
+}
+
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
