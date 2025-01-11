@@ -9,6 +9,8 @@ from decimal import Decimal
 from django.db import transaction
 from .models import Order, OrderItem
 from django.db import models  # Ensure this import is present
+from django.template import loader
+
 
 def index(request):
     return render(request, 'base.html')
@@ -116,9 +118,22 @@ def menu(request):
 def dashboard(request):
     return render(request, 'dashboard.html')
 
-def tabel(request):
-    table_numbers = range(1, 21)
+def table_view(request):
+    try:
+        # Attempt to load the template manually
+        template = loader.get_template('tabel.html')
+        print(f"Template loaded successfully.")
+    except Exception as e:
+        print(f"Error loading template: {str(e)}")
+        # If there is an error, return an error response
+        return render(request, 'error.html', {'error_message': 'Failed to load the template.'})
+
+    # Fetch all tables from the database
+    table_numbers = Table.objects.all()  # Fetches all tables from the database
+
+    # Pass the table numbers to the template
     return render(request, 'tabel.html', {'table_numbers': table_numbers})
+
 
 @csrf_exempt
 @transaction.atomic
@@ -128,70 +143,59 @@ def place_order(request):
             data = json.loads(request.body)
             print("Received order data:", data)  # Debug print
 
-            payment_type = data.get('paymentType')
-            print("Payment Type:", payment_type)  # Debug print
+            # Validate required fields
+            required_keys = {"orderId", "items", "paymentType", "totalAmount", "gstAmount", "grandTotal", "orderType"}
+            missing_keys = required_keys - set(data.keys())
+            if missing_keys:
+                return JsonResponse({
+                    'status': 'failed',
+                    'error': f'Missing required fields: {missing_keys}'
+                }, status=400)
 
-            # Prepare order details with only necessary information
-            order_details = [
-                {
-                    'name': item['name'],
-                    'price': item['price'],
-                    'customizations': item.get('customizations', []),
-                    'quantity': item['quantity']
-                }
-                for item in data['items']
-            ]
-
-            # Create the order first
-            order = Order(
+            # Create order with validated data
+            order = Order.objects.create(
                 order_id=data['orderId'],
-                subtotal=Decimal(str(data['totalAmount'])),
-                gst_amount=Decimal(str(data['gstAmount'])),
-                grand_total=Decimal(str(data['grandTotal'])),
-                payment_type=payment_type,
-                order_type=data['orderType'],
-                order_details=order_details  # Save the simplified order details
+                subtotal=Decimal(str(data.get('totalAmount', '0'))),
+                gst_amount=Decimal(str(data.get('gstAmount', '0'))),
+                grand_total=Decimal(str(data.get('grandTotal', '0'))),
+                payment_type=data.get('paymentType', 'N/A'),
+                order_type=data.get('orderType', 'N/A'),
+                order_details=data.get('items', [])
             )
-            order.save()
-            print("Order saved:", order)  # Debug print
 
-            # Create order items with full details
-            for item_data in data['items']:
-                # Create OrderItem with all details
-                order_item = OrderItem(
-                    name=item_data['name'],
-                    price=Decimal(str(item_data['price'])),
-                    quantity=item_data['quantity'],
+            # Create order items
+            for item_data in data.get('items', []):
+                if not isinstance(item_data, dict):
+                    continue
+                
+                order_item = OrderItem.objects.create(
+                    name=item_data.get('name', ''),
+                    price=Decimal(str(item_data.get('price', '0'))),
+                    quantity=int(item_data.get('quantity', 0)),
                     customizations=item_data.get('customizations', []),
-                    total_price=Decimal(str(item_data['totalPrice']))  # Correct key used here
+                    total_price=Decimal(str(item_data.get('totalPrice', '0'))),
+                    base_price=Decimal(str(item_data.get('price', '0'))),
+                    customization_price=Decimal(str(item_data.get('customizationPrice', '0'))),
+                    item_details=item_data
                 )
-                order_item.save()
-                print("Order item saved:", order_item)  # Debug print
-                
-                # Store the complete item details in the order_item
-                order_item.item_details = item_data
-                order_item.base_price = Decimal(str(item_data['price']))  # Assuming base_price is the same as price
-                order_item.customization_price = Decimal(str(item_data.get('customizationPrice', 0)))
-                order_item.save()
-                
                 order.items.add(order_item)
 
             order.save()
-            print("Final order saved with items:", order)  # Debug print
+            print("Final order saved:", order.order_id, "with items:", order.items.count())
 
             return JsonResponse({
                 'status': 'success',
-                'order_id': order.order_id
+                'order_id': order.order_id,
+                'items_count': order.items.count()
             })
-            
+
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'failed', 'error': 'Invalid JSON data'}, status=400)
         except Exception as e:
             import traceback
             print("Error saving order:", str(e))
             print(traceback.format_exc())
-            return JsonResponse({
-                'status': 'failed',
-                'error': str(e)
-            }, status=400)
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
 
     return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
 
@@ -201,79 +205,64 @@ def save_order(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            print("Received order data:", data)  # Debug print
+            print("Received order data:", data)
+
+            if not data.get('items'):
+                return JsonResponse({
+                    'status': 'failed',
+                    'error': 'No items in order'
+                }, status=400)
 
             table_number = data['tableId'].replace('table-', '')
-            table, created = Table.objects.get_or_create(number=table_number)
+            table, _ = Table.objects.get_or_create(number=table_number)
 
-            # Prepare order details with all necessary information
-            order_details = [
-                {
-                    'name': item['name'],
-                    'price': item['price'],
-                    'customizations': item.get('customizations', []),
-                    'quantity': item['quantity'],
-                    'totalPrice': item['totalPrice']
-                }
-                for item in data['items']
-            ]
-
-            # Create the order first
-            order = Order(
+            # Create order with non-zero values
+            order = Order.objects.create(
                 order_id=data['orderId'],
-                subtotal=Decimal(str(data['totalAmount'])),
-                gst_amount=Decimal(str(data['gstAmount'])),
-                grand_total=Decimal(str(data['grandTotal'])),
-                payment_type='N/A',  # Placeholder as payment type is not required for saving
-                order_type='N/A',  # Placeholder as order type is not required for saving
-                order_details=order_details  # Save the order details
+                subtotal=Decimal(str(data.get('totalAmount', '0'))),
+                gst_amount=Decimal(str(data.get('gstAmount', '0'))),
+                grand_total=Decimal(str(data.get('grandTotal', '0'))),
+                payment_type=data.get('paymentType', 'N/A'),
+                order_type=data.get('orderType', 'N/A'),
+                order_details=data.get('items', [])
             )
-            order.save()
-            print("Order saved:", order)  # Debug print
 
-            # Create order items with full details
-            for item_data in data['items']:
-                # Create OrderItem with all details
-                order_item = OrderItem(
-                    name=item_data['name'],
-                    price=Decimal(str(item_data['price'])),
-                    quantity=item_data['quantity'],
+            # Create order items with proper validation
+            for item_data in data.get('items', []):
+                if not isinstance(item_data, dict):
+                    continue
+                    
+                order_item = OrderItem.objects.create(
+                    name=item_data.get('name', ''),
+                    price=Decimal(str(item_data.get('price', '0'))),
+                    quantity=int(item_data.get('quantity', 0)),
                     customizations=item_data.get('customizations', []),
-                    total_price=Decimal(str(item_data['totalPrice']))  # Correct key used here
+                    total_price=Decimal(str(item_data.get('totalPrice', '0'))),
+                    base_price=Decimal(str(item_data.get('price', '0'))),
+                    customization_price=Decimal(str(item_data.get('customizationPrice', '0'))),
+                    item_details=item_data
                 )
-                order_item.save()
-                print("Order item saved:", order_item)  # Debug print
-                
-                # Store the complete item details in the order_item
-                order_item.item_details = item_data
-                order_item.base_price = Decimal(str(item_data['price']))  # Assuming base_price is the same as price
-                order_item.customization_price = Decimal(str(item_data.get('customizationPrice', 0)))
-                order_item.save()
-                
                 order.items.add(order_item)
 
-            order.save()
-
-            # Save the order to the TableOrder model
-            table_order, created = TableOrder.objects.get_or_create(table=table)
+            # Link order to table
+            table_order, _ = TableOrder.objects.get_or_create(table=table)
             table_order.orders.add(order)
-            table_order.save()
 
-            print("Final order saved with items:", order)  # Debug print
+            print("Final order saved:", order.order_id, "with items:", order.items.count())
 
             return JsonResponse({
                 'status': 'success',
-                'order_id': order.order_id
+                'order_id': order.order_id,
+                'items_count': order.items.count()
             })
-            
+
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'failed', 'error': 'Invalid JSON data'}, status=400)
         except Exception as e:
             import traceback
             print("Error saving order:", str(e))
             print(traceback.format_exc())
-            return JsonResponse({
-                'status': 'failed',
-                'error': str(e)
-            }, status=400)
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
 
     return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
 

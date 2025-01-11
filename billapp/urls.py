@@ -1,5 +1,7 @@
 from django.urls import path, include
 from . import views
+from .views import table_view
+from .api import api
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -14,11 +16,14 @@ urlpatterns = [
     path('menu/', views.menu, name='menu'),
     path('Refund/', views.Refund, name='Refund'),
     path('Terms_Conditions/', views.Terms_Conditions, name='Terms_Conditions'),
-    path('tabel/', views.tabel, name='tabel'),
+    path('tabel/', views.table_view, name='tabel'),
+    path('tables/', views.table_view, name='tables'),
+    # path('tables/', table_view, name='table_view'),
     path("__reload__/", include("django_browser_reload.urls")),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('place-order/', views.place_order, name='place_order'),
     path('save-order/', views.save_order, name='save_order'),
     path('view-table-orders/<int:table_number>/', views.view_table_orders, name='view_table_orders'),
     path('release-table/', views.release_table, name='release_table'),
+    path('api/', api.urls),  # Include API urls here
 ]

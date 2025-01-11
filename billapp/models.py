@@ -3,12 +3,18 @@ from decimal import Decimal
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name_plural = "Categories"
+        app_label = 'billapp'
 
     def __str__(self):
         return self.name
 
 class CustomizationCategory(models.Model):
     name = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
         verbose_name_plural = "Customization Categories"
@@ -20,6 +26,15 @@ class CustomizationOption(models.Model):
     name = models.CharField(max_length=100)
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     category = models.ForeignKey(CustomizationCategory, on_delete=models.CASCADE, related_name='options')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'price': str(self.price),
+            'category': self.category.name
+        }
 
     def __str__(self):
         return f"{self.name} (+₹{self.price})"
@@ -31,7 +46,9 @@ class Item(models.Model):
     image = models.ImageField(upload_to='items/', blank=True, null=True)
     has_customization = models.BooleanField(default=False)
     customization_options = models.ManyToManyField(CustomizationOption, blank=True)
-    short_code = models.CharField(max_length=100, blank=True, null=True)  # Add this line
+    short_code = models.CharField(max_length=100, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
@@ -44,36 +61,47 @@ class OrderItem(models.Model):
     quantity = models.IntegerField()
     customizations = models.JSONField(default=list)
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
-    item_details = models.JSONField(default=dict)  # Store complete item details
+    item_details = models.JSONField(default=dict)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
+        # Ensure customizations is a list
+        if not isinstance(self.customizations, list):
+            self.customizations = []
+        
+        # Calculate total price
         if not self.total_price:
-            self.total_price = self.price * self.quantity
+            customization_price = sum(
+                Decimal(str(c.get('price', '0'))) 
+                for c in self.customizations
+            )
+            self.total_price = (self.price + customization_price) * self.quantity
+        
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name} x{self.quantity}"
 
 class Order(models.Model):
+    ORDER_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+        ('cancelled', 'Cancelled')
+    ]
+
     order_id = models.CharField(max_length=100, unique=True)
-    order_details = models.JSONField(default=dict)  # Moved column for order details
+    order_details = models.JSONField(default=dict)
     items = models.ManyToManyField(OrderItem)
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
     gst_amount = models.DecimalField(max_digits=10, decimal_places=2)
     grand_total = models.DecimalField(max_digits=10, decimal_places=2)
     payment_type = models.CharField(max_length=50)
     order_type = models.CharField(max_length=50)
+    status = models.CharField(max_length=20, choices=ORDER_STATUS_CHOICES, default='pending')
     time = models.TimeField(auto_now_add=True)
     date = models.DateField(auto_now_add=True)
-
-    def save(self, *args, **kwargs):
-        if isinstance(self.subtotal, str):
-            self.subtotal = Decimal(self.subtotal)
-        if isinstance(self.gst_amount, str):
-            self.gst_amount = Decimal(self.gst_amount)
-        if isinstance(self.grand_total, str):
-            self.grand_total = Decimal(self.grand_total)
-        super().save(*args, **kwargs)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Order {self.order_id} - ₹{self.grand_total}"
@@ -81,13 +109,18 @@ class Order(models.Model):
 class Table(models.Model):
     number = models.IntegerField(unique=True)
     orders = models.ManyToManyField(Order, blank=True)
+    place = models.CharField(max_length=100, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Table {self.number}"
+        return f"Table {self.number} ({self.place})"
 
 class TableOrder(models.Model):
     table = models.OneToOneField(Table, on_delete=models.CASCADE, related_name='table_order')
     orders = models.ManyToManyField(Order, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"TableOrder for Table {self.table.number}"

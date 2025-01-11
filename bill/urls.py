@@ -18,10 +18,12 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf.urls.static import static
 from django.conf import settings
+from billapp.api import api as main_api
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include("billapp.urls")),
-    path("__reload__/", include("django_browser_reload.urls")),
+    path("__reload__/", include("django_browser_reload.urls", namespace='browser_reload')),  # Add namespace
     # path('auth/',include("my_auth.urls"))
-]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

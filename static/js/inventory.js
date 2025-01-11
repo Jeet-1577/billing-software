@@ -731,13 +731,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            fetch('/release-table/', {
+            fetch('/api/tables/release', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
                 },
-                body: JSON.stringify({ tableId: selectedTable })
+                body: JSON.stringify({ table_id: selectedTable })
             })
             .then(response => {
                 if (!response.ok) {
@@ -748,9 +748,9 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.status === 'success') {
                     alert('Table released successfully!');
-                    clearSidebar();
+                    location.reload(); // Refresh to show updated table status
                 } else {
-                    alert('Failed to release table: ' + data.error);
+                    alert('Failed to release table: ' + (data.error || 'Unknown error'));
                 }
             })
             .catch(error => {
@@ -763,7 +763,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.viewBill = function(event, tableId) {
         event.stopPropagation();
         var tableNumber = tableId.replace('table-', '');
-        fetch(`/view-table-orders/${tableNumber}/`)
+        fetch(`/api/tables/${tableNumber}/orders`)
         .then(response => {
             if (!response.ok) {
                 throw new Error('Network response was not ok');
@@ -774,7 +774,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.status === 'success') {
                 generateBill(data.orders);
             } else {
-                alert('Failed to fetch orders: ' + data.error);
+                alert('Failed to fetch orders: ' + (data.error || 'Unknown error'));
             }
         })
         .catch(error => {
@@ -859,4 +859,44 @@ document.addEventListener('DOMContentLoaded', function() {
             billWindow.print();
         }, 250);
     }
+
+    function loadTables() {
+        fetch('/api/tables')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Update tables display
+            const tableContainer = document.getElementById('tableContainer');
+            tableContainer.innerHTML = ''; // Clear existing tables
+
+            Object.entries(data.tables).forEach(([place, tables]) => {
+                const placeSection = document.createElement('div');
+                placeSection.classList.add('place-section');
+                placeSection.innerHTML = `<h2>${place}</h2>`;
+                
+                const tableGrid = document.createElement('div');
+                tableGrid.classList.add('table-container');
+                
+                tables.forEach(table => {
+                    // Create table elements similar to your existing code
+                    const tableBox = createTableElement(table);
+                    tableGrid.appendChild(tableBox);
+                });
+                
+                placeSection.appendChild(tableGrid);
+                tableContainer.appendChild(placeSection);
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while loading tables.');
+        });
+    }
+
+    // Call loadTables when the page loads
+    document.addEventListener('DOMContentLoaded', loadTables);
 });

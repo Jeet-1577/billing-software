@@ -95,11 +95,15 @@ WSGI_APPLICATION = 'bill.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'bill1',
+        'NAME': 'billmaker_new',  # New database name
         'USER': 'mrjac',
-        'PASSWORD': '1577',  # Ensure this is the correct password
+        'PASSWORD': '1577',
         'HOST': 'localhost',
         'PORT': '5432',
+        'OPTIONS': {
+            'client_encoding': 'UTF8'
+        },
+        'ATOMIC_REQUESTS': True  # Add this for better transaction handling
     }
 }
 

@@ -25,7 +25,7 @@
     }
     
     .inventory-categories::-webkit-scrollbar-track {
-        background: transparent; /* Transparent track */
+        background: hidden; /* Transparent track */
     }
     
     .inventory-categories::-webkit-scrollbar-thumb {
@@ -41,8 +41,12 @@
     
     /* Firefox scrollbar */
     .inventory-categories {
-        scrollbar-width: thin; /* Thin scrollbar */
-        scrollbar-color: #4b5563 transparent; /* Thumb and track color */
+        scrollbar-width: none; /* For Firefox */
+        -ms-overflow-style: none; /* For Internet Explorer and Edge */
+    }
+    
+    .inventory-categories::-webkit-scrollbar {
+        display: none; /* For Chrome, Safari, and Edge */
     }
 
     /* Category Container Styling */
