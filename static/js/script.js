@@ -154,68 +154,67 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Ensure the checkout button exists before adding the event listener
-    var checkoutButton = document.querySelector('.checkout');
-    if (checkoutButton) {
-        checkoutButton.addEventListener('click', function() {
-            var selectedItems = document.getElementsByClassName('item-cube selected');
-            var orderItems = [];
-            var totalAmount = 0;
-            for (var i = 0; i < selectedItems.length; i++) {
-                var itemId = selectedItems[i].getAttribute('data-item-id');
-                var itemName = selectedItems[i].getAttribute('data-item-name');
-                var itemPrice = parseFloat(selectedItems[i].getAttribute('data-item-price'));
-                var quantityElement = document.getElementById(`quantity-${itemId}`);
-                if (quantityElement) {
-                    var quantity = parseInt(quantityElement.innerText);
-                    totalAmount += itemPrice * quantity;
-                    orderItems.push({
-                        id: itemId,
-                        name: itemName,
-                        price: itemPrice,
-                        quantity: quantity
-                    });
-                }
-            }
-            var gstAmount = totalAmount * 0.18;
-            var grandTotal = totalAmount + gstAmount;
-            var paymentType = document.querySelector('input[name="payment_type"]:checked').value;
-            var orderType = document.querySelector('input[name="order_type"]:checked').value;
-            var orderData = {
-                orderId: Date.now().toString(),
-                items: orderItems,
-                totalAmount: totalAmount.toFixed(2),
-                gstAmount: gstAmount.toFixed(2),
-                grandTotal: grandTotal.toFixed(2),
-                paymentType: paymentType,
-                orderType: orderType,
-                time: new Date().toLocaleTimeString('en-US', { hour12: true }),  // Ensure time includes AM/PM
-                date: new Date().toISOString().split('T')[0]
-            };
-            fetch('/place-order/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: JSON.stringify(orderData)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    alert('Order placed successfully!');
-                    console.log(orderData);
-                    generateBill(orderData);
-                    clearSelectedItems();
-                } else {
-                    alert('Failed to place order: ' + data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while placing the order.');
-            });
-        });
-    }
+    // var checkoutButton = document.querySelector('.checkout');
+    // if (checkoutButton) {
+    //     checkoutButton.addEventListener('click', function() {
+    //         var selectedItems = document.getElementsByClassName('item-cube selected');
+    //         var orderItems = [];
+    //         var totalAmount = 0;
+    //         for (var i = 0; i < selectedItems.length; i++) {
+    //             var itemId = selectedItems[i].getAttribute('data-item-id');
+    //             var itemName = selectedItems[i].getAttribute('data-item-name');
+    //             var itemPrice = parseFloat(selectedItems[i].getAttribute('data-item-price'));
+    //             var quantityElement = document.getElementById(`quantity-${itemId}`);
+    //             if (quantityElement) {
+    //                 var quantity = parseInt(quantityElement.innerText);
+    //                 totalAmount += itemPrice * quantity;
+    //                 orderItems.push({
+    //                     id: itemId,
+    //                     name: itemName,
+    //                     price: itemPrice,
+    //                     quantity: quantity
+    //                 });
+    //             }
+    //         }
+    //         var gstAmount = totalAmount * 0.18;
+    //         var grandTotal = totalAmount + gstAmount;
+    //         var paymentType = document.querySelector('input[name="payment_type"]:checked').value;
+    //         var orderType = document.querySelector('input[name="order_type"]:checked').value;
+    //         var orderData = {
+    //             orderId: Date.now().toString(),
+    //             items: orderItems,
+    //             totalAmount: totalAmount.toFixed(2),
+    //             gstAmount: gstAmount.toFixed(2),
+    //             grandTotal: grandTotal.toFixed(2),
+    //             paymentType: paymentType,
+    //             orderType: orderType,
+    //             time: new Date().toLocaleTimeString('en-US', { hour12: true }),  // Ensure time includes AM/PM
+    //             date: new Date().toISOString().split('T')[0]
+    //         };
+    //         fetch('/place-order/', {
+    //             method: 'POST',
+    //             headers: {
+    //                 'Content-Type': 'application/json',
+    //                 'X-CSRFToken': '{{ csrf_token }}'
+    //             },
+    //             body: JSON.stringify(orderData)
+    //         })
+    //         .then(response => response.json())
+    //         .then(data => {
+    //             if (data.status === 'success') {
+    //                 alert('Order placed successfully!');
+    //                 console.log(orderData);
+    //                 clearSelectedItems();
+    //             } else {
+    //                 alert('Failed to place order: ' + data.error);
+    //             }
+    //         })
+    //         .catch(error => {
+    //             console.error('Error:', error);
+    //             alert('An error occurred while placing the order.');
+    //         });
+    //     });
+    // }
 
     function updateTotalAmount() {
         var selectedItems = document.getElementsByClassName('item-cube selected');
@@ -269,33 +268,5 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         localStorage.removeItem('selectedItemsData');
         updateTotalAmount();
-    }
-
-    function generateBill(orderData) {
-        var billWindow = window.open('', 'PRINT', 'height=400,width=600');
-        if (!billWindow) {
-            console.error('Failed to open bill window');
-            return;
-        }
-
-        billWindow.document.write('<html><head><title>Bill</title>');
-        billWindow.document.write('<style>body { font-family: Arial, sans-serif; width: 58mm; margin: 0; padding: 0; } .bill-container { padding: 10px; } .bill-header, .bill-footer { text-align: center; } .bill-header h1, .bill-footer p { margin: 0; } .bill-details, .bill-items { width: 100%; margin-top: 10px; } .bill-items th, .bill-items td { text-align: left; padding: 5px; border-bottom: 1px solid #000; } .bill-items th { background-color: #f0f0f0; } .bill-total { text-align: right; margin-top: 10px; }</style>');
-        billWindow.document.write('</head><body>');
-        billWindow.document.write('<div class="bill-container">');
-        billWindow.document.write('<div class="bill-header"><h1>Bill</h1><p>Order ID: ' + orderData.orderId + '</p><p>Date: ' + orderData.date + '</p><p>Time: ' + orderData.time + '</p></div>');
-        billWindow.document.write('<table class="bill-details"><tr><td>Payment Type:</td><td>' + orderData.paymentType + '</td></tr><tr><td>Order Type:</td><td>' + orderData.orderType + '</td></tr></table>');
-        billWindow.document.write('<table class="bill-items"><thead><tr><th>Item</th><th>Qty</th><th>Price</th></tr></thead><tbody>');
-        orderData.items.forEach(function(item) {
-            billWindow.document.write('<tr><td>' + item.name + '</td><td>' + item.quantity + '</td><td>₹' + item.price + '</td></tr>');
-        });
-        billWindow.document.write('</tbody></table>');
-        billWindow.document.write('<div class="bill-total"><p>Total: ₹' + orderData.totalAmount + '</p><p>GST (18%): ₹' + orderData.gstAmount + '</p><p>Grand Total: ₹' + orderData.grandTotal + '</p></div>');
-        billWindow.document.write('<div class="bill-footer"><p>Thank you for your order!</p></div>');
-        billWindow.document.write('</div>');
-        billWindow.document.write('</body></html>');
-        billWindow.document.close();
-        setTimeout(() => {
-            billWindow.print();
-        }, 250);
     }
 });

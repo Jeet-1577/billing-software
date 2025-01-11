@@ -533,7 +533,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function placeOrder(orderData) {
         const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
         fetch('/place-order/', {
             method: 'POST',
             headers: {
@@ -549,12 +548,13 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(data => {
-            console.log("Response from server:", data);  // Debug print
             if (data.status === 'success') {
                 alert('Order placed successfully!');
+                console.log(orderData);
+                generateThermalBill(orderData); // Call the enhanced function here
                 clearSelectedItems();
             } else {
-                alert('Failed to place order: ' + data.error);
+                alert('Failed to place order: ' + (data.error || 'Unknown error'));
             }
         })
         .catch(error => {
@@ -580,83 +580,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         localStorage.removeItem('selectedItemsData');
         updateTotalAmount();
-    }
-
-    function generateBill(orderData) {
-        var billWindow = window.open('', 'PRINT', 'height=600,width=800');
-        if (!billWindow) {
-            console.error('Failed to open bill window');
-            return;
-        }
-
-        var billContent = `
-            <html>
-            <head>
-                <title>Bill</title>
-                <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; }
-                    .bill-header { text-align: center; margin-bottom: 20px; }
-                    .bill-items { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                    .bill-items th, .bill-items td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                    .bill-total { text-align: right; margin-top: 20px; }
-                    .customizations { font-size: 0.9em; color: #666; margin-left: 20px; }
-                </style>
-            </head>
-            <body>
-                <div class="bill-header">
-                    <h2>Bill</h2>
-                    <p>Order ID: ${orderData.orderId}</p>
-                    <p>Date: ${orderData.date}</p>
-                    <p>Time: ${orderData.time}</p>
-                    <p>Payment Type: ${orderData.paymentType}</p>
-                    <p>Order Type: ${orderData.orderType}</p>
-                </div>
-                <table class="bill-items">
-                    <thead>
-                        <tr>
-                            <th>Item</th>
-                            <th>Quantity</th>
-                            <th>Price</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${orderData.items.map(item => `
-                            <tr>
-                                <td>
-                                    ${item.name}
-                                    ${item.customizations.length > 0 ? `
-                                        <div class="customizations">
-                                            ${item.customizations.map(c => 
-                                                `+ ${c.name} (₹${parseFloat(c.price).toFixed(2)})`
-                                            ).join('<br>')}
-                                        </div>
-                                    ` : ''}
-                                </td>
-                                <td>${item.quantity}</td>
-                                <td>₹${parseFloat(item.price).toFixed(2)}</td>
-                                <td>₹${item.totalPrice.toFixed(2)}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-                <div class="bill-total">
-                    <p>Subtotal: ₹${orderData.totalAmount}</p>
-                    <p>GST (18%): ₹${orderData.gstAmount}</p>
-                    <p><strong>Grand Total: ₹${orderData.grandTotal}</strong></p>
-                </div>
-                <div style="text-align: center; margin-top: 30px;">
-                    <p>Thank you for your order!</p>
-                </div>
-            </body>
-            </html>
-        `;
-
-        billWindow.document.write(billContent);
-        billWindow.document.close();
-        setTimeout(() => {
-            billWindow.print();
-        }, 250);
     }
 
     document.querySelectorAll('.category-link').forEach(function(link) {
@@ -731,7 +654,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            fetch('/api/tables/release', {
+            fetch('/api/tables/release', {      
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -783,83 +706,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
-    function generateBill(orders) {
-        var billWindow = window.open('', 'PRINT', 'height=600,width=800');
-        if (!billWindow) {
-            console.error('Failed to open bill window');
-            return;
-        }
-
-        var billContent = `
-            <html>
-            <head>
-                <title>Bill</title>
-                <style>
-                    body { font-family: Arial, sans-serif; padding: 20px; }
-                    .bill-header { text-align: center; margin-bottom: 20px; }
-                    .bill-items { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                    .bill-items th, .bill-items td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                    .bill-total { text-align: right; margin-top: 20px; }
-                    .customizations { font-size: 0.9em; color: #666; margin-left: 20px; }
-                </style>
-            </head>
-            <body>
-                <div class="bill-header">
-                    <h2>Bill</h2>
-                    ${orders.map(order => `
-                        <p>Order ID: ${order.order_id}</p>
-                        <p>Date: ${order.date}</p>
-                        <p>Time: ${order.time}</p>
-                        <table class="bill-items">
-                            <thead>
-                                <tr>
-                                    <th>Item</th>
-                                    <th>Quantity</th>
-                                    <th>Price</th>
-                                    <th>Total</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${order.items.map(item => `
-                                    <tr>
-                                        <td>
-                                            ${item.name}
-                                            ${item.customizations.length > 0 ? `
-                                                <div class="customizations">
-                                                    ${item.customizations.map(c => 
-                                                        `+ ${c.name} (₹${parseFloat(c.price).toFixed(2)})`
-                                                    ).join('<br>')}
-                                                </div>
-                                            ` : ''}
-                                        </td>
-                                        <td>${item.quantity}</td>
-                                        <td>₹${parseFloat(item.price).toFixed(2)}</td>
-                                        <td>₹${item.total_price.toFixed(2)}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                        <div class="bill-total">
-                            <p>Subtotal: ₹${order.subtotal}</p>
-                            <p>GST (18%): ₹${order.gst_amount}</p>
-                            <p><strong>Grand Total: ₹${order.grand_total}</strong></p>
-                        </div>
-                    `).join('')}
-                </div>
-                <div style="text-align: center; margin-top: 30px;">
-                    <p>Thank you for your order!</p>
-                </div>
-            </body>
-            </html>
-        `;
-
-        billWindow.document.write(billContent);
-        billWindow.document.close();
-        setTimeout(() => {
-            billWindow.print();
-        }, 250);
-    }
-
     function loadTables() {
         fetch('/api/tables')
         .then(response => {
@@ -900,3 +746,141 @@ document.addEventListener('DOMContentLoaded', function() {
     // Call loadTables when the page loads
     document.addEventListener('DOMContentLoaded', loadTables);
 });
+
+function generateThermalBill(orderData) {
+    const printWindow = window.open('', 'PRINT', 'width=350,height=600');
+    if (!printWindow) {
+        console.error('Failed to open print window');
+        return;
+    }
+    const billContent = `
+        <html>
+        <head>
+            <title>Thermal Bill</title>
+            <style>
+                body {
+                    width: 58mm; /* Adjust to 80mm if needed */
+                    font-family: monospace;
+                    font-size: 12px;
+                    margin: 0;
+                    padding: 10px;
+                }
+                .header, .footer {
+                    text-align: center;
+                }
+                .header img {
+                    max-width: 100px;
+                    margin-bottom: 10px;
+                }
+                .details {
+                    margin: 10px 0;
+                }
+                .details div {
+                    display: flex;
+                    justify-content: space-between;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin: 10px 0;
+                }
+                table, th, td {
+                    border: 1px dashed #000;
+                }
+                th, td {
+                    padding: 5px;
+                    text-align: left;
+                }
+                .total {
+                    margin: 10px 0;
+                    display: flex;
+                    justify-content: space-between;
+                }
+                .thank-you {
+                    margin-top: 20px;
+                    text-align: center;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <img src="https://yourcompany.com/logo.png" alt="Company Logo">
+                <h2>Your Company Name</h2>
+                <p>1234 Street Name, City, State</p>
+                <p>Phone: (123) 456-7890 | Email: info@yourcompany.com</p>
+            </div>
+            
+            <div class="details">
+                <div>
+                    <span>Order ID:</span>
+                    <span>${orderData.orderId}</span>
+                </div>
+                <div>
+                    <span>Date:</span>
+                    <span>${orderData.date}</span>
+                </div>
+                <div>
+                    <span>Time:</span>
+                    <span>${orderData.time}</span>
+                </div>
+                ${orderData.tableNumber ? `
+                <div>
+                    <span>Table No.:</span>
+                    <span>${orderData.tableNumber}</span>
+                </div>
+                ` : ''}
+                <div>
+                    <span>Payment:</span>
+                    <span>${orderData.paymentType}</span>
+                </div>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${orderData.items.map(item => `
+                        <tr>
+                            <td>${item.name}${item.customizations.length > 0 ? ` (${item.customizations.map(c => c.name).join(', ')})` : ''}</td>
+                            <td>${item.quantity}</td>
+                            <td>₹${(item.price).toFixed(2)}</td>
+                            <td>₹${(item.totalPrice).toFixed(2)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+            
+            <div class="total">
+                <span>Subtotal:</span>
+                <span>₹${orderData.totalAmount}</span>
+            </div>
+            <div class="total">
+                <span>GST (18%):</span>
+                <span>₹${orderData.gstAmount}</span>
+            </div>
+            <div class="total">
+                <strong>Grand Total:</strong>
+                <strong>₹${orderData.grandTotal}</strong>
+            </div>
+            
+            <div class="footer">
+                <p>Thank you for dining with us!</p>
+                <p>Please come again.</p>
+            </div>
+        </body>
+        </html>
+    `;
+    printWindow.document.write(billContent);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 200);
+}

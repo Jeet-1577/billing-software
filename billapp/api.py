@@ -41,6 +41,13 @@ class OrderResponseSchema(Schema):
 @transaction.atomic
 def place_order(request, order_data: OrderRequestSchema):
     try:
+        # Check if order already exists
+        if Order.objects.filter(order_id=order_data.orderId).exists():
+            return {
+                "status": "failed",
+                "error": "Order already exists"
+            }
+
         # Create order
         order = Order.objects.create(
             order_id=order_data.orderId,
@@ -54,6 +61,9 @@ def place_order(request, order_data: OrderRequestSchema):
 
         # Create order items
         for item in order_data.items:
+            if not item.name:  # Skip empty items
+                continue
+                
             order_item = OrderItem.objects.create(
                 name=item.name,
                 price=Decimal(item.price),
@@ -80,7 +90,10 @@ def place_order(request, order_data: OrderRequestSchema):
         }
     except Exception as e:
         print(f"Error placing order: {str(e)}")
-        raise
+        return {
+            "status": "failed",
+            "error": str(e)
+        }
 
 @api.get("/tables/{table_number}/orders")
 def get_table_orders(request, table_number: int):
