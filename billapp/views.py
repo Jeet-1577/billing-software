@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Category, Item, Order, Table, TableOrder
+from .models import Category, Item, Order, Table, TableOrder, Employee  # Ensure Employee is imported
 from .forms import CategoryForm, ItemForm
 from django.http import JsonResponse
 import json
@@ -348,12 +348,14 @@ def get_table_status(request):
 
 def order_data(request):
     status_filter = request.GET.get('status', '')
-    orders = Order.objects.all()
+    orders = Order.objects.all().order_by('-created_at')  # Order by creation date in descending order
 
     if status_filter:
         orders = orders.filter(status=status_filter)
 
-    return render(request, 'order_data.html', {'orders': orders})
+    employees = Employee.objects.all()  # Fetch all employees
+
+    return render(request, 'order_data.html', {'orders': orders, 'employees': employees})
 
 def order_details(request, order_id):
     try:
@@ -389,11 +391,9 @@ def delete_order(request, order_id):
     try:
         data = json.loads(request.body)
         reason = data.get('reason', '')
-        employee_id = data.get('employee_id', '')  # Retrieve employee ID from the request
         order = get_object_or_404(Order, order_id=order_id)
         order.status = 'deleted'
         order.deletion_reason = reason
-        order.deleted_by = employee_id  # Save the employee ID
         order.save()
         return JsonResponse({'status': 'success'})
     except Order.DoesNotExist:
@@ -407,6 +407,15 @@ def verify_password(request):
     try:
         data = json.loads(request.body)
         password = data.get('password', '')
+        user = authenticate(username=request.user.username, password=password)
+        if user is not None:
+            return JsonResponse({'status': 'success'})
+        else:
+            return JsonResponse({'status': 'failed'}, status=400)
+    except Exception as e:
+        password = data.get('password', '')
+        return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
+
         user = authenticate(username=request.user.username, password=password)
         if user is not None:
             return JsonResponse({'status': 'success'})

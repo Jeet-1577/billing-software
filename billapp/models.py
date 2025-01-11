@@ -83,6 +83,15 @@ class OrderItem(models.Model):
     def __str__(self):
         return f"{self.name} x{self.quantity}"
 
+class Employee(models.Model):
+    employee_id = models.CharField(max_length=100, unique=True)
+    name = models.CharField(max_length=100)
+    email = models.EmailField(unique=True)
+    # Add other relevant fields
+
+    def __str__(self):
+        return f"{self.name} ({self.employee_id})"
+
 class Order(models.Model):
     ORDER_STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -101,7 +110,7 @@ class Order(models.Model):
     order_type = models.CharField(max_length=50)
     status = models.CharField(max_length=20, choices=ORDER_STATUS_CHOICES, default='pending')
     deletion_reason = models.TextField(null=True, blank=True)  # New field for deletion reason
-    deleted_by = models.CharField(max_length=100, null=True, blank=True)  # New field to store employee ID
+    deleted_by = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
     time = models.TimeField(auto_now_add=True)
     date = models.DateField(auto_now_add=True)
     created_at = models.DateTimeField(auto_now_add=True)

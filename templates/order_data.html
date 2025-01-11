@@ -132,7 +132,11 @@
             </div>
             <div class="mb-4">
                 <label for="employeeId" class="block text-white mb-2">Employee ID:</label>
-                <input type="text" id="employeeId" name="employeeId" required class="w-full p-2 rounded bg-gray-700 text-white">
+                <select id="employeeId" name="employeeId" required class="w-full p-2 rounded bg-gray-700 text-white">
+                    {% for employee in employees %}
+                        <option value="{{ employee.employee_id }}">{{ employee.name }} ({{ employee.employee_id }})</option>
+                    {% endfor %}
+                </select>
             </div>
             <div class="mb-4">
                 <label for="reason" class="block text-white mb-2">Reason for Deletion:</label>
