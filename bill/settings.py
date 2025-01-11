@@ -73,7 +73,7 @@ ROOT_URLCONF = 'bill.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / "templates"], # Add this line to the TEMPLATES list
+        'DIRS': [BASE_DIR / "templates"],  # Ensure this line is present
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

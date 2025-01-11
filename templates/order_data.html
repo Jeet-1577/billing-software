@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Order Data{% endblock %}
+
+{% block content %}
+<div class="container mx-auto p-4">
+    <h1 class="text-2xl font-bold mb-4">Order Data</h1>
+    
+    <!-- Filter and Search Container -->
+    <div class="flex flex-wrap justify-between items-center mb-4">
+        <div class="flex flex-wrap space-x-4 mb-2 md:mb-0">
+            <select id="filterStatus" class="bg-gray-800 text-white rounded-lg p-2">
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+            </select>
+            <select id="filterPaymentType" class="bg-gray-800 text-white rounded-lg p-2">
+                <option value="">All Payment Types</option>
+                <option value="online">Online</option>
+                <option value="cash">Cash</option>
+            </select>
+            <select id="filterOrderType" class="bg-gray-800 text-white rounded-lg p-2">
+                <option value="">All Order Types</option>
+                <option value="dine_in">Dine In</option>
+                <option value="delivery">Delivery</option>
+                <option value="take_away">Take Away</option>
+            </select>
+            <input type="date" id="filterFromDate" class="bg-gray-800 text-white rounded-lg p-2">
+            <input type="date" id="filterToDate" class="bg-gray-800 text-white rounded-lg p-2">
+        </div>
+        <div class="relative">
+            <input type="text" id="searchOrderId" placeholder="Search by Order ID" class="bg-gray-800 text-white rounded-lg p-2 pl-10">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 absolute left-2 top-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 4a6 6 0 100 12 6 6 0 000-12zm0 0l6 6" />
+            </svg>
+        </div>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-gray-800 text-white rounded-lg shadow-lg mx-auto">
+            <thead>
+                <tr>
+                    <th class="py-2 px-4 border-b border-gray-700 text-center">Order ID</th>
+                    <th class="py-2 px-4 border-b border-gray-700 text-center">Subtotal</th>
+                    <th class="py-2 px-4 border-b border-gray-700 text-center">GST Amount</th>
+                    <th class="py-2 px-4 border-b border-gray-700 text-center">Grand Total</th>
+                    <th class="py-2 px-4 border-b border-gray-700 text-center">Payment Type</th>
+                    <th class="py-2 px-4 border-b border-gray-700 text-center">Order Type</th>
+                    <th class="py-2 px-4 border-b border-gray-700 text-center">Date</th>
+                    <th class="py-2 px-4 border-b border-gray-700 text-center">Time</th>
+                    <th class="py-2 px-4 border-b border-gray-700 text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="overflow-y-auto max-h-[500px]" style="display: block; scrollbar-width: none; -ms-overflow-style: none;">
+                {% for order in orders %}
+                <tr class="hover:bg-gray-700" style="display: table; width: 100%; table-layout: fixed;">
+                    <td class="py-2 px-4 border-b border-gray-700 text-center">{{ order.order_id }}</td>
+                    <td class="py-2 px-4 border-b border-gray-700 text-center">₹{{ order.subtotal }}</td>
+                    <td class="py-2 px-4 border-b border-gray-700 text-center">₹{{ order.gst_amount }}</td>
+                    <td class="py-2 px-4 border-b border-gray-700 text-center">₹{{ order.grand_total }}</td>
+                    <td class="py-2 px-4 border-b border-gray-700 text-center">{{ order.payment_type }}</td>
+                    <td class="py-2 px-4 border-b border-gray-700 text-center">{{ order.order_type }}</td>
+                    <td class="py-2 px-4 border-b border-gray-700 text-center">{{ order.date }}</td>
+                    <td class="py-2 px-4 border-b border-gray-700 text-center">{{ order.time }}</td>
+                    <td class="py-2 px-4 border-b border-gray-700 text-center">
+                        <button class="view-order" data-order-id="{{ order.order_id }}">
+                            <img src="{% static 'img/seen.png' %}" alt="View" class="h-6 w-6">
+                        </button>
+                        <span class="mx-2"></span> <!-- Add gap between buttons -->
+                        <button class="delete-order" data-order-id="{{ order.order_id }}">
+                            <img src="{% static 'img/delete.png' %}" alt="Delete" class="h-6 w-6">
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr style="display: table; width: 100%; table-layout: fixed;">
+                    <td colspan="9" class="py-2 px-4 text-center">No orders available.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Popup for Order Details -->
+<div id="orderDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-gray-800 rounded-lg p-6 w-[600px] max-h-[80vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-white">Order Details</h3>
+            <button onclick="closeOrderDetailsModal()" class="text-gray-400 hover:text-white" aria-label="Close order details popup">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div id="orderDetailsContent" class="space-y-4">
+            <!-- Order details will be dynamically added here -->
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Hide scrollbar for WebKit browsers */
+    .overflow-y-auto::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Hide scrollbar for IE, Edge and Firefox */
+    .overflow-y-auto {
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+    }
+
+    /* Ensure table format remains constant */
+    table {
+        table-layout: fixed;
+        width: 100%;
+    }
+    tbody {
+        display: block;
+        width: 100%;
+    }
+    tr {
+        display: table;
+        width: 100%;
+        table-layout: fixed;
+    }
+    th, td {
+        width: 11.1%; /* Adjusted to fit the new Actions column */
+        white-space: nowrap; /* Prevent text from wrapping */
+        text-align: center; /* Center-align text */
+    }
+    th:last-child, td:last-child {
+        width: 12.5%; /* Ensure the Actions column takes up equal space */
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterStatus = document.getElementById('filterStatus');
+        const filterPaymentType = document.getElementById('filterPaymentType');
+        const filterOrderType = document.getElementById('filterOrderType');
+        const filterFromDate = document.getElementById('filterFromDate');
+        const filterToDate = document.getElementById('filterToDate');
+        const searchOrderId = document.getElementById('searchOrderId');
+
+        filterStatus.addEventListener('change', applyFilters);
+        filterPaymentType.addEventListener('change', applyFilters);
+        filterOrderType.addEventListener('change', applyFilters);
+        filterFromDate.addEventListener('change', applyFilters);
+        filterToDate.addEventListener('change', applyFilters);
+        searchOrderId.addEventListener('input', applyFilters);
+
+        function applyFilters() {
+            const status = filterStatus.value.toLowerCase();
+            const paymentType = filterPaymentType.value.toLowerCase();
+            const orderType = filterOrderType.value.toLowerCase();
+            const fromDate = filterFromDate.value;
+            const toDate = filterToDate.value;
+            const orderId = searchOrderId.value.toLowerCase();
+
+            document.querySelectorAll('tbody tr').forEach(row => {
+                const rowStatus = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
+                const rowPaymentType = row.querySelector('td:nth-child(5)').textContent.toLowerCase();
+                const rowOrderType = row.querySelector('td:nth-child(6)').textContent.toLowerCase();
+                const rowDate = row.querySelector('td:nth-child(7)').textContent;
+                const rowOrderId = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
+
+                const matchesStatus = !status || rowStatus.includes(status);
+                const matchesPaymentType = !paymentType || rowPaymentType.includes(paymentType);
+                const matchesOrderType = !orderType || rowOrderType.includes(orderType);
+                const matchesDate = (!fromDate || rowDate >= fromDate) && (!toDate || rowDate <= toDate);
+                const matchesOrderId = !orderId || rowOrderId.includes(orderId);
+
+                if (matchesStatus && matchesPaymentType && matchesOrderType && matchesDate && matchesOrderId) {
+                    row.style.display = 'table-row';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        document.querySelectorAll('.view-order').forEach(button => {
+            button.addEventListener('click', function() {
+                const orderId = this.getAttribute('data-order-id');
+                fetchOrderDetails(orderId);
+            });
+        });
+
+        document.querySelectorAll('.delete-order').forEach(button => {
+            button.addEventListener('click', function() {
+                const orderId = this.getAttribute('data-order-id');
+                // Implement delete order functionality here
+                alert(`Delete order with Order ID: ${orderId}`);
+            });
+        });
+    });
+
+    function fetchOrderDetails(orderId) {
+        fetch(`/order-details/${orderId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    displayOrderDetails(data.order);
+                } else {
+                    alert('Failed to fetch order details: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while fetching the order details.');
+            });
+    }
+
+    function displayOrderDetails(order) {
+        const orderDetailsContent = document.getElementById('orderDetailsContent');
+        orderDetailsContent.innerHTML = `
+            <div>
+                <h4 class="text-lg font-bold">Order ID: ${order.order_id}</h4>
+                <p><strong>Date:</strong> ${order.date}</p>
+                <p><strong>Time:</strong> ${order.time}</p>
+                <p><strong>Payment Type:</strong> ${order.payment_type}</p>
+                <p><strong>Order Type:</strong> ${order.order_type}</p>
+                <p><strong>Status:</strong> ${order.status}</p>
+            </div>
+            <div>
+                <h4 class="text-lg font-bold">Items:</h4>
+                <ul class="list-disc pl-5">
+                    ${order.items.map(item => `
+                        <li>
+                            <p><strong>${item.name}</strong> (x${item.quantity}) - ₹${item.total_price.toFixed(2)}</p>
+                            ${item.customizations.length > 0 ? `
+                                <ul class="list-disc pl-5">
+                                    ${item.customizations.map(c => `
+                                        <li>${c.name} - ₹${c.price.toFixed(2)}</li>
+                                    `).join('')}
+                                </ul>
+                            ` : ''}
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>
+            <div>
+                <p><strong>Subtotal:</strong> ₹${order.subtotal.toFixed(2)}</p>
+                <p><strong>GST Amount:</strong> ₹${order.gst_amount.toFixed(2)}</p>
+                <p><strong>Grand Total:</strong> ₹${order.grand_total.toFixed(2)}</p>
+            </div>
+        `;
+
+        const modal = document.getElementById('orderDetailsModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    function closeOrderDetailsModal() {
+        const modal = document.getElementById('orderDetailsModal');
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+    }
+</script>
+{% endblock %}

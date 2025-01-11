@@ -1,5 +1,6 @@
 from django.db import models
 from decimal import Decimal
+from django.utils import timezone
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
@@ -112,6 +113,19 @@ class Table(models.Model):
     place = models.CharField(max_length=100, null=True, blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    size = models.IntegerField(default=4)  # Number of seats
+    is_booked = models.BooleanField(default=False)
+    booking_time = models.DateTimeField(null=True, blank=True)
+
+    def book_table(self):
+        self.is_booked = True
+        self.booking_time = timezone.now()
+        self.save()
+
+    def release_table(self):
+        self.is_booked = False
+        self.booking_time = None
+        self.save()
 
     def __str__(self):
         return f"Table {self.number} ({self.place})"

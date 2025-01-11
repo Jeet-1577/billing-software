@@ -97,6 +97,15 @@
     .eye-icon:hover {
         transform: scale(1.2);
     }
+    .table-timer {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background-color: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        padding: 2px 5px;
+        border-radius: 3px;
+    }
 </style>
 
 <div class="button-container">
@@ -105,10 +114,18 @@
 </div>
 <div class="table-container">
     {% for table in table_numbers %}
-    <div class="table-box" id="table-{{ table.id }}" onclick="selectTable(this)">
-        {{ table.number }} <!-- Show only the table number -->
+    <div class="table-box" id="table-{{ table.id }}" onclick="selectTable(this)" data-size="{{ table.size }}">
+        {{ table.number }} 
+        {% if table.is_booked %}
+        <div class="table-timer" id="timer-{{ table.id }}"></div>
+        {% endif %}
         <svg xmlns="http://www.w3.org/2000/svg" class="eye-icon h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" onclick="viewOrder(event, '{{ table.id }}')">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm-3-9a9 9 0 00-9 9 9 9 0018 0 9 9 0 00-9-9z" />
+            <path 
+                stroke-linecap="round" 
+                stroke-linejoin="round" 
+                stroke-width="2" 
+                d="M15 12a3 3 0 1 1 -6 0 3 3 0 0 1 6 0zm-3-9a9 9 0 0 0 -9 9 9 9 0 0 0 18 0 9 9 0 0 0 -9-9z" 
+            />
         </svg>
     </div>
     {% endfor %}

@@ -551,7 +551,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.status === 'success') {
                 alert('Order placed successfully!');
                 console.log(orderData);
-                generateThermalBill(orderData); // Call the enhanced function here
+                generateThermalBill(orderData); // Call the function to show the bill
                 clearSelectedItems();
             } else {
                 alert('Failed to place order: ' + (data.error || 'Unknown error'));
@@ -748,9 +748,10 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function generateThermalBill(orderData) {
-    const printWindow = window.open('', 'PRINT', 'width=350,height=600');
-    if (!printWindow) {
-        console.error('Failed to open print window');
+    // Open a new window for the bill
+    const billWindow = window.open('', 'BILL', 'width=400,height=600');
+    if (!billWindow) {
+        console.error('Failed to open bill window');
         return;
     }
     const billContent = `
@@ -778,6 +779,7 @@ function generateThermalBill(orderData) {
                 .details div {
                     display: flex;
                     justify-content: space-between;
+                    margin-bottom: 5px;
                 }
                 table {
                     width: 100%;
@@ -795,10 +797,12 @@ function generateThermalBill(orderData) {
                     margin: 10px 0;
                     display: flex;
                     justify-content: space-between;
+                    font-size: 14px;
                 }
                 .thank-you {
                     margin-top: 20px;
                     text-align: center;
+                    font-size: 14px;
                 }
             </style>
         </head>
@@ -840,8 +844,8 @@ function generateThermalBill(orderData) {
                     <tr>
                         <th>Item</th>
                         <th>Qty</th>
-                        <th>Price</th>
-                        <th>Total</th>
+                        <th>Price (₹)</th>
+                        <th>Total (₹)</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -869,18 +873,14 @@ function generateThermalBill(orderData) {
                 <strong>₹${orderData.grandTotal}</strong>
             </div>
             
-            <div class="footer">
+            <div class="thank-you">
                 <p>Thank you for dining with us!</p>
                 <p>Please come again.</p>
             </div>
         </body>
         </html>
     `;
-    printWindow.document.write(billContent);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-    }, 200);
+    billWindow.document.write(billContent);
+    billWindow.document.close();
+    billWindow.focus();
 }

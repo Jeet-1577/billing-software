@@ -26,4 +26,8 @@ urlpatterns = [
     path('view-table-orders/<int:table_number>/', views.view_table_orders, name='view_table_orders'),
     path('release-table/', views.release_table, name='release_table'),
     path('api/', api.urls),  # Include API urls here
+    path('book-table/<int:table_id>/', views.book_table, name='book_table'),
+    path('release-table/<int:table_id>/', views.release_table, name='release_table'),
+    path('table-status/', views.get_table_status, name='table_status'),
+    path('order-data/', views.order_data, name='order_data'),
 ]
