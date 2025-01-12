@@ -76,7 +76,7 @@
                             <img src="{% static 'img/seen.png' %}" alt="View" class="h-6 w-6">
                         </button>
                         <span class="mx-2"></span> <!-- Add gap between buttons -->
-                        <button class="delete-order" data-order-id="{{ order.order_id }}">
+                        <button class="delete-order" data-order-id="{{ order.order_id }}" {% if order.status == 'deleted' %}disabled{% endif %}>
                             <img src="{% static 'img/delete.png' %}" alt="Delete" class="h-6 w-6">
                         </button>
                     </td>
@@ -240,8 +240,10 @@
 
         document.querySelectorAll('.delete-order').forEach(button => {
             button.addEventListener('click', function() {
-                const orderId = this.getAttribute('data-order-id');
-                openDeleteOrderModal(orderId);
+                if (!this.disabled) {
+                    const orderId = this.getAttribute('data-order-id');
+                    openDeleteOrderModal(orderId);
+                }
             });
         });
 
