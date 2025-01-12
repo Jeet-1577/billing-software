@@ -76,7 +76,7 @@
                             <img src="{% static 'img/seen.png' %}" alt="View" class="h-6 w-6">
                         </button>
                         <span class="mx-2"></span> <!-- Add gap between buttons -->
-                        <button class="delete-order" data-order-id="{{ order.order_id }}" {% if order.status == 'deleted' %}disabled{% endif %}>
+                        <button class="delete-order" data-order-id="{{ order.order_id }}">
                             <img src="{% static 'img/delete.png' %}" alt="Delete" class="h-6 w-6">
                         </button>
                     </td>
@@ -132,11 +132,7 @@
             </div>
             <div class="mb-4">
                 <label for="employeeId" class="block text-white mb-2">Employee ID:</label>
-                <select id="employeeId" name="employeeId" required class="w-full p-2 rounded bg-gray-700 text-white">
-                    {% for employee in employees %}
-                        <option value="{{ employee.employee_id }}">{{ employee.name }} ({{ employee.employee_id }})</option>
-                    {% endfor %}
-                </select>
+                <input type="text" id="employeeId" name="employeeId" required class="w-full p-2 rounded bg-gray-700 text-white">
             </div>
             <div class="mb-4">
                 <label for="reason" class="block text-white mb-2">Reason for Deletion:</label>
@@ -240,10 +236,8 @@
 
         document.querySelectorAll('.delete-order').forEach(button => {
             button.addEventListener('click', function() {
-                if (!this.disabled) {
-                    const orderId = this.getAttribute('data-order-id');
-                    openDeleteOrderModal(orderId);
-                }
+                const orderId = this.getAttribute('data-order-id');
+                openDeleteOrderModal(orderId);
             });
         });
 

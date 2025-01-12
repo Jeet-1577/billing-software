@@ -135,6 +135,13 @@ document.addEventListener('DOMContentLoaded', function() {
                                     </svg>
                                 </button>
                             </div>
+                            <button
+                                type="button"
+                                class="text-gray-400 hover:text-blue-500 transition-all flex items-center justify-center w-6 h-6"
+                                aria-label="Edit item"
+                            >
+                                <img src="{% static 'icons/pen.png' %}" alt="Edit" class="h-4 w-4">
+                            </button>
                         </div>
                     </div>
                     ${customizations.length > 0 ? `

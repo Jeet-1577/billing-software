@@ -15,10 +15,21 @@ from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
+from django.db.models import Sum, Count
 
 
 def index(request):
-    return render(request, 'base.html')
+    today = timezone.now().date()
+    today_revenue = Order.objects.filter(date=today).aggregate(Sum('grand_total'))['grand_total__sum'] or 0
+    today_orders_count = Order.objects.filter(date=today).count()
+    today_orders = Order.objects.filter(date=today)
+
+    context = {
+        'today_revenue': today_revenue,
+        'today_orders_count': today_orders_count,
+        'today_orders': today_orders,
+    }
+    return render(request, 'home.html', context)
 
 def profile(request):
     return render(request, 'profile.html')
