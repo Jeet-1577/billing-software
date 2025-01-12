@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Category, Item, Order, Table, TableOrder, Employee  # Ensure Employee is imported
+from .models import Category, Item, Order, Table, TableOrder, Employee, OrderItem  # Ensure Employee and OrderItem are imported
 from .forms import CategoryForm, ItemForm
 from django.http import JsonResponse
 import json
@@ -7,7 +7,6 @@ from datetime import datetime
 from django.views.decorators.csrf import csrf_exempt
 from decimal import Decimal
 from django.db import transaction
-from .models import Order, OrderItem
 from django.db import models  # Ensure this import is present
 from django.template import loader
 from django.views.decorators.http import require_POST
@@ -434,3 +433,18 @@ def verify_password(request):
             return JsonResponse({'status': 'failed'}, status=400)
     except Exception as e:
         return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
+
+@csrf_exempt
+def save_note(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            item_id = data.get('itemId')
+            note = data.get('note')
+            order_item = get_object_or_404(OrderItem, id=item_id)
+            order_item.note = note
+            order_item.save()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'error': str(e)})
+    return JsonResponse({'status': 'error', 'error': 'Invalid request method'})

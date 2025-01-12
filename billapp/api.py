@@ -3,7 +3,8 @@ from typing import List, Optional
 from decimal import Decimal
 from django.db import transaction
 from .models import Order, OrderItem, Table, TableOrder
-from datetime import datetime
+from django.http import JsonResponse
+import json
 
 api = NinjaAPI(version='2.0.0')  # Add version parameter
 

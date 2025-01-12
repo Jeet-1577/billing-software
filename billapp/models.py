@@ -63,6 +63,7 @@ class OrderItem(models.Model):
     customizations = models.JSONField(default=list)
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     item_details = models.JSONField(default=dict)
+    note = models.TextField(blank=True, null=True)  # Add this field for notes
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):

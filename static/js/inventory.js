@@ -1,4 +1,16 @@
 document.addEventListener('DOMContentLoaded', function() {
+    const selectedTable = localStorage.getItem('selectedTable');
+    if (selectedTable) {
+        document.getElementById('selectedTable').innerText = `Table: ${selectedTable.replace('table-', '')}`;
+    }
+
+    const orderData = localStorage.getItem('orderData');
+    if (orderData) {
+        const orders = JSON.parse(orderData);
+        loadOrderToSidebar(orders);
+        localStorage.removeItem('orderData');
+    }
+
     var sidebar = document.getElementById('sidebar');
     var sidebarToggle = document.getElementById('sidebarToggle');
     var searchInput = document.getElementById('searchInput');
@@ -137,13 +149,13 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
                             <button
                                 type="button"
-                                class="text-gray-400 hover:text-blue-500 transition-all flex items-center justify-center w-6 h-6"
+                                class="text-gray-400 hover:text-blue-500 transition-all flex items-center justify-center w-6 h-6 edit-customization"
                                 aria-label="Edit item"
+                                onclick="editItem('${uniqueItemId}')"
                             >
                                 <img src="{% static 'icons/pen.png' %}" alt="Edit" class="h-4 w-4">
                             </button>
                         </div>
-                    </div>
                     ${customizations.length > 0 ? `
                         <div class="selected-item-customizations">
                             ${customizations.map(opt => `
@@ -752,6 +764,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Call loadTables when the page loads
     document.addEventListener('DOMContentLoaded', loadTables);
+
+    // Add event listener for edit customization buttons in the sidebar
+    selectedItemsList.addEventListener('click', function(event) {
+        const editButton = event.target.closest('.edit-customization');
+        if (editButton) {
+            const selectedItemBox = editButton.closest('.selected-item-box');
+            const itemId = selectedItemBox.querySelector('[data-item-id]').getAttribute('data-item-id');
+            const itemElement = document.querySelector(`[data-item-id="${itemId}"]`);
+            showCustomizationPopup(itemElement);
+        }
+    });
+
+    const targetUl = document.querySelector('ul#inventory-list'); // Ensure the <ul> has id="inventory-list"
+
+    if (targetUl) {
+        targetUl.addEventListener('click', function(event) {
+            var target = event.target;
+            if (target && target.getAttribute) {
+                var attribute = target.getAttribute('data-attribute');
+                // ...rest of the code...
+            } else {
+                console.warn('Expected element with data-attribute not found.');
+            }
+        });
+    } else {
+        console.error('Target <ul id="inventory-list"> element not found.');
+    }
 });
 
 function generateThermalBill(orderData) {

@@ -821,7 +821,7 @@
                 </div>
                 <div id="itemsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-8 gap-x-1 gap-y-2">
                     {% for item in items %}
-                    <div class="item-cube" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-code="{{ item.short_code }}" data-item-price="{{ item.price }}" data-has-customization="{{ item.has_customization }}" data-customization-options='{{ item.customization_options|safe }}'>
+                    <div class="item-cube" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-code="{{ item.short_code }}" data-item-price="{{ item.price }}">
                         <h3 class="text-xl font-bold mb-2">{{ item.name }}</h3>
                         <img src="{{ item.image.url }}" alt="{{ item.name }}">
                     </div>
@@ -837,6 +837,20 @@
         <div class="scrollable-content">
             <ul id="selectedItemsList" class="space-y-2">
                 <!-- Selected items will be appended here -->
+                <li class="selected-item-box">
+                    <div class="selected-item-content">
+                        <!-- ...existing content... -->
+                        <button class="edit-customization" onclick="showCustomizationPopup(this)">
+                            <!-- Inline SVG Pen Icon -->
+                            <svg xmlns="http://www.w3.org/2000/svg" class="icon icon-tabler icon-tabler-pencil" width="24" height="24" viewBox="0 0 24 24" stroke-width="2" stroke="#000000" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                                <path d="M4 20h4l10.5 -10.5a1.5 1.5 0 0 0 -4 -4l-10.5 10.5v4" />
+                                <path d="M13.5 6.5l4 4" />
+                            </svg>
+                        </button>
+                    </div>
+                </li>
+                <!-- ...existing items... -->
             </ul>
         </div>
         <div class="options">
@@ -942,6 +956,7 @@
     </div>
 </div>
 
+
 <script src="{% static 'js/inventory.js' %}"></script>
 
 <script>
@@ -983,6 +998,7 @@
                                         type="button"
                                         class="text-gray-400 hover:text-blue-500 transition-all flex items-center justify-center w-6 h-6"
                                         aria-label="Edit item"
+                                        onclick="editItem('${item.id}')"
                                     >
                                         <svg
                                             xmlns="http://www.w3.org/2000/svg"
@@ -1085,7 +1101,14 @@
         });
     });
 
-    // ...existing code...
+    function editItem(uniqueItemId) {
+        // Example function to handle editing an item
+        const item = document.querySelector(`[data-unique-id="${uniqueItemId}"]`);
+        const note = prompt("Enter a note for this item:");
+        if(note !== null){
+            saveNote(item.getAttribute('data-item-id'), note);
+        }
+    }
 </script>
 
 {% endblock %}
