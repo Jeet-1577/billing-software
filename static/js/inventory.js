@@ -79,6 +79,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Correct the path to the pen icon
+    const penIconUrl = '/static/icons/pen.png';
+
     function updateSidebar() {
         var selectedItems = document.getElementsByClassName('item-cube selected');
         selectedItemsList.innerHTML = '';
@@ -153,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 aria-label="Edit item"
                                 onclick="editItem('${uniqueItemId}')"
                             >
-                                <img src="{% static 'icons/pen.png' %}" alt="Edit" class="h-4 w-4">
+                                <img src="${penIconUrl}" alt="Edit" class="h-4 w-4">
                             </button>
                         </div>
                     ${customizations.length > 0 ? `
@@ -791,6 +794,94 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         console.error('Target <ul id="inventory-list"> element not found.');
     }
+
+    // Handle Edit Note Icon Click
+    document.querySelectorAll('.edit-note-icon').forEach(function(icon) {
+        icon.addEventListener('click', function() {
+            var itemId = this.getAttribute('data-item-id');
+            if (!itemId) {
+                console.error('Item ID not found on edit-note-icon.');
+                return;
+            }
+
+            var noteDisplay = document.getElementById('note-' + itemId);
+            var noteInput = document.getElementById('note-input-' + itemId);
+
+            if (!noteDisplay || !noteInput) {
+                console.error('Note elements not found for item ID:', itemId);
+                return;
+            }
+
+            // Toggle display of note and input
+            if (noteInput.style.display === 'none') {
+                noteDisplay.style.display = 'none';
+                noteInput.style.display = 'block';
+            } else {
+                noteDisplay.style.display = 'block';
+                noteInput.style.display = 'none';
+            }
+        });
+    });
+
+    // Handle Save Note Button Click
+    document.querySelectorAll('.save-note-button').forEach(function(button) {
+        button.addEventListener('click', function() {
+            var itemId = this.getAttribute('data-item-id');
+            if (!itemId) {
+                console.error('Item ID not found on save-note-button.');
+                return;
+            }
+
+            var textarea = document.getElementById('textarea-' + itemId);
+            if (!textarea) {
+                console.error('Textarea not found for item ID:', itemId);
+                return;
+            }
+
+            var noteContent = textarea.value.trim();
+
+            // Send AJAX request to save the note
+            fetch('/save-note/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken(),
+                },
+                body: JSON.stringify({
+                    itemId: itemId,
+                    note: noteContent
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Update the note display
+                    var noteDisplay = document.getElementById('note-' + itemId);
+                    if (noteContent) {
+                        noteDisplay.innerHTML = `<p>${noteContent}</p>`;
+                    } else {
+                        noteDisplay.innerHTML = `<p>No notes added.</p>`;
+                    }
+
+                    // Toggle display back to note
+                    var noteInput = document.getElementById('note-input-' + itemId);
+                    if (noteInput) {
+                        noteInput.style.display = 'none';
+                    }
+                    if (noteDisplay) {
+                        noteDisplay.style.display = 'block';
+                    }
+                } else {
+                    alert('Failed to save note: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error saving note:', error);
+                alert('An error occurred while saving the note.');
+            });
+        });
+    });
+
 });
 
 function generateThermalBill(orderData) {
@@ -930,3 +1021,135 @@ function generateThermalBill(orderData) {
     billWindow.document.close();
     billWindow.focus();
 }
+
+function editItem(event) {
+    var button = event.target.closest('button');
+    var itemId = button ? button.getAttribute('data-item-id') : null;
+    if (!itemId) {
+        console.error('Item ID not found on button.');
+        return;
+    }
+
+    var item = document.getElementById('item-' + itemId);
+    if (!item) {
+        console.error('Item element not found for ID:', itemId);
+        return;
+    }
+
+    // Toggle the note input visibility
+    var noteDisplay = document.getElementById('note-' + itemId);
+    var noteInput = document.getElementById('note-input-' + itemId);
+
+    if (!noteDisplay || !noteInput) {
+        console.error('Note elements not found for item ID:', itemId);
+        return;
+    }
+
+    if (noteInput.style.display === 'none') {
+        noteDisplay.style.display = 'none';
+        noteInput.style.display = 'block';
+    } else {
+        noteDisplay.style.display = 'block';
+        noteInput.style.display = 'none';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // ...existing code...
+
+    // Handle Edit Note Icon Click
+    document.querySelectorAll('.edit-note-icon').forEach(function(icon) {
+        icon.addEventListener('click', function() {
+            var itemId = this.getAttribute('data-item-id');
+            if (!itemId) {
+                console.error('Item ID not found on edit-note-icon.');
+                return;
+            }
+
+            var noteDisplay = document.getElementById('note-' + itemId);
+            var noteInput = document.getElementById('note-input-' + itemId);
+
+            if (!noteDisplay || !noteInput) {
+                console.error('Note elements not found for item ID:', itemId);
+                return;
+            }
+
+            // Toggle display of note and input
+            if (noteInput.style.display === 'none') {
+                noteDisplay.style.display = 'none';
+                noteInput.style.display = 'block';
+            } else {
+                noteDisplay.style.display = 'block';
+                noteInput.style.display = 'none';
+            }
+        });
+    });
+
+    // Handle Save Note Button Click
+    document.querySelectorAll('.save-note-button').forEach(function(button) {
+        button.addEventListener('click', function() {
+            var itemId = this.getAttribute('data-item-id');
+            if (!itemId) {
+                console.error('Item ID not found on save-note-button.');
+                return;
+            }
+
+            var textarea = document.getElementById('textarea-' + itemId);
+            if (!textarea) {
+                console.error('Textarea not found for item ID:', itemId);
+                return;
+            }
+
+            var noteContent = textarea.value.trim();
+
+            // Send AJAX request to save the note
+            fetch('/save-note/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken(),
+                },
+                body: JSON.stringify({
+                    itemId: itemId,
+                    note: noteContent
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Update the note display
+                    var noteDisplay = document.getElementById('note-' + itemId);
+                    if (noteContent) {
+                        noteDisplay.innerHTML = `<p>${noteContent}</p>`;
+                    } else {
+                        noteDisplay.innerHTML = `<p>No notes added.</p>`;
+                    }
+
+                    // Toggle display back to note
+                    var noteInput = document.getElementById('note-input-' + itemId);
+                    if (noteInput) {
+                        noteInput.style.display = 'none';
+                    }
+                    if (noteDisplay) {
+                        noteDisplay.style.display = 'block';
+                    }
+                } else {
+                    alert('Failed to save note: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error saving note:', error);
+                alert('An error occurred while saving the note.');
+            });
+        });
+    });
+
+    // ...existing code...
+});
+
+// Function to retrieve CSRF token
+function getCSRFToken() {
+    return document.querySelector('[name=csrfmiddlewaretoken]').value;
+}
+
+// ...existing code...

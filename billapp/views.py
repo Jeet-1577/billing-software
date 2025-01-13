@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Category, Item, Order, Table, TableOrder, Employee, OrderItem  # Ensure Employee and OrderItem are imported
+from .models import Category, Item, Order, Table, TableOrder, Employee, OrderItem  # Ensure Employee, OrderItem, and Note are imported
 from .forms import CategoryForm, ItemForm
 from django.http import JsonResponse
 import json
@@ -36,62 +36,6 @@ def profile(request):
 # Add more views as needed
 def settings(request):
     return render(request, 'settings.html')
-
-def inventory(request):
-    categories = Category.objects.all()
-    selected_category_id = request.GET.get('category')
-    search_query = request.GET.get('search')
-    
-    try:
-        if search_query:
-            items = Item.objects.filter(
-                models.Q(name__icontains=search_query) | 
-                models.Q(short_code__icontains=search_query)
-            ).order_by('name')
-        elif selected_category_id:
-            items = Item.objects.filter(category_id=selected_category_id)
-        else:
-            items = Item.objects.all()
-        
-        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-            items_data = []
-            for item in items:
-                item_data = {
-                    'id': item.id,
-                    'name': item.name,
-                    'price': str(item.price),
-                    'image': item.image.url if item.image else '',
-                    'has_customization': item.has_customization,
-                    'customization_options': []
-                }
-                if item.has_customization:
-                    item_data['customization_options'] = [
-                        {
-                            'id': opt.id,
-                            'name': opt.name,
-                            'price': str(opt.price),
-                            'category': opt.category.name
-                        }
-                        for opt in item.customization_options.all()
-                    ]
-                items_data.append(item_data)
-            
-            return JsonResponse({
-                'categories': list(categories.values()),
-                'items': items_data,
-                'selected_category_id': selected_category_id
-            })
-        
-        return render(request, 'inventory.html', {
-            'categories': categories,
-            'items': items,
-            'selected_category_id': selected_category_id
-        })
-    except Exception as e:
-        import traceback
-        print("Error in inventory view:", str(e))
-        print(traceback.format_exc())
-        return JsonResponse({'error': str(e)}, status=500)
 
 def portfolio(request):
     return render(request, 'portfolio.html')
@@ -314,7 +258,8 @@ def view_table_orders(request, table_number):
                         'price': str(item.price),
                         'quantity': item.quantity,
                         'customizations': item.customizations,
-                        'total_price': str(item.total_price)
+                        'total_price': str(item.total_price),
+                        'note': item.note.content if hasattr(item, 'note') else ''
                     }
                     for item in order.items.all()
                 ]
@@ -386,7 +331,8 @@ def order_details(request, order_id):
                     'name': item.name,
                     'quantity': item.quantity,
                     'total_price': item.total_price,
-                    'customizations': item.customizations
+                    'customizations': item.customizations,
+                    'note': item.note.content if hasattr(item, 'note') else ''
                 }
                 for item in order_items
             ]
@@ -423,28 +369,103 @@ def verify_password(request):
         else:
             return JsonResponse({'status': 'failed'}, status=400)
     except Exception as e:
-        password = data.get('password', '')
-        return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
-
-        user = authenticate(username=request.user.username, password=password)
-        if user is not None:
-            return JsonResponse({'status': 'success'})
-        else:
-            return JsonResponse({'status': 'failed'}, status=400)
-    except Exception as e:
         return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
 
 @csrf_exempt
 def save_note(request):
     if request.method == 'POST':
+        data = json.loads(request.body)
+        item_id = data.get('itemId')
+        note_content = data.get('note', '').strip()
+        
+        try:
+            order_item = OrderItem.objects.get(id=item_id)
+            note, created = Note.objects.get_or_create(order_item=order_item)
+            note.content = note_content
+            note.save()
+            return JsonResponse({'status': 'success'})
+        except OrderItem.DoesNotExist:
+            return JsonResponse({'status': 'error', 'error': 'OrderItem not found.'})
+    return JsonResponse({'status': 'error', 'error': 'Invalid request method.'})
+
+@csrf_exempt
+@transaction.atomic
+def send_order(request):
+    if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            item_id = data.get('itemId')
-            note = data.get('note')
-            order_item = get_object_or_404(OrderItem, id=item_id)
-            order_item.note = note
-            order_item.save()
-            return JsonResponse({'status': 'success'})
+            print("Received order data:", data)
+
+            if not data.get('items'):
+                return JsonResponse({
+                    'status': 'failed',
+                    'error': 'No items in order'
+                }, status=400)
+
+            table_number = data['tableId'].replace('table-', '')
+            table, _ = Table.objects.get_or_create(number=table_number)
+
+            # Create order with non-zero values
+            order = Order.objects.create(
+                order_id=data['orderId'],
+                subtotal=Decimal(str(data.get('totalAmount', '0'))),
+                gst_amount=Decimal(str(data.get('gstAmount', '0'))),
+                grand_total=Decimal(str(data.get('grandTotal', '0'))),
+                payment_type=data.get('paymentType', 'N/A'),
+                order_type=data.get('orderType', 'N/A'),
+                order_details=data.get('items', []),
+                status='sent'  # Mark order as sent
+            )
+
+            # Create order items with proper validation
+            for item_data in data.get('items', []):
+                if not isinstance(item_data, dict):
+                    continue
+                    
+                order_item = OrderItem.objects.create(
+                    name=item_data.get('name', ''),
+                    price=Decimal(str(item_data.get('price', '0'))),
+                    quantity=int(item_data.get('quantity', 0)),
+                    customizations=item_data.get('customizations', []),
+                    total_price=Decimal(str(item_data.get('totalPrice', '0'))),
+                    base_price=Decimal(str(item_data.get('price', '0'))),
+                    customization_price=Decimal(str(item_data.get('customizationPrice', '0'))),
+                    item_details=item_data
+                )
+                order.items.add(order_item)
+
+            # Link order to table
+            table_order, _ = TableOrder.objects.get_or_create(table=table)
+            table_order.orders.add(order)
+
+            print("Final order sent:", order.order_id, "with items:", order.items.count())
+
+            return JsonResponse({
+                'status': 'success',
+                'order_id': order.order_id,
+                'items_count': order.items.count()
+            })
+
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'failed', 'error': 'Invalid JSON data'}, status=400)
         except Exception as e:
-            return JsonResponse({'status': 'error', 'error': str(e)})
-    return JsonResponse({'status': 'error', 'error': 'Invalid request method'})
+            import traceback
+            print("Error sending order:", str(e))
+            print(traceback.format_exc())
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
+
+    return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
+
+def ko(request):
+    # Only show orders with status="sent"
+    orders = Order.objects.filter(status="sent").order_by('-created_at')
+    return render(request, 'ko.html', {'orders': orders})
+
+def inventory(request):
+    categories = Category.objects.all()
+    items = Item.objects.all()  # Fetch all inventory items
+    context = {
+        'categories': categories,
+        'items': items,
+    }
+    return render(request, 'inventory.html', context)

@@ -827,6 +827,15 @@
                     </div>
                     {% endfor %}
                 </div>
+                <ul id="inventory-list">
+                    <!-- Inventory items will be dynamically inserted here -->
+                    {% for item in items %}
+                    <li id="item-{{ item.id }}" data-item-id="{{ item.id }}">
+                        <span>{{ item.name }}</span>
+                        <button class="edit-item-button" data-item-id="{{ item.id }}" onclick="editItem(event)">Edit</button>
+                    </li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
     </div>
@@ -922,41 +931,6 @@
     </div>
 </div>
 
-<!-- Add a modal for notes -->
-<div id="notesModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-    <div class="bg-gray-800 p-4 rounded">
-        <h2 class="text-white text-lg mb-2">Add Note</h2>
-        <form id="notesForm">
-            <input type="hidden" name="itemId" id="itemId">
-            <textarea id="note" name="note" class="w-full mt-2 p-2 border rounded bg-gray-700 text-white" required></textarea>
-            <div class="flex justify-end mt-2">
-                <button type="button" id="cancelNote" class="mr-2 bg-gray-600 text-white px-4 py-2 rounded">
-                    Cancel
-                </button>
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">
-                    Save Note
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Add this modal for notes -->
-<div id="notesModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-gray-800 rounded-lg p-6 w-[400px] transform transition-all scale-95">
-        <h2 class="text-xl font-semibold mb-4 text-white">Add Cooking Instructions</h2>
-        <form id="notesForm">
-            <input type="hidden" id="itemId" name="itemId">
-            <textarea id="note" name="note" class="w-full p-2 rounded bg-gray-700 text-white mb-4" rows="3" placeholder="Enter cooking instructions..."></textarea>
-            <div class="flex justify-end gap-2">
-                <button type="button" id="cancelNote" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">Cancel</button>
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-
 <script src="{% static 'js/inventory.js' %}"></script>
 
 <script>
@@ -971,6 +945,192 @@
             const orders = JSON.parse(orderData);
             loadOrderToSidebar(orders);
             localStorage.removeItem('orderData');
+        }
+
+        const searchInput = document.getElementById('searchInput');
+        const itemsContainer = document.getElementById('itemsContainer');
+        const selectionSidebar = document.getElementById('selectionSidebar');
+        const selectedItemsList = document.getElementById('selectedItemsList');
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                var searchQuery = searchInput.value.toLowerCase();
+                fetch(`/inventory/?search=${searchQuery}`, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    itemsContainer.innerHTML = '';
+                    data.items.forEach(function(item) {
+                        var itemCube = document.createElement('div');
+                        itemCube.classList.add('item-cube');
+                        itemCube.setAttribute('data-item-id', item.id);
+                        itemCube.setAttribute('data-item-name', item.name);
+                        itemCube.setAttribute('data-item-price', item.price);
+                        itemCube.setAttribute('data-item-code', item.short_code);
+                        itemCube.setAttribute('data-has-customization', item.has_customization);
+                        if (item.has_customization) {
+                            itemCube.setAttribute('data-customization-options', JSON.stringify(item.customization_options));
+                        }
+                        itemCube.innerHTML = `
+                            <h3 class="text-xl font-bold mb-2">${item.name}</h3>
+                            <img src="${item.image}" alt="${item.name}">
+                        `;
+                        itemCube.addEventListener('click', function() {
+                            selectItem(this);
+                        });
+                        itemsContainer.appendChild(itemCube);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while fetching items.');
+                });
+            });
+
+            searchInput.addEventListener('keydown', function(event) {
+                if (event.key === 'Enter') {
+                    event.preventDefault();
+                    var firstItem = itemsContainer.querySelector('.item-cube');
+                    if (firstItem) {
+                        selectItem(firstItem);
+                    }
+                }
+            });
+        }
+
+        // Shortcut key to focus on the search bar
+        document.addEventListener('keydown', function(event) {
+            if (event.ctrlKey && event.key === 'f') {
+                event.preventDefault();
+                if (searchInput) {
+                    searchInput.focus();
+                }
+            }
+        });
+
+        function sendOrder() {
+            const selectedTable = localStorage.getItem('selectedTable');
+            if (!selectedTable) {
+                alert('Please select a table first.');
+                return;
+            }
+
+            const selectedItems = document.getElementsByClassName('item-cube selected');
+            const orderItems = [];
+            let totalAmount = 0;
+
+            for (let i = 0; i < selectedItems.length; i++) {
+                const item = selectedItems[i];
+                const itemId = item.getAttribute('data-item-id');
+                const itemName = item.getAttribute('data-item-name');
+                const basePrice = parseFloat(item.getAttribute('data-item-price'));
+                const uniqueItemId = item.getAttribute('data-unique-id') || `${itemId}-basic`;
+
+                const quantityElement = document.getElementById(`quantity-${uniqueItemId}`);
+                if (quantityElement) {
+                    const quantity = parseInt(quantityElement.innerText);
+                    const customizations = [];
+                    let customizationPrice = 0;
+
+                    if (item.hasAttribute('data-selected-customizations')) {
+                        customizations.push(...JSON.parse(item.getAttribute('data-selected-customizations')));
+                        customizationPrice = customizations.reduce((sum, opt) => sum + parseFloat(opt.price), 0);
+                    }
+
+                    const itemTotalPrice = (basePrice + customizationPrice) * quantity;
+                    totalAmount += itemTotalPrice;
+
+                    orderItems.push({
+                        id: itemId,
+                        name: itemName,
+                        price: basePrice + customizationPrice,
+                        quantity: quantity,
+                        customizations: customizations,
+                        totalPrice: itemTotalPrice
+                    });
+                }
+            }
+
+            const gstAmount = totalAmount * 0.18;
+            const grandTotal = totalAmount + gstAmount;
+
+            const paymentTypeElement = document.querySelector('input[name="payment_type"]:checked');
+            const orderTypeElement = document.querySelector('input[name="order_type"]:checked');
+
+            if (!paymentTypeElement || !orderTypeElement) {
+                alert('Please select both payment type and order type.');
+                return;
+            }
+
+            const orderData = {
+                orderId: Date.now().toString(),
+                items: orderItems,
+                totalAmount: totalAmount.toFixed(2),
+                gstAmount: gstAmount.toFixed(2),
+                grandTotal: grandTotal.toFixed(2),
+                paymentType: paymentTypeElement.value,
+                orderType: orderTypeElement.value,
+                time: new Date().toLocaleTimeString('en-US', { hour12: true }),
+                date: new Date().toISOString().split('T')[0],
+                tableId: selectedTable,
+                status: 'sent'  // Mark order as sent
+            };
+
+            console.log("Order data being sent:", orderData);  // Debug print
+
+            sendOrderToTable(orderData);
+        }
+
+        function sendOrderToTable(orderData) {
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            fetch('/send-order/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify(orderData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Response from server:", data);  // Debug print
+                if (data.status === 'success') {
+                    alert('Order sent successfully!');
+                    clearSelectedItems();
+                    localStorage.removeItem('selectedTable');
+                    document.getElementById('selectedTable').innerText = '';
+                    document.getElementById('totalAmount').innerText = 'Total: ₹0.00';
+                    document.getElementById('gstAmount').innerText = 'GST (18%): ₹0.00';
+                    document.getElementById('grandTotal').innerText = 'Grand Total: ₹0.00';
+                    window.location.href = "{% url 'ko' %}";  // Redirect to KO page
+                } else {
+                    alert('Failed to send order: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while sending the order.');
+            });
+        }
+
+        // Handle Send Button Click
+        const sendButton = document.getElementById('sendButton');
+        if (sendButton) {
+            sendButton.addEventListener('click', sendOrder);
         }
     });
 

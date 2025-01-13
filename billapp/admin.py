@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Item, Order, CustomizationOption, CustomizationCategory, OrderItem, TableOrder, Table, Employee  # Add this import
+from .models import Category, Item, Order, CustomizationOption, CustomizationCategory, OrderItem, TableOrder, Table, Employee  # Remove Note import
 from django import forms
 
 class CustomizationOptionInline(admin.TabularInline):

@@ -209,8 +209,8 @@
         <div class="flex items-center">
             <a href="{% url 'tabel' %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Table</a>
             <button class="dark-button green ml-2" onclick="saveOrder()">Save</button>
-            <button class="dark-button red ml-2">Button 2</button>
-            <button class="dark-button yellow ml-2">Button 3</button>
+            <button class="dark-button red ml-2" id="sendButton">Send</button>
+            <button class="dark-button yellow ml-2" id="koButton">KO</button>
         </div>
     </nav>
 
@@ -304,6 +304,8 @@
                 totalAmount: totalAmount.toFixed(2),
                 gstAmount: gstAmount.toFixed(2),
                 grandTotal: grandTotal.toFixed(2),
+                paymentType: document.querySelector('input[name="payment_type"]:checked').value,
+                orderType: document.querySelector('input[name="order_type"]:checked').value,
                 time: new Date().toLocaleTimeString('en-US', { hour12: true }),
                 date: new Date().toISOString().split('T')[0],
                 tableId: selectedTable
@@ -341,7 +343,7 @@
                     document.getElementById('totalAmount').innerText = 'Total: ₹0.00';
                     document.getElementById('gstAmount').innerText = 'GST (18%): ₹0.00';
                     document.getElementById('grandTotal').innerText = 'Grand Total: ₹0.00';
-                    location.reload();
+                    window.location.href = "{% url 'ko' %}";  // Redirect to KO page
                 } else {
                     alert('Failed to save order: ' + data.error);
                 }
@@ -375,6 +377,123 @@
             document.getElementById('totalAmount').innerText = 'Total: ₹0.00';
             document.getElementById('gstAmount').innerText = 'GST (18%): ₹0.00';
             document.getElementById('grandTotal').innerText = 'Grand Total: ₹0.00';
+        }
+
+        // Handle KO Button Click
+        const koButton = document.getElementById('koButton');
+        if (koButton) {
+            koButton.addEventListener('click', function() {
+                window.location.href = "{% url 'ko' %}";
+            });
+        }
+
+        function sendOrder() {
+            const selectedTable = localStorage.getItem('selectedTable');
+            if (!selectedTable) {
+                alert('Please select a table first.');
+                return;
+            }
+
+            const selectedItems = document.getElementsByClassName('item-cube selected');
+            const orderItems = [];
+            let totalAmount = 0;
+
+            for (let i = 0; i < selectedItems.length; i++) {
+                const item = selectedItems[i];
+                const itemId = item.getAttribute('data-item-id');
+                const itemName = item.getAttribute('data-item-name');
+                const basePrice = parseFloat(item.getAttribute('data-item-price'));
+                const uniqueItemId = item.getAttribute('data-unique-id') || `${itemId}-basic`;
+
+                const quantityElement = document.getElementById(`quantity-${uniqueItemId}`);
+                if (quantityElement) {
+                    const quantity = parseInt(quantityElement.innerText);
+                    const customizations = [];
+                    let customizationPrice = 0;
+
+                    if (item.hasAttribute('data-selected-customizations')) {
+                        customizations.push(...JSON.parse(item.getAttribute('data-selected-customizations')));
+                        customizationPrice = customizations.reduce((sum, opt) => sum + parseFloat(opt.price), 0);
+                    }
+
+                    const itemTotalPrice = (basePrice + customizationPrice) * quantity;
+                    totalAmount += itemTotalPrice;
+
+                    orderItems.push({
+                        id: itemId,
+                        name: itemName,
+                        price: basePrice + customizationPrice,
+                        quantity: quantity,
+                        customizations: customizations,
+                        totalPrice: itemTotalPrice
+                    });
+                }
+            }
+
+            const gstAmount = totalAmount * 0.18;
+            const grandTotal = totalAmount + gstAmount;
+
+            const orderData = {
+                orderId: Date.now().toString(),
+                items: orderItems,
+                totalAmount: totalAmount.toFixed(2),
+                gstAmount: gstAmount.toFixed(2),
+                grandTotal: grandTotal.toFixed(2),
+                paymentType: document.querySelector('input[name="payment_type"]:checked').value,
+                orderType: document.querySelector('input[name="order_type"]:checked').value,
+                time: new Date().toLocaleTimeString('en-US', { hour12: true }),
+                date: new Date().toISOString().split('T')[0],
+                tableId: selectedTable,
+                status: 'sent'  // Mark order as sent
+            };
+
+            console.log("Order data being sent:", orderData);  // Debug print
+
+            sendOrderToTable(orderData);
+        }
+
+        function sendOrderToTable(orderData) {
+            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+            fetch('/send-order/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify(orderData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Response from server:", data);  // Debug print
+                if (data.status === 'success') {
+                    alert('Order sent successfully!');
+                    clearSelectedItems();
+                    localStorage.removeItem('selectedTable');
+                    document.getElementById('selectedTable').innerText = '';
+                    document.getElementById('totalAmount').innerText = 'Total: ₹0.00';
+                    document.getElementById('gstAmount').innerText = 'GST (18%): ₹0.00';
+                    document.getElementById('grandTotal').innerText = 'Grand Total: ₹0.00';
+                    window.location.href = "{% url 'ko' %}";  // Redirect to KO page
+                } else {
+                    alert('Failed to send order: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while sending the order.');
+            });
+        }
+
+        // Handle Send Button Click
+        const sendButton = document.getElementById('sendButton');
+        if (sendButton) {
+            sendButton.addEventListener('click', sendOrder);
         }
     </script>
     <script src="http://localhost:8000/__reload__/reload.js"></script>

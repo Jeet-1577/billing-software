@@ -63,7 +63,6 @@ class OrderItem(models.Model):
     customizations = models.JSONField(default=list)
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     item_details = models.JSONField(default=dict)
-    note = models.TextField(blank=True, null=True)  # Add this field for notes
     created_at = models.DateTimeField(auto_now_add=True)
 
     def save(self, *args, **kwargs):
@@ -83,6 +82,15 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.name} x{self.quantity}"
+
+class Note(models.Model):
+    content = models.TextField()
+    order_item = models.OneToOneField(OrderItem, on_delete=models.CASCADE, related_name='note')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Note for {self.order_item.name}"
 
 class Employee(models.Model):
     employee_id = models.CharField(max_length=100, unique=True)
