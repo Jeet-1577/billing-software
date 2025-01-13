@@ -830,10 +830,7 @@
                 <ul id="inventory-list">
                     <!-- Inventory items will be dynamically inserted here -->
                     {% for item in items %}
-                    <li id="item-{{ item.id }}" data-item-id="{{ item.id }}">
-                        <span>{{ item.name }}</span>
-                        <button class="edit-item-button" data-item-id="{{ item.id }}" onclick="editItem(event)">Edit</button>
-                    </li>
+                    
                     {% endfor %}
                 </ul>
             </div>
