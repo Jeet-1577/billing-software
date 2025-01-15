@@ -35,4 +35,5 @@ urlpatterns = [
     path('verify-password/', views.verify_password, name='verify_password'),
     path('save-note/', save_note, name='save_note'),  # Ensure save_note is handled here
     path('ko/', views.ko_view, name='ko'),  # Add ko view
+    path('send-order/', views.send_order, name='send_order'),
 ]

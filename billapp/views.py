@@ -449,5 +449,35 @@ def save_note(request):
             return JsonResponse({'status': 'error', 'error': str(e)})
     return JsonResponse({'status': 'error', 'error': 'Invalid request method'})
 
+@csrf_exempt
+@transaction.atomic
+def send_order(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            order = Order.objects.create(
+                order_id=data.get('orderId', ''),
+                date=data.get('date', ''),
+                time=data.get('time', ''),
+                subtotal=Decimal(str(data.get('totalAmount', 0))),
+                gst_amount=Decimal(str(data.get('gstAmount', 0))),
+                grand_total=Decimal(str(data.get('grandTotal', 0))),
+                status='sent'
+            )
+            for item_data in data.get('items', []):
+                order_item = OrderItem.objects.create(
+                    name=item_data.get('name', ''),
+                    price=Decimal(str(item_data.get('price', 0))),
+                    quantity=int(item_data.get('quantity', 0)),
+                    customizations=item_data.get('customizations', []),
+                    total_price=Decimal(str(item_data.get('totalPrice', 0))),
+                )
+                order.items.add(order_item)
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
+    return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
+
 def ko_view(request):
-    return render(request, 'ko.html')
+    orders = Order.objects.filter(status='sent').order_by('-created_at')
+    return render(request, 'ko.html', {'orders': orders})

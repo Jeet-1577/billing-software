@@ -1,4 +1,22 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Identify whether we're on the inventory page
+    const isInventoryPage = document.querySelector('.inventory-categories');
+    if (!isInventoryPage) {
+        return; // Skip all inventory code if not on inventory page
+    }
+
+    // Add null checks for required elements
+    const selectionSidebar = document.getElementById('selectionSidebar');
+    const selectedItemsList = document.getElementById('selectedItemsList');
+
+    if (!selectionSidebar || !selectedItemsList) {
+        console.error('Required sidebar elements not found:', {
+            selectionSidebar: !!selectionSidebar,
+            selectedItemsList: !!selectedItemsList
+        });
+        return;
+    }
+
     const selectedTable = localStorage.getItem('selectedTable');
     if (selectedTable) {
         document.getElementById('selectedTable').innerText = `Table: ${selectedTable.replace('table-', '')}`;
@@ -15,72 +33,79 @@ document.addEventListener('DOMContentLoaded', function() {
     var sidebarToggle = document.getElementById('sidebarToggle');
     var searchInput = document.getElementById('searchInput');
     var itemsContainer = document.getElementById('itemsContainer');
-    var selectionSidebar = document.getElementById('selectionSidebar');
-    var selectedItemsList = document.getElementById('selectedItemsList');
     var mainContent = document.getElementById('mainContent');
 
-    searchInput.addEventListener('input', function() {
-        var searchQuery = searchInput.value.toLowerCase();
-        fetch(`/inventory/?search=${searchQuery}`, {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            itemsContainer.innerHTML = '';
-            data.items.forEach(function(item) {
-                var itemCube = document.createElement('div');
-                itemCube.classList.add('item-cube');
-                itemCube.setAttribute('data-item-id', item.id);
-                itemCube.setAttribute('data-item-name', item.name);
-                itemCube.setAttribute('data-item-price', item.price);
-                itemCube.setAttribute('data-item-code', item.short_code);
-                itemCube.setAttribute('data-has-customization', item.has_customization);
-                if (item.has_customization) {
-                    itemCube.setAttribute('data-customization-options', JSON.stringify(item.customization_options));
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            var searchQuery = searchInput.value.toLowerCase();
+            fetch(`/inventory/?search=${searchQuery}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
-                itemCube.innerHTML = `
-                    <h3 class="text-xl font-bold mb-2">${item.name}</h3>
-                    <img src="${item.image}" alt="${item.name}">
-                `;
-                itemCube.addEventListener('click', function() {
-                    selectItem(this);
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                itemsContainer.innerHTML = '';
+                data.items.forEach(function(item) {
+                    var itemCube = document.createElement('div');
+                    itemCube.classList.add('item-cube');
+                    itemCube.setAttribute('data-item-id', item.id);
+                    itemCube.setAttribute('data-item-name', item.name);
+                    itemCube.setAttribute('data-item-price', item.price);
+                    itemCube.setAttribute('data-item-code', item.short_code);
+                    itemCube.setAttribute('data-has-customization', item.has_customization);
+                    if (item.has_customization) {
+                        itemCube.setAttribute('data-customization-options', JSON.stringify(item.customization_options));
+                    }
+                    itemCube.innerHTML = `
+                        <h3 class="text-xl font-bold mb-2">${item.name}</h3>
+                        <img src="${item.image}" alt="${item.name}">
+                    `;
+                    itemCube.addEventListener('click', function() {
+                        selectItem(this);
+                    });
+                    itemsContainer.appendChild(itemCube);
                 });
-                itemsContainer.appendChild(itemCube);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while fetching items.');
             });
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while fetching items.');
         });
-    });
 
-    searchInput.addEventListener('keydown', function(event) {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            var firstItem = itemsContainer.querySelector('.item-cube');
-            if (firstItem) {
-                selectItem(firstItem);
+        searchInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                var firstItem = itemsContainer.querySelector('.item-cube');
+                if (firstItem) {
+                    selectItem(firstItem);
+                }
             }
-        }
-    });
+        });
+    }
 
     // Shortcut key to focus on the search bar
     document.addEventListener('keydown', function(event) {
         if (event.ctrlKey && event.key === 'f') {
             event.preventDefault();
-            searchInput.focus();
+            if (searchInput) {
+                searchInput.focus();
+            }
         }
     });
 
     function updateSidebar() {
         var selectedItems = document.getElementsByClassName('item-cube selected');
+        var selectedItemsList = document.getElementById('selectedItemsList');
+        if (!selectedItemsList) {
+            console.error('selectedItemsList element not found');
+            return;
+        }
         selectedItemsList.innerHTML = '';
         var selectedIds = [];
         var totalAmount = 0;
@@ -477,70 +502,73 @@ document.addEventListener('DOMContentLoaded', function() {
 
     restoreSelectedItems();
 
-    document.querySelector('.checkout').addEventListener('click', function() {
-        var paymentType = document.querySelector('input[name="payment_type"]:checked');
-        var orderType = document.querySelector('input[name="order_type"]:checked');
+    const checkoutButton = document.querySelector('.checkout');
+    if (checkoutButton) {
+        checkoutButton.addEventListener('click', function() {
+            var paymentType = document.querySelector('input[name="payment_type"]:checked');
+            var orderType = document.querySelector('input[name="order_type"]:checked');
 
-        if (!paymentType || !orderType) {
-            alert('Please select both payment type and order type');
-            return;
-        }
-
-        var selectedItems = document.getElementsByClassName('item-cube selected');
-        var orderItems = [];
-        var totalAmount = 0;
-
-        for (var i = 0; i < selectedItems.length; i++) {
-            var item = selectedItems[i];
-            var itemId = item.getAttribute('data-item-id');
-            var itemName = item.getAttribute('data-item-name');
-            var basePrice = parseFloat(item.getAttribute('data-item-price'));
-            var uniqueItemId = item.getAttribute('data-unique-id') || `${itemId}-basic`;
-
-            var quantityElement = document.getElementById(`quantity-${uniqueItemId}`);
-            if (quantityElement) {
-                var quantity = parseInt(quantityElement.innerText);
-                var customizations = [];
-                var customizationPrice = 0;
-
-                if (item.hasAttribute('data-selected-customizations')) {
-                    customizations = JSON.parse(item.getAttribute('data-selected-customizations'));
-                    customizationPrice = customizations.reduce((sum, opt) => sum + parseFloat(opt.price), 0);
-                }
-
-                var itemTotalPrice = (basePrice + customizationPrice) * quantity;
-                totalAmount += itemTotalPrice;
-
-                orderItems.push({
-                    id: itemId,
-                    name: itemName,
-                    price: basePrice + customizationPrice,
-                    quantity: quantity,
-                    customizations: customizations,
-                    totalPrice: itemTotalPrice
-                });
+            if (!paymentType || !orderType) {
+                alert('Please select both payment type and order type');
+                return;
             }
-        }
 
-        var gstAmount = totalAmount * 0.18;
-        var grandTotal = totalAmount + gstAmount;
+            var selectedItems = document.getElementsByClassName('item-cube selected');
+            var orderItems = [];
+            var totalAmount = 0;
 
-        var orderData = {
-            orderId: Date.now().toString(),
-            items: orderItems,
-            totalAmount: totalAmount.toFixed(2),
-            gstAmount: gstAmount.toFixed(2),
-            grandTotal: grandTotal.toFixed(2),
-            paymentType: paymentType.value,
-            orderType: orderType.value,
-            time: new Date().toLocaleTimeString('en-US', { hour12: true }),
-            date: new Date().toISOString().split('T')[0]
-        };
+            for (var i = 0; i < selectedItems.length; i++) {
+                var item = selectedItems[i];
+                var itemId = item.getAttribute('data-item-id');
+                var itemName = item.getAttribute('data-item-name');
+                var basePrice = parseFloat(item.getAttribute('data-item-price'));
+                var uniqueItemId = item.getAttribute('data-unique-id') || `${itemId}-basic`;
 
-        console.log("Order data being sent:", orderData);  // Debug print
+                var quantityElement = document.getElementById(`quantity-${uniqueItemId}`);
+                if (quantityElement) {
+                    var quantity = parseInt(quantityElement.innerText);
+                    var customizations = [];
+                    var customizationPrice = 0;
 
-        placeOrder(orderData);
-    });
+                    if (item.hasAttribute('data-selected-customizations')) {
+                        customizations = JSON.parse(item.getAttribute('data-selected-customizations'));
+                        customizationPrice = customizations.reduce((sum, opt) => sum + parseFloat(opt.price), 0);
+                    }
+
+                    var itemTotalPrice = (basePrice + customizationPrice) * quantity;
+                    totalAmount += itemTotalPrice;
+
+                    orderItems.push({
+                        id: itemId,
+                        name: itemName,
+                        price: basePrice + customizationPrice,
+                        quantity: quantity,
+                        customizations: customizations,
+                        totalPrice: itemTotalPrice
+                    });
+                }
+            }
+
+            var gstAmount = totalAmount * 0.18;
+            var grandTotal = totalAmount + gstAmount;
+
+            var orderData = {
+                orderId: Date.now().toString(),
+                items: orderItems,
+                totalAmount: totalAmount.toFixed(2),
+                gstAmount: gstAmount.toFixed(2),
+                grandTotal: grandTotal.toFixed(2),
+                paymentType: paymentType.value,
+                orderType: orderType.value,
+                time: new Date().toLocaleTimeString('en-US', { hour12: true }),
+                date: new Date().toISOString().split('T')[0]
+            };
+
+            console.log("Order data being sent:", orderData);  // Debug print
+
+            placeOrder(orderData);
+        });
+    }
 
     function placeOrder(orderData) {
         const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
@@ -767,8 +795,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // ...existing JavaScript code that manipulates inventoryList...
     });
 
-    const targetUl = document.querySelector('ul#inventory-list'); // Ensure the <ul> has id="inventory-list"
-
+    const targetUl = document.getElementById('inventory-list');
     if (targetUl) {
         targetUl.addEventListener('click', function(event) {
             var target = event.target;
@@ -779,9 +806,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.warn('Expected element with data-attribute not found.');
             }
         });
-    } else {
-        console.error('Target <ul id="inventory-list"> element not found.');
-    }
+    } 
 });
 
 function generateThermalBill(orderData) {
@@ -919,5 +944,5 @@ function generateThermalBill(orderData) {
     `;
     billWindow.document.write(billContent);
     billWindow.document.close();
-    billWindow.focus();
+    billWindow.focus(); 
 }

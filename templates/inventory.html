@@ -831,18 +831,13 @@
         </div>
     </div>
     
-    <!-- Make sure this element exists and has the correct ID -->
+    <!-- Update the sidebar structure -->
     <div id="selectionSidebar" class="selection-sidebar">
         <div id="selectedTable" class="selected-table"></div>
         <div class="scrollable-content">
+            <!-- Add id for selectedItemsList -->
             <ul id="selectedItemsList" class="space-y-2">
                 <!-- Selected items will be appended here -->
-                <li class="selected-item-box">
-                    <div class="selected-item-content">
-                        <!-- ...existing content... -->
-                    </div>
-                </li>
-                <!-- ...existing items... -->
             </ul>
         </div>
         <div class="options">
@@ -947,11 +942,6 @@
         </form>
     </div>
 </div>
-
-<!-- Add the inventory list -->
-<ul id="inventory-list">
-    <!-- Inventory items will be dynamically inserted here -->
-</ul>
 
 <script src="{% static 'js/inventory.js' %}"></script>
 
