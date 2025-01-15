@@ -8,6 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Dashboard{% endblock %}</title>
     {% tailwind_css %}
+    <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon"> <!-- Add this line -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{% static 'js/script.js' %}" defer></script>
     <style>
@@ -390,7 +391,8 @@
         function sendOrder() {
             const selectedTable = localStorage.getItem('selectedTable');
             if (!selectedTable) {
-                alert('Please select a table first.');
+                // Removed popup alert
+                // alert('Please select a table first.');
                 return;
             }
 
@@ -439,8 +441,7 @@
                 totalAmount: totalAmount.toFixed(2),
                 gstAmount: gstAmount.toFixed(2),
                 grandTotal: grandTotal.toFixed(2),
-                paymentType: document.querySelector('input[name="payment_type"]:checked').value,
-                orderType: document.querySelector('input[name="order_type"]:checked').value,
+                // Removed paymentType and orderType
                 time: new Date().toLocaleTimeString('en-US', { hour12: true }),
                 date: new Date().toISOString().split('T')[0],
                 tableId: selectedTable,
@@ -497,5 +498,10 @@
         }
     </script>
     <script src="http://localhost:8000/__reload__/reload.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Updated jQuery CDN -->
+    <script src="{% static 'js/inventory.js' %}"></script>
+    {% block scripts %}
+    <!-- Additional scripts can be added by extending templates -->
+    {% endblock %}
 </body>
 </html>

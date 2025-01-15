@@ -28,8 +28,8 @@ class OrderRequestSchema(Schema):
     totalAmount: str
     gstAmount: str
     grandTotal: str
-    paymentType: Optional[str] = None  # Made optional
-    orderType: Optional[str] = None     # Made optional
+    paymentType: str
+    orderType: str
     tableId: Optional[str] = None
 
 class OrderResponseSchema(Schema):
@@ -38,22 +38,25 @@ class OrderResponseSchema(Schema):
     items_count: int
 
 # API Endpoints
-@api.post("/place/", response=OrderResponseSchema)  # Adjusted endpoint
+@api.post("/orders/place", response=OrderResponseSchema)
 @transaction.atomic
 def place_order(request, order_data: OrderRequestSchema):
     try:
-        # Remove validation for existing order
-        # if Order.objects.filter(order_id=order_data.orderId).exists():
-        #     return {"status": "failed", "error": "Order already exists"}
+        # Check if order already exists
+        if Order.objects.filter(order_id=order_data.orderId).exists():
+            return {
+                "status": "failed",
+                "error": "Order already exists"
+            }
 
-        # Create order without requiring paymentType, orderType, and tableId
+        # Create order
         order = Order.objects.create(
             order_id=order_data.orderId,
             subtotal=Decimal(order_data.totalAmount),
             gst_amount=Decimal(order_data.gstAmount),
             grand_total=Decimal(order_data.grandTotal),
-            payment_type=order_data.paymentType or 'N/A',
-            order_type=order_data.orderType or 'N/A',
+            payment_type=order_data.paymentType,
+            order_type=order_data.orderType,
             order_details=[item.dict() for item in order_data.items]
         )
 
@@ -74,7 +77,7 @@ def place_order(request, order_data: OrderRequestSchema):
             )
             order.items.add(order_item)
 
-        # Link to table if tableId is provided
+        # If table order, link to table
         if order_data.tableId:
             table_number = order_data.tableId.replace('table-', '')
             table, _ = Table.objects.get_or_create(number=table_number)

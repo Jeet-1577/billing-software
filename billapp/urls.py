@@ -34,5 +34,5 @@ urlpatterns = [
     path('delete-order/<str:order_id>/', views.delete_order, name='delete_order'),
     path('verify-password/', views.verify_password, name='verify_password'),
     path('save-note/', save_note, name='save_note'),  # Ensure save_note is handled here
-    path('ko/', views.ko, name='ko'),  # Ensure this line exists
+    path('ko/', views.ko_view, name='ko'),  # Add ko view
 ]
