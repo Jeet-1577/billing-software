@@ -8,7 +8,6 @@
     <div class="orders-container h-full overflow-y-auto hide-scrollbar pb-36">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-5">
             {% for order in orders %}
-            {% if order.status == 'sent' %}
             <div class="bg-gray-800 rounded-lg p-4 shadow-lg">
                 <div class="flex justify-between items-baseline mb-1">
                     <h2 class="text-lg font-bold">Order #{{ order.order_id }}</h2>
@@ -30,41 +29,10 @@
                     Mark as Cooked
                 </button>
             </div>
-            {% endif %}
             {% endfor %}
         </div>
     </div>
 </div>
-<style>
-    .hide-scrollbar {
-        -ms-overflow-style: none;  /* Internet Explorer 10+ */    
-        scrollbar-width: none;     /* Firefox */
-    }
-    .hide-scrollbar::-webkit-scrollbar {
-        display: none;            /* Safari and Chrome */
-        width: 0;                 /* Hide scrollbar track */
-    }
-</style>
-        {% for order in orders %}
-        
-        <tr>
-            <td>{{ order.order_id }}</td>
-            <td>{{ order.subtotal }}</td>
-            <td>{{ order.gst_amount }}</td>
-            <td>{{ order.grand_total }}</td>
-            <td>
-                <!-- Example Action: View Details -->
-                <a href="{% url 'order_details' order.order_id %}">View</a>
-                <!-- Add more actions as needed -->
-            </td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="5">No sent orders available.</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
 <style>
     .hide-scrollbar {
         -ms-overflow-style: none;  /* Internet Explorer 10+ */    

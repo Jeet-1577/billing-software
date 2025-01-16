@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Category, Item, Order, Table, TableOrder, Employee, OrderItem  # Ensure Employee and OrderItem are imported
+from .models import Category, Item, Order, Table, TableOrder, Employee, OrderItem, KoOrder  # Ensure Employee, OrderItem, and KoOrder are imported
 from .forms import CategoryForm, ItemForm
 from django.http import JsonResponse
 import json
@@ -461,5 +461,95 @@ def save_note(request):
             return JsonResponse({'status': 'error', 'error': str(e)})
     return JsonResponse({'status': 'error', 'error': 'Invalid request method'})
 
+@csrf_exempt
+@transaction.atomic
+def send_order(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            print("Received order data:", data)
+
+            # Validate required fields
+            required_keys = {"orderId", "items", "totalAmount", "gstAmount", "grandTotal"}
+            missing_keys = required_keys - set(data.keys())
+            if missing_keys:
+                print(f"Missing required fields: {missing_keys}")
+                return JsonResponse({
+                    'status': 'failed',
+                    'error': f'Missing required fields: {missing_keys}'
+                }, status=400)
+
+            # Validate items
+            for item in data.get('items', []):
+                if not isinstance(item, dict):
+                    print(f"Invalid item format: {item}")
+                    return JsonResponse({
+                        'status': 'failed',
+                        'error': f"Each item must be a dictionary, got: {item}"
+                    }, status=400)
+                print("Processing item:", item)
+
+            # Create KoOrder
+            ko_order = KoOrder.objects.create(
+                order_id=data['orderId'],
+                subtotal=Decimal(str(data.get('totalAmount', '0'))),
+                gst_amount=Decimal(str(data.get('gstAmount', '0'))),
+                grand_total=Decimal(str(data.get('grandTotal', '0'))),
+                payment_type=data.get('paymentType', 'N/A'),  # Default value if not provided
+                order_type=data.get('orderType', 'N/A'),      # Default value if not provided
+                order_details=data.get('items', [])
+            )
+
+            # Add items to KoOrder
+            for item_data in data.get('items', []):
+                try:
+                    order_item = OrderItem.objects.create(
+                        name=item_data.get('name', ''),
+                        price=Decimal(str(item_data.get('price', '0'))),
+                        quantity=int(item_data.get('quantity', 0)),
+                        customizations=item_data.get('customizations', []),
+                        total_price=Decimal(str(item_data.get('totalPrice', '0'))),
+                        base_price=Decimal(str(item_data.get('price', '0'))),
+                        customization_price=Decimal(str(item_data.get('customizationPrice', '0'))),
+                        item_details=item_data
+                    )
+                    ko_order.items.add(order_item)
+                except Exception as e:
+                    print(f"Error processing item {item_data}: {e}")
+                    raise
+
+            ko_order.save()
+            print("Final KoOrder saved:", ko_order.order_id, "with items:", ko_order.items.count())
+
+            return JsonResponse({
+                'status': 'success',
+                'order_id': ko_order.order_id,
+                'items_count': ko_order.items.count()
+            })
+
+        except json.JSONDecodeError:
+            print("Invalid JSON data")
+            return JsonResponse({'status': 'failed', 'error': 'Invalid JSON data'}, status=400)
+        except Exception as e:
+            import traceback
+            print("Error saving KoOrder:", str(e))
+            print(traceback.format_exc())
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
+
+    return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
+
+@csrf_exempt
 def ko_view(request):
-    return render(request, 'ko.html')
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            # Process the order data as needed
+            return JsonResponse({'status': 'success'})
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'failed', 'error': 'Invalid JSON data'}, status=400)
+        except Exception as e:
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
+    
+    # Fetch orders with status 'sent' from KoOrder
+    orders = KoOrder.objects.filter(status='sent')
+    return render(request, 'ko.html', {'orders': orders})

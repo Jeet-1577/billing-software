@@ -150,3 +150,21 @@ class TableOrder(models.Model):
 
     def __str__(self):
         return f"TableOrder for Table {self.table.number}"
+
+class KoOrder(models.Model):
+    order_id = models.CharField(max_length=100, unique=True)
+    order_details = models.JSONField(default=dict)
+    items = models.ManyToManyField(OrderItem)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2)
+    gst_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    grand_total = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_type = models.CharField(max_length=50)
+    order_type = models.CharField(max_length=50)
+    status = models.CharField(max_length=20, default='sent')
+    time = models.TimeField(auto_now_add=True)
+    date = models.DateField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"KoOrder {self.order_id} - ₹{self.grand_total}"

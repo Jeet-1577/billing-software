@@ -1,7 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
     const selectedTable = localStorage.getItem('selectedTable');
-    if (selectedTable) {
-        document.getElementById('selectedTable').innerText = `Table: ${selectedTable.replace('table-', '')}`;
+    const selectedTableElement = document.getElementById('selectedTable');
+    if (selectedTable && selectedTableElement) {
+        selectedTableElement.innerText = `Table: ${selectedTable.replace('table-', '')}`;
     }
 
     const orderData = localStorage.getItem('orderData');
@@ -781,6 +782,86 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     } else {
         console.error('Target <ul id="inventory-list"> element not found.');
+    }
+
+    const sendButton = document.getElementById('sendButton');
+    if (sendButton) {
+        sendButton.addEventListener('click', function() {
+            const selectedItems = document.getElementsByClassName('item-cube selected');
+            const orderItems = [];
+            let totalAmount = 0;
+
+            for (let i = 0; i < selectedItems.length; i++) {
+                const item = selectedItems[i];
+                const itemId = item.getAttribute('data-item-id');
+                const itemName = item.getAttribute('data-item-name');
+                const basePrice = parseFloat(item.getAttribute('data-item-price'));
+                const uniqueItemId = item.getAttribute('data-unique-id') || `${itemId}-basic`;
+
+                const quantityElement = document.getElementById(`quantity-${uniqueItemId}`);
+                if (quantityElement) {
+                    const quantity = parseInt(quantityElement.innerText);
+                    const customizations = item.hasAttribute('data-selected-customizations') ? JSON.parse(item.getAttribute('data-selected-customizations')) : [];
+                    const customizationPrice = customizations.reduce((sum, opt) => sum + parseFloat(opt.price), 0);
+                    const itemTotalPrice = (basePrice + customizationPrice) * quantity;
+                    totalAmount += itemTotalPrice;
+
+                    orderItems.push({
+                        id: itemId,
+                        name: itemName,
+                        price: basePrice + customizationPrice,
+                        quantity: quantity,
+                        customizations: customizations,
+                        totalPrice: itemTotalPrice
+                    });
+                }
+            }
+
+            const orderData = {
+                orderId: Date.now().toString(),
+                items: orderItems,
+                totalAmount: totalAmount.toFixed(2),
+                gstAmount: (totalAmount * 0.18).toFixed(2),
+                grandTotal: (totalAmount * 1.18).toFixed(2),
+                paymentType: 'N/A',  // Default value if not selected
+                orderType: 'N/A',    // Default value if not selected
+                time: new Date().toLocaleTimeString('en-US', { hour12: true }),
+                date: new Date().toISOString().split('T')[0]
+            };
+
+            console.log("Order data being sent:", orderData);  // Debug print
+
+            fetch('/send-order/', {  // Corrected URL
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(orderData)
+            })
+            .then(response => {
+                console.log("Response status:", response.status);  // Debug response status
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        console.error("Response data:", data);  // Debug response data
+                        throw new Error('Network response was not ok');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    clearSelectedItems();
+                    // Removed redirect to KO page
+                } else {
+                    alert('Failed to send order: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while sending the order.');
+            });
+        });
     }
 });
 

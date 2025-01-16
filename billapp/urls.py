@@ -20,7 +20,7 @@ urlpatterns = [
     # path('tables/', table_view, name='table_view'),
     path("__reload__/", include("django_browser_reload.urls")),
     path('dashboard/', views.dashboard, name='dashboard'),
-    path('place-order/', views.place_order, name='place_order'),
+    path('place-order/', views.place_order, name='place_order'),  # Ensure place_order is handled here
     path('save-order/', views.save_order, name='save_order'),
     path('view-table-orders/<int:table_number>/', views.view_table_orders, name='view_table_orders'),
     path('release-table/', views.release_table, name='release_table'),
@@ -34,5 +34,6 @@ urlpatterns = [
     path('delete-order/<str:order_id>/', views.delete_order, name='delete_order'),
     path('verify-password/', views.verify_password, name='verify_password'),
     path('save-note/', save_note, name='save_note'),  # Ensure save_note is handled here
+    path('send-order/', views.send_order, name='send_order'),  # Ensure send_order is handled here
     path('ko/', views.ko_view, name='ko'),  # Add ko view
 ]
