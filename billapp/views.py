@@ -497,7 +497,8 @@ def send_order(request):
                 grand_total=Decimal(str(data.get('grandTotal', '0'))),
                 payment_type=data.get('paymentType', 'N/A'),  # Default value if not provided
                 order_type=data.get('orderType', 'N/A'),      # Default value if not provided
-                order_details=data.get('items', [])
+                order_details=data.get('items', []),
+                table_number=data.get('tableNumber', 'N/A')   # Include table number if provided
             )
 
             # Add items to KoOrder

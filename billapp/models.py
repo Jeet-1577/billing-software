@@ -161,6 +161,7 @@ class KoOrder(models.Model):
     payment_type = models.CharField(max_length=50)
     order_type = models.CharField(max_length=50)
     status = models.CharField(max_length=20, default='sent')
+    table_number = models.CharField(max_length=10, null=True, blank=True)  # Add table number field
     time = models.TimeField(auto_now_add=True)
     date = models.DateField(auto_now_add=True)
     created_at = models.DateTimeField(auto_now_add=True)

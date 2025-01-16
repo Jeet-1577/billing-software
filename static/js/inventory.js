@@ -852,7 +852,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.status === 'success') {
                     clearSelectedItems();
-                    // Removed redirect to KO page
+                    showSuccessPopup();  // Show success popup
                 } else {
                     alert('Failed to send order: ' + (data.error || 'Unknown error'));
                 }
@@ -863,6 +863,46 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+
+    function showSuccessPopup() {
+        const successOverlay = document.createElement('div');
+        successOverlay.classList.add('success-overlay', 'fixed', 'inset-0', 'flex', 'items-center', 'justify-center', 'z-50');
+        successOverlay.innerHTML = `
+            <div class="bg-gray-800 p-6 rounded-lg text-center">
+                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                    <circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
+                    <path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/>
+                </svg>
+                <p class="success-text mt-4">Order sent successfully!</p>
+            </div>
+        `;
+        document.body.appendChild(successOverlay);
+
+        setTimeout(() => {
+            successOverlay.classList.add('opacity-0');
+            setTimeout(() => {
+                successOverlay.remove();
+            }, 300);
+        }, 2000);
+    }
+
+    // Handle status button clicks
+    const statusButtons = document.querySelectorAll('.status-button');
+    statusButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const currentState = button.getAttribute('data-state');
+            const orderBox = button.closest('.order-box');
+
+            if (currentState === 'start') {
+                // Change to 'Order Preparing'
+                button.innerText = 'Order Preparing';
+                button.setAttribute('data-state', 'preparing');
+                orderBox.classList.add('neon-yellow');
+                orderBox.classList.remove('neon-green');
+            }
+            // Add more states if needed
+        });
+    });
 });
 
 function generateThermalBill(orderData) {

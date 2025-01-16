@@ -5,12 +5,12 @@
 <h1 class="text-3xl font-bold mb-4">Kitchen Orders</h1>
 <div class="container mx-auto h-screen overflow-hidden">
     <!-- New scrollable container with hidden scrollbar -->
-    <div class="orders-container h-full overflow-y-auto hide-scrollbar pb-36">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-5">
+    <div class="orders-container h-full overflow-y-auto hide-scrollbar pb-36 pt-3">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-5 pt-2">
             {% for order in orders %}
-            <div class="bg-gray-800 rounded-lg p-4 shadow-lg">
+            <div class="order-box bg-gray-800 shadow-lg rounded-lg p-4 relative transition-transform transform hover:scale-105">
                 <div class="flex justify-between items-baseline mb-1">
-                    <h2 class="text-lg font-bold">Order #{{ order.order_id }}</h2>
+                    <h2 class="text-lg font-bold text-white">Order #{{ order.order_id }}</h2>
                     <span class="text-xs text-gray-400">{{ order.status }}</span>
                 </div>
                 <p class="text-gray-400 mb-1 text-sm">Table: {{ order.table.number }}</p>
@@ -25,9 +25,7 @@
                 <div class="text-white font-semibold mb-2 text-sm">
                     Grand Total: ₹{{ order.grand_total }}
                 </div>
-                <button class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors w-full text-sm">
-                    Mark as Cooked
-                </button>
+                <button class="status-button bg-blue-500 text-white px-4 py-2 rounded transition-colors hover:bg-blue-600" data-state="start">Order Start</button>
             </div>
             {% endfor %}
         </div>
@@ -42,6 +40,39 @@
         display: none;            /* Safari and Chrome */
         width: 0;                 /* Hide scrollbar track */
     }
+    .neon-yellow {
+        box-shadow: 0 0 10px yellow, 0 0 20px yellow;
+    }
+    .neon-green {
+        box-shadow: 0 0 10px green, 0 0 20px green;
+    }
 </style>
+{% endblock %}
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle status button clicks
+    const statusButtons = document.querySelectorAll('.status-button');
+    statusButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const currentState = button.getAttribute('data-state');
+            const orderBox = button.closest('.order-box');
+
+            if (currentState === 'start') {
+                // Change to 'Order Preparing'
+                button.innerText = 'Order Preparing';
+                button.setAttribute('data-state', 'preparing');
+                orderBox.classList.add('neon-yellow');
+            } else if (currentState === 'preparing') {
+                // Change to 'Place Order'
+                button.innerText = 'Place Order';
+                button.setAttribute('data-state', 'place');
+                orderBox.classList.remove('neon-yellow');
+                orderBox.classList.add('neon-green');
+            }
+        });
+    });
+});
+</script>
 {% endblock %}
 
