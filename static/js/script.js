@@ -45,6 +45,81 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+// Utility Functions
+function prepareOrderData() {
+    const selectedItems = document.querySelectorAll('.item-cube.selected');
+    const orderItems = [];
+    let totalAmount = 0;
+
+    selectedItems.forEach(item => {
+        const itemId = item.dataset.itemId;
+        const itemName = item.dataset.itemName;
+        const itemPrice = parseFloat(item.dataset.itemPrice);
+        const quantity = parseInt(document.getElementById(`quantity-${itemId}`).innerText);
+
+        if (quantity > 0) {
+            totalAmount += itemPrice * quantity;
+            orderItems.push({
+                id: itemId,
+                name: itemName,
+                price: itemPrice,
+                quantity: quantity
+            });
+        }
+    });
+
+    const gstAmount = totalAmount * 0.18;
+    const grandTotal = totalAmount + gstAmount;
+    const paymentType = document.querySelector('input[name="payment_type"]:checked').value;
+    const orderType = document.querySelector('input[name="order_type"]:checked').value;
+
+    return {
+        orderId: Date.now().toString(),
+        items: orderItems,
+        totalAmount: totalAmount.toFixed(2),
+        gstAmount: gstAmount.toFixed(2),
+        grandTotal: grandTotal.toFixed(2),
+        paymentType: paymentType,
+        orderType: orderType,
+        time: new Date().toLocaleTimeString('en-US', { hour12: true }),
+        date: new Date().toISOString().split('T')[0]
+    };
+}
+
+// Main Functions
+function placeOrder() {
+    const orderData = prepareOrderData(); // Use the reusable function
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    fetch('/place-order/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify(orderData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.status === 'success') {
+            alert('Order placed successfully!');
+            console.log(orderData);
+            generateThermalBill(orderData); // Call the function to show the bill
+            clearSelectedItems();
+        } else {
+            alert('Failed to place order: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while placing the order.');
+    });
+}
 
     // Ensure the checkout button exists before adding the event listener
     // var checkoutButton = document.querySelector('.checkout');

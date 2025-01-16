@@ -40,7 +40,7 @@ class OrderResponseSchema(Schema):
 # API Endpoints
 @api.post("/orders/place", response=OrderResponseSchema)
 @transaction.atomic
-def place_order(request, order_data: OrderRequestSchema):
+def place_order_api(request, order_data: OrderRequestSchema):
     try:
         # Check if order already exists
         if Order.objects.filter(order_id=order_data.orderId).exists():
@@ -90,7 +90,7 @@ def place_order(request, order_data: OrderRequestSchema):
             "items_count": order.items.count()
         }
     except Exception as e:
-        print(f"Error placing order: {str(e)}")
+        print(f"Error placing order via API: {str(e)}")
         return {
             "status": "failed",
             "error": str(e)

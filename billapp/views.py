@@ -150,13 +150,15 @@ def table_view(request):
     return render(request, 'tabel.html', {'table_numbers': table_numbers})
 
 
+
 @csrf_exempt
 @transaction.atomic
 def place_order(request):
     if request.method == 'POST':
         try:
+            print("Raw request body:", request.body)  # Debug raw request body
             data = json.loads(request.body)
-            print("Received order data:", data)  # Debug print
+            print("Received order data:", data)  # Debug parsed data
 
             # Validate required fields
             required_keys = {"orderId", "items", "paymentType", "totalAmount", "gstAmount", "grandTotal", "orderType"}
@@ -167,7 +169,16 @@ def place_order(request):
                     'error': f'Missing required fields: {missing_keys}'
                 }, status=400)
 
-            # Create order with validated data
+            # Validate items
+            for item in data.get('items', []):
+                if not isinstance(item, dict):
+                    return JsonResponse({
+                        'status': 'failed',
+                        'error': f"Each item must be a dictionary, got: {item}"
+                    }, status=400)
+                print("Processing item:", item)  # Debug each item
+
+            # Create order
             order = Order.objects.create(
                 order_id=data['orderId'],
                 subtotal=Decimal(str(data.get('totalAmount', '0'))),
@@ -178,22 +189,23 @@ def place_order(request):
                 order_details=data.get('items', [])
             )
 
-            # Create order items
+            # Add items to order
             for item_data in data.get('items', []):
-                if not isinstance(item_data, dict):
-                    continue
-                
-                order_item = OrderItem.objects.create(
-                    name=item_data.get('name', ''),
-                    price=Decimal(str(item_data.get('price', '0'))),
-                    quantity=int(item_data.get('quantity', 0)),
-                    customizations=item_data.get('customizations', []),
-                    total_price=Decimal(str(item_data.get('totalPrice', '0'))),
-                    base_price=Decimal(str(item_data.get('price', '0'))),
-                    customization_price=Decimal(str(item_data.get('customizationPrice', '0'))),
-                    item_details=item_data
-                )
-                order.items.add(order_item)
+                try:
+                    order_item = OrderItem.objects.create(
+                        name=item_data.get('name', ''),
+                        price=Decimal(str(item_data.get('price', '0'))),
+                        quantity=int(item_data.get('quantity', 0)),
+                        customizations=item_data.get('customizations', []),
+                        total_price=Decimal(str(item_data.get('totalPrice', '0'))),
+                        base_price=Decimal(str(item_data.get('price', '0'))),
+                        customization_price=Decimal(str(item_data.get('customizationPrice', '0'))),
+                        item_details=item_data
+                    )
+                    order.items.add(order_item)  # Add order item to order
+                except Exception as e:
+                    print(f"Error processing item {item_data}: {e}")
+                    raise
 
             order.save()
             print("Final order saved:", order.order_id, "with items:", order.items.count())
