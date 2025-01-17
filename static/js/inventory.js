@@ -20,65 +20,67 @@ document.addEventListener('DOMContentLoaded', function() {
     var selectedItemsList = document.getElementById('selectedItemsList');
     var mainContent = document.getElementById('mainContent');
 
-    searchInput.addEventListener('input', function() {
-        var searchQuery = searchInput.value.toLowerCase();
-        fetch(`/inventory/?search=${searchQuery}`, {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            itemsContainer.innerHTML = '';
-            data.items.forEach(function(item) {
-                var itemCube = document.createElement('div');
-                itemCube.classList.add('item-cube');
-                itemCube.setAttribute('data-item-id', item.id);
-                itemCube.setAttribute('data-item-name', item.name);
-                itemCube.setAttribute('data-item-price', item.price);
-                itemCube.setAttribute('data-item-code', item.short_code);
-                itemCube.setAttribute('data-has-customization', item.has_customization);
-                if (item.has_customization) {
-                    itemCube.setAttribute('data-customization-options', JSON.stringify(item.customization_options));
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            var searchQuery = searchInput.value.toLowerCase();
+            fetch(`/inventory/?search=${searchQuery}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
-                itemCube.innerHTML = `
-                    <h3 class="text-xl font-bold mb-2">${item.name}</h3>
-                    <img src="${item.image}" alt="${item.name}">
-                `;
-                itemCube.addEventListener('click', function() {
-                    selectItem(this);
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                itemsContainer.innerHTML = '';
+                data.items.forEach(function(item) {
+                    var itemCube = document.createElement('div');
+                    itemCube.classList.add('item-cube');
+                    itemCube.setAttribute('data-item-id', item.id);
+                    itemCube.setAttribute('data-item-name', item.name);
+                    itemCube.setAttribute('data-item-price', item.price);
+                    itemCube.setAttribute('data-item-code', item.short_code);
+                    itemCube.setAttribute('data-has-customization', item.has_customization);
+                    if (item.has_customization) {
+                        itemCube.setAttribute('data-customization-options', JSON.stringify(item.customization_options));
+                    }
+                    itemCube.innerHTML = `
+                        <h3 class="text-xl font-bold mb-2">${item.name}</h3>
+                        <img src="${item.image}" alt="${item.name}">
+                    `;
+                    itemCube.addEventListener('click', function() {
+                        selectItem(this);
+                    });
+                    itemsContainer.appendChild(itemCube);
                 });
-                itemsContainer.appendChild(itemCube);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while fetching items.');
             });
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while fetching items.');
         });
-    });
 
-    searchInput.addEventListener('keydown', function(event) {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            var firstItem = itemsContainer.querySelector('.item-cube');
-            if (firstItem) {
-                selectItem(firstItem);
+        searchInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                var firstItem = itemsContainer.querySelector('.item-cube');
+                if (firstItem) {
+                    selectItem(firstItem);
+                }
             }
-        }
-    });
+        });
 
-    // Shortcut key to focus on the search bar
-    document.addEventListener('keydown', function(event) {
-        if (event.ctrlKey && event.key === 'f') {
-            event.preventDefault();
-            searchInput.focus();
-        }
-    });
+        // Shortcut key to focus on the search bar
+        document.addEventListener('keydown', function(event) {
+            if (event.ctrlKey && event.key === 'f') {
+                event.preventDefault();
+                searchInput.focus();
+            }
+        });
+    }
 
     function updateSidebar() {
         var selectedItems = document.getElementsByClassName('item-cube selected');
@@ -172,8 +174,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!item) return null;
             return {
                 itemId: item.getAttribute('data-item-id'),
-                customizations: item.hasAttribute('data-selected-customizations') ? JSON.parse(item.getAttribute('data-selected-customizations')) : [],
-                totalPrice: item.getAttribute('data-total-price'),
                 uniqueItemId: id,
                 quantity: document.getElementById(`quantity-${id}`)?.innerText || '1'
             };

@@ -564,3 +564,77 @@ def ko_view(request):
     # Fetch orders with status 'sent' from KoOrder
     orders = KoOrder.objects.filter(status='sent')
     return render(request, 'ko.html', {'orders': orders})
+
+@csrf_exempt
+@transaction.atomic
+def store_order(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            print("Received order data for storage:", data)  # Debug parsed data
+
+            # Validate required fields
+            required_keys = {"order_id", "items", "payment_type", "subtotal", "gst_amount", "grand_total", "order_type"}
+            missing_keys = required_keys - set(data.keys())
+            if missing_keys:
+                return JsonResponse({
+                    'status': 'failed',
+                    'error': f'Missing required fields: {missing_keys}'
+                }, status=400)
+
+            # Validate items
+            for item in data.get('items', []):
+                if not isinstance(item, dict):
+                    return JsonResponse({
+                        'status': 'failed',
+                        'error': f"Each item must be a dictionary, got: {item}"
+                    }, status=400)
+                print("Processing item for storage:", item)  # Debug each item
+
+            # Create order
+            order = Order.objects.create(
+                order_id=data['order_id'],
+                subtotal=Decimal(str(data.get('subtotal', '0'))),
+                gst_amount=Decimal(str(data.get('gst_amount', '0'))),
+                grand_total=Decimal(str(data.get('grand_total', '0'))),
+                payment_type=data.get('payment_type', 'N/A'),
+                order_type=data.get('order_type', 'N/A'),
+                order_details=data.get('items', [])
+            )
+
+            # Add items to order
+            for item_data in data.get('items', []):
+                try:
+                    order_item = OrderItem.objects.create(
+                        name=item_data.get('name', ''),
+                        price=Decimal(str(item_data.get('price', '0'))),
+                        quantity=int(item_data.get('quantity', 0)),
+                        customizations=item_data.get('customizations', []),
+                        total_price=Decimal(str(item_data.get('total_price', '0'))),
+                        base_price=Decimal(str(item_data.get('price', '0'))),
+                        customization_price=Decimal(str(item_data.get('customization_price', '0'))),
+                        item_details=item_data
+                    )
+                    order.items.add(order_item)  # Add order item to order
+                except Exception as e:
+                    print(f"Error processing item {item_data} for storage: {e}")
+                    raise
+
+            order.save()
+            print("Final order stored:", order.order_id, "with items:", order.items.count())
+
+            return JsonResponse({
+                'status': 'success',
+                'order_id': order.order_id,
+                'items_count': order.items.count()
+            })
+
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'failed', 'error': 'Invalid JSON data'}, status=400)
+        except Exception as e:
+            import traceback
+            print("Error storing order:", str(e))
+            print(traceback.format_exc())
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
+
+    return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)

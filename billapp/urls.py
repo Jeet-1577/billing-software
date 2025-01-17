@@ -1,6 +1,6 @@
 from django.urls import path, include
 from . import views  # Updated import
-from .views import table_view, save_note  # Import save_note from views
+from .views import table_view, save_note, store_order  # Import save_note and store_order from views
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -35,5 +35,6 @@ urlpatterns = [
     path('verify-password/', views.verify_password, name='verify_password'),
     path('save-note/', save_note, name='save_note'),  # Ensure save_note is handled here
     path('send-order/', views.send_order, name='send_order'),  # Ensure send_order is handled here
+    path('store-order/', store_order, name='store_order'),  # Ensure store_order is handled here
     path('ko/', views.ko_view, name='ko'),  # Add ko view
 ]

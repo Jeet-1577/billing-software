@@ -307,6 +307,53 @@ function printOrder(encodedOrder) {
     billWindow.document.close();
     billWindow.focus();
     billWindow.print();
+
+    // Store the order data in the Order table in the database
+    function storeOrder(order) {
+        fetch('/store-order/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                order_id: order.order_id,
+                items: order.items,
+                payment_type: order.payment_type,
+                subtotal: order.subtotal,
+                gst_amount: order.gst_amount,
+                grand_total: order.grand_total,
+                order_type: order.order_type
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                console.log('Order stored successfully!');
+            } else if (data.error && data.error.includes('duplicate key value violates unique constraint')) {
+                // Handle duplicate order ID by generating a new one
+                order.order_id = Date.now().toString();
+                storeOrder(order);
+            } else {
+                console.error('Failed to store order:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error storing order:', error);
+        })
+        .finally(() => {
+            // Remove the order box from the page using the correct order ID
+            const orderBox = document.querySelector(`.order-box[data-order-id="${order.pk}"]`);
+            if (orderBox) {
+                orderBox.remove();
+            }
+        });
+    }
+
+    storeOrder(order);
+
+    // Close the order details modal
+    closeOrderDetailsModal();
 }
 </script>
 {% endblock %}
