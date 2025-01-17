@@ -1042,3 +1042,12 @@ function generateThermalBill(orderData) {
     billWindow.document.close();
     billWindow.focus();
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const targetElement = document.getElementById('someButton');
+    if (targetElement) {
+        targetElement.addEventListener('click', () => {
+            // ...existing logic...
+        });
+    }
+});

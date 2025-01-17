@@ -4,17 +4,19 @@
 {% block content %}
 <h1 class="text-3xl font-bold mb-4">Kitchen Orders</h1>
 <div class="container mx-auto h-screen overflow-hidden">
+    <!-- CSRF Token Meta Tag -->
+    <meta name="csrfmiddlewaretoken" content="{{ csrf_token }}"/>
+    
     <!-- New scrollable container with hidden scrollbar -->
     <div class="orders-container h-full overflow-y-auto hide-scrollbar pb-36 pt-3">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-5 pt-2">
             {% for order in orders %}
-            <div class="order-box bg-gray-800 shadow-lg rounded-lg p-4 relative transition-transform transform hover:scale-105">
+            <div class="order-box bg-gray-800 shadow-lg rounded-lg p-4 relative transition-transform transform hover:scale-105" data-order-id="{{ order.pk }}">
                 <div class="flex justify-between items-baseline mb-1">
                     <h2 class="text-lg font-bold text-white">Order #{{ order.order_id }}</h2>
                     <span class="text-xs text-gray-400">{{ order.status }}</span>
                 </div>
                 <p class="text-gray-400 mb-1 text-sm">Table: {{ order.table.number }}</p>
-                <p class="text-gray-400 mb-1 text-sm">Payment: {{ order.payment_type }}</p>
                 <p class="text-gray-400 mb-1 text-sm">Date: {{ order.date }}</p>
                 <p class="text-gray-400 mb-2 text-sm">Time: {{ order.time }}</p>
                 <ul class="text-gray-400 mb-2 text-sm">
@@ -30,7 +32,34 @@
             {% endfor %}
         </div>
     </div>
+
 </div>
+
+<!-- Order Details Modal -->
+<div id="orderDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-gray-800 rounded-lg p-6 w-[600px] max-h-[80vh] transform transition-all scale-95 opacity-0 overflow-y-auto shadow-lg" id="modalContent">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-white" id="modalTitle">Order Details</h3>
+            <button onclick="closeOrderDetailsModal()" class="text-gray-400 hover:text-white" aria-label="Close order details modal">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div id="orderDetailsContent" class="text-white space-y-4">
+            <!-- Order details will be dynamically added here -->
+            <div class="flex justify-end mt-4 gap-2">
+                <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded" onclick="editOrder()">
+                    Edit
+                </button>
+                <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded" onclick="printOrder()">
+                    Print
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
     .hide-scrollbar {
         -ms-overflow-style: none;  /* Internet Explorer 10+ */    
@@ -49,6 +78,7 @@
 </style>
 {% endblock %}
 {% block scripts %}
+<script src="{% static 'js/script.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Handle status button clicks
@@ -57,6 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', function() {
             const currentState = button.getAttribute('data-state');
             const orderBox = button.closest('.order-box');
+            const orderId = orderBox.getAttribute('data-order-id');
 
             if (currentState === 'start') {
                 // Change to 'Order Preparing'
@@ -69,10 +100,74 @@ document.addEventListener('DOMContentLoaded', function() {
                 button.setAttribute('data-state', 'place');
                 orderBox.classList.remove('neon-yellow');
                 orderBox.classList.add('neon-green');
+            } else if (currentState === 'place') {
+                // Show order details modal
+                fetchOrderDetails(orderId);
             }
         });
     });
 });
+
+function fetchOrderDetails(orderId) {
+    fetch(`/order-details/${orderId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showOrderDetailsModal(data.order);
+            } else {
+                alert('Failed to fetch order details: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while fetching the order details.');
+        });
+}
+
+function showOrderDetailsModal(order) {
+    const modalContent = document.getElementById('orderDetailsContent');
+    modalContent.innerHTML = `
+        <div><strong>Order ID:</strong> ${order.order_id}</div>
+        <div><strong>Date:</strong> ${order.date}</div>
+        <div><strong>Time:</strong> ${order.time}</div>
+        <div><strong>Payment Type:</strong> ${order.payment_type}</div>
+        <div><strong>Order Type:</strong> ${order.order_type}</div>
+        <div><strong>Subtotal:</strong> ₹${order.subtotal}</div>
+        <div><strong>GST Amount:</strong> ₹${order.gst_amount}</div>
+        <div><strong>Grand Total:</strong> ₹${order.grand_total}</div>
+        <div><strong>Items:</strong></div>
+        <ul>
+            ${order.items.map(item => `
+                <li>${item.name} × ${item.quantity} ${item.customizations.length > 0 ? `(${item.customizations.map(c => c.name).join(', ')})` : ''}</li>
+            `).join('')}
+        </ul>
+        <div class="flex justify-end mt-4 gap-2">
+            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded" onclick="editOrder()">
+                Edit
+            </button>
+            <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded" onclick="printOrder()">
+                Print
+            </button>
+        </div>
+    `;
+
+    const modal = document.getElementById('orderDetailsModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setTimeout(() => {
+        document.getElementById('modalContent').classList.remove('scale-95', 'opacity-0');
+        document.getElementById('modalContent').classList.add('scale-100', 'opacity-100');
+    }, 10);
+}
+
+function closeOrderDetailsModal() {
+    const modal = document.getElementById('orderDetailsModal');
+    document.getElementById('modalContent').classList.remove('scale-100', 'opacity-100');
+    document.getElementById('modalContent').classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+    }, 300);
+}
 </script>
 {% endblock %}
-

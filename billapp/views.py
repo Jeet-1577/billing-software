@@ -15,7 +15,9 @@ from datetime import timedelta
 from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, Count
+import logging
 
+logger = logging.getLogger(__name__)
 
 def index(request):
     today = timezone.now().date()
@@ -379,33 +381,41 @@ def order_data(request):
 
     return render(request, 'order_data.html', {'orders': orders, 'employees': employees})
 
-def order_details(request, order_id):
+def order_details(request, pk):
     try:
-        order = get_object_or_404(Order, order_id=order_id)
+        logger.debug(f"Fetching order details for pk={pk}")
+        order = get_object_or_404(Order, pk=pk)
         order_items = order.items.all()
         order_data = {
             'order_id': order.order_id,
-            'date': order.date,
-            'time': order.time,
+            'date': order.date.strftime('%Y-%m-%d') if hasattr(order, 'date') else 'N/A',
+            'time': order.time.strftime('%H:%M:%S') if hasattr(order, 'time') else 'N/A',
             'payment_type': order.payment_type,
             'order_type': order.order_type,
-            'status': order.status,
-            'subtotal': order.subtotal,
-            'gst_amount': order.gst_amount,
-            'grand_total': order.grand_total,
+            'subtotal': str(order.subtotal),
+            'gst_amount': str(order.gst_amount),
+            'grand_total': str(order.grand_total),
             'items': [
                 {
                     'name': item.name,
                     'quantity': item.quantity,
-                    'total_price': item.total_price,
+                    'total_price': str(item.total_price),
                     'customizations': item.customizations
                 }
                 for item in order_items
             ]
         }
+        logger.debug(f"Order data: {order_data}")
         return JsonResponse({'status': 'success', 'order': order_data})
     except Order.DoesNotExist:
+        logger.error(f"Order with pk={pk} does not exist.")
         return JsonResponse({'status': 'failed', 'error': 'Order not found'}, status=404)
+    except AttributeError as ae:
+        logger.error(f"Attribute error in order_details for pk={pk}: {str(ae)}")
+        return JsonResponse({'status': 'failed', 'error': 'Invalid order data'}, status=400)
+    except Exception as e:
+        logger.error(f"Error fetching order details for pk={pk}: {str(e)}")
+        return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
 
 @csrf_exempt
 @require_POST

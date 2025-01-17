@@ -355,3 +355,30 @@ function getCookie(name) {
     }
     return cookieValue;
 }
+
+function fetchOrderDetails(orderId) {
+    if (!orderId) {
+        console.error('Invalid Order ID:', orderId);
+        alert('Invalid Order ID.');
+        return;
+    }
+
+    fetch(`/order-details/${orderId}/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                showOrderDetailsModal(data.order);
+            } else {
+                alert('Failed to fetch order details: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching order details:', error);
+            alert('An error occurred while fetching the order details.');
+        });
+}
