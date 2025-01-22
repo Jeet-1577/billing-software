@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 from decimal import Decimal
 from django.utils import timezone
 
@@ -84,6 +85,7 @@ class OrderItem(models.Model):
         return f"{self.name} x{self.quantity}"
 
 class Employee(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     employee_id = models.CharField(max_length=100, unique=True)
     name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)

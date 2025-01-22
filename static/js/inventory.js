@@ -1051,3 +1051,120 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+document.addEventListener('DOMContentLoaded', function() {
+    // ...existing code...
+
+    let currentOrderId = null;
+
+    function openDeleteOrderModal(orderId) {
+        currentOrderId = orderId;
+        document.getElementById('deleteOrderModal').classList.remove('hidden');
+        setTimeout(() => {
+            document.getElementById('deleteOrderModal').classList.add('opacity-100', 'scale-100');
+        }, 10);
+    }
+
+    // Handle form submission
+    document.getElementById('deleteOrderForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const password = document.getElementById('password').value;
+        const employeeId = document.getElementById('employeeId').value;
+        const reason = document.getElementById('reason').value;
+
+        if (reason) {
+            deleteOrder(currentOrderId, reason, password, employeeId);
+        } else {
+            alert('Deletion reason is required.');
+        }
+    });
+
+    // Handle modal cancellation
+    document.getElementById('cancelDelete').addEventListener('click', function() {
+        closeDeleteOrderModal();
+    });
+
+    function closeDeleteOrderModal() {
+        document.getElementById('deleteOrderModal').classList.remove('opacity-100', 'scale-100');
+        setTimeout(() => {
+            document.getElementById('deleteOrderModal').classList.add('hidden');
+            document.getElementById('deleteOrderForm').reset();
+            currentOrderId = null;
+        }, 300);
+    }
+
+    function deleteOrder(orderId, reason, password, employeeId) {
+        fetch(`/delete-order/${orderId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({ reason: reason, employee_id: employeeId, password: password })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                const row = document.querySelector(`button[data-order-id="${orderId}"]`).closest('tr');
+                row.classList.add('bg-red-700');
+
+                // Update the Order ID cell to be a clickable link
+                const orderIdCell = row.querySelector('td:nth-child(1)');
+                orderIdCell.innerHTML = `
+                    <a href="#" class="deleted-order-id hover:text-blue-500 underline" 
+                       data-deletion-reason="${reason}" 
+                       data-deleted-by="${employeeId}">
+                       ${orderId}
+                    </a>
+                `;
+
+                // Re-bind the event listener to the new link
+                orderIdCell.querySelector('.deleted-order-id').addEventListener('click', function(event) {
+                    event.preventDefault();
+                    const reason = this.getAttribute('data-deletion-reason');
+                    const employeeId = this.getAttribute('data-deleted-by');
+                    const displayText = `Reason: ${reason || 'No reason provided.'}\nDeleted by Employee ID: ${employeeId || 'N/A'}`;
+                    document.getElementById('deletionReasonContent').innerText = displayText;
+                    document.getElementById('deletionReasonModal').classList.remove('hidden');
+                    setTimeout(() => {
+                        document.getElementById('deletionReasonModal').classList.add('opacity-100', 'scale-100');
+                    }, 10);
+                });
+
+                closeDeleteOrderModal();
+                alert('Order deleted successfully!');
+            } else {
+                alert('Failed to delete order: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while deleting the order.');
+        });
+    }
+
+    // Implement event delegation for deleted-order-id links
+    document.body.addEventListener('click', function(event) {
+        if (event.target.matches('.deleted-order-id')) {
+            event.preventDefault();
+            const reason = event.target.getAttribute('data-deletion-reason');
+            const employeeId = event.target.getAttribute('data-deleted-by');
+            const displayText = `Reason: ${reason || 'No reason provided.'}\nDeleted by Employee ID: ${employeeId || 'N/A'}`;
+            document.getElementById('deletionReasonContent').innerText = displayText;
+            document.getElementById('deletionReasonModal').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('deletionReasonModal').classList.add('opacity-100', 'scale-100');
+            }, 10);
+        }
+    });
+
+    // Event listener to close the modal
+    document.getElementById('closeModal').addEventListener('click', function() {
+        document.getElementById('deletionReasonModal').classList.remove('opacity-100', 'scale-100');
+        setTimeout(() => {
+            document.getElementById('deletionReasonModal').classList.add('hidden');
+        }, 300);
+    });
+
+    // ...existing code...
+});
