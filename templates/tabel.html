@@ -5,6 +5,8 @@
 {% block title %}Tables{% endblock %}
 {% block header %}Tables{% endblock %}
 {% block content %}
+{% csrf_token %}
+
 <style>
     .table-container {
         overflow: auto; /* Enables scrolling */
@@ -53,8 +55,17 @@
         border: 2px solid yellow; /* Yellow border */
     }
     .table-box.booked {
-        box-shadow: 0 0 20px green; /* Green glow effect */
-        border: 2px solid green; /* Green border */
+        background-color: green;
+        color: white;
+    }
+    .table-box.booked .flag-icon {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        width: 20px;
+        height: 20px;
+        background: url("{% static 'img/flag.png' %}") no-repeat center center;
+        background-size: contain;
     }
     .button-container {
         position: absolute;
@@ -114,10 +125,11 @@
 </div>
 <div class="table-container">
     {% for table in table_numbers %}
-    <div class="table-box" id="table-{{ table.id }}" onclick="selectTable(this)" data-size="{{ table.size }}">
+    <div class="table-box {% if table.is_booked %}booked{% endif %}" id="table-{{ table.id }}" onclick="selectTable(this)" data-size="{{ table.size }}">
         {{ table.number }} 
         {% if table.is_booked %}
         <div class="table-timer" id="timer-{{ table.id }}"></div>
+        <div class="flag-icon"></div>
         {% endif %}
         <svg xmlns="http://www.w3.org/2000/svg" class="eye-icon h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" onclick="viewOrder(event, '{{ table.id }}')">
             <path 
@@ -139,6 +151,9 @@
             const tableElement = document.getElementById(tableId);
             if (tableElement) {
                 tableElement.classList.add('booked');
+                const flagIcon = document.createElement('div');
+                flagIcon.classList.add('flag-icon');
+                tableElement.appendChild(flagIcon);
             }
         });
     });

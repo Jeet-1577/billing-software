@@ -790,6 +790,14 @@
         margin-bottom: 10px;
     }
 
+    /* Hide scrollbar for customization popup */
+    #customizationPopup::-webkit-scrollbar {
+        width: 0; /* Safari and Chrome */
+    }
+    #customizationPopup {
+        -ms-overflow-style: none;  /* Internet Explorer 10+ */
+        scrollbar-width: none;     /* Firefox */
+    }
 
 </style>
 

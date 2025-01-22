@@ -37,4 +37,5 @@ urlpatterns = [
     path('send-order/', views.send_order, name='send_order'),  # Ensure send_order is handled here
     path('store-order/', store_order, name='store_order'),  # Ensure store_order is handled here
     path('ko/', views.ko_view, name='ko'),  # Add ko view
+    path('save-order-status/<int:order_id>/', views.update_ko_order_status, name='update_ko_order_status'),
 ]

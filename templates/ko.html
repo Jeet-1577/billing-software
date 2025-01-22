@@ -72,8 +72,9 @@
     .neon-yellow {
         box-shadow: 0 0 10px yellow, 0 0 20px yellow;
     }
-    .neon-green {
-        box-shadow: 0 0 10px green, 0 0 20px green;
+    .bg-green-600 {
+        background-color: green;
+        color: white;
     }
 </style>
 {% endblock %}
@@ -99,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 button.innerText = 'Place Order';
                 button.setAttribute('data-state', 'place');
                 orderBox.classList.remove('neon-yellow');
-                orderBox.classList.add('neon-green');
+                orderBox.classList.add('bg-green-600');
             } else if (currentState === 'place') {
                 // Show order details modal
                 fetchOrderDetails(orderId);
