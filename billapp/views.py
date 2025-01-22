@@ -422,35 +422,15 @@ def order_details(request, pk):
 def delete_order(request, order_id):
     try:
         data = json.loads(request.body)
-        logger.debug(f"Received data for deleting order: {data}")  # Log received data
-        password = data.get('password', '')
-        employee_id = data.get('employee_id', '')
         reason = data.get('reason', '')
-
-        # Verify employee credentials
-        employee = Employee.objects.filter(employee_id=employee_id).first()
-        if not employee:
-            logger.error(f"Invalid employee ID: {employee_id}")
-            return JsonResponse({'status': 'failed', 'error': 'Invalid employee ID'}, status=400)
-
-        user = authenticate(username=employee.user.username, password=password)
-        if user is None:
-            logger.error(f"Invalid password for employee ID: {employee_id}")
-            return JsonResponse({'status': 'failed', 'error': 'Invalid password'}, status=400)
-
-        # Proceed with order deletion
         order = get_object_or_404(Order, order_id=order_id)
         order.status = 'deleted'
         order.deletion_reason = reason
-        order.deleted_by = employee  # Store the employee who deleted the order
         order.save()
-        logger.info(f"Order {order_id} deleted by employee {employee_id}")
         return JsonResponse({'status': 'success'})
     except Order.DoesNotExist:
-        logger.error(f"Order not found: {order_id}")
         return JsonResponse({'status': 'failed', 'error': 'Order not found'}, status=404)
     except Exception as e:
-        logger.error(f"Error deleting order {order_id}: {str(e)}")
         return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
 
 @csrf_exempt
