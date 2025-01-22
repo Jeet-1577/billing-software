@@ -27,7 +27,7 @@
                 <div class="text-white font-semibold mb-2 text-sm">
                     Grand Total: ₹{{ order.grand_total }}
                 </div>
-                <button class="status-button bg-blue-500 text-white px-4 py-2 rounded transition-colors hover:bg-blue-600" data-state="start">Order Start</button>
+                <button class="status-button bg-blue-500 border border-black text-white px-4 py-2 rounded transition-colors hover:bg-blue-600" data-state="start">Order Start</button>
             </div>
             {% endfor %}
         </div>
@@ -69,9 +69,6 @@
         display: none;            /* Safari and Chrome */
         width: 0;                 /* Hide scrollbar track */
     }
-    .neon-yellow {
-        box-shadow: 0 0 10px yellow, 0 0 20px yellow;
-    }
     .bg-green-600 {
         background-color: green;
         color: white;
@@ -82,31 +79,44 @@
 <script src="{% static 'js/script.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Handle status button clicks
-    const statusButtons = document.querySelectorAll('.status-button');
-    statusButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const currentState = button.getAttribute('data-state');
-            const orderBox = button.closest('.order-box');
-            const orderId = orderBox.getAttribute('data-order-id');
+    // 1. Restore any saved states
+    document.querySelectorAll('.order-box').forEach(box => {
+        const orderId = box.dataset.orderId;
+        const savedState = localStorage.getItem(`orderBoxState-${orderId}`);
+        if (savedState) {
+            const { buttonText, buttonState, boxClasses } = JSON.parse(savedState);
+            const statusBtn = box.querySelector('.status-button');
+            if (statusBtn) {
+                statusBtn.innerText = buttonText;
+                statusBtn.dataset.state = buttonState;
+            }
+            box.classList.remove('bg-green-600');
+            boxClasses.forEach(cls => box.classList.add(cls));
+        }
+    });
 
+    // 2. Update localStorage on button click
+    document.querySelectorAll('.status-button').forEach(button => {
+        button.addEventListener('click', () => {
+            const currentState = button.dataset.state;
+            const box = button.closest('.order-box');
+            const orderId = box.dataset.orderId;
             if (currentState === 'start') {
-                // Change to 'Order Preparing'
-                button.innerText = 'Order Preparing';
-                button.setAttribute('data-state', 'preparing');
-                orderBox.classList.add('neon-yellow');
-            } else if (currentState === 'preparing') {
-                // Change to 'Place Order'
                 button.innerText = 'Place Order';
-                button.setAttribute('data-state', 'place');
-                orderBox.classList.remove('neon-yellow');
-                orderBox.classList.add('bg-green-600');
+                button.dataset.state = 'place';
+                box.classList.add('bg-green-600');
+                saveBoxState(orderId, 'Place Order', 'place', ['bg-green-600']);
             } else if (currentState === 'place') {
-                // Show order details modal
                 fetchOrderDetails(orderId);
             }
         });
     });
+
+    function saveBoxState(orderId, buttonText, buttonState, boxClasses) {
+        localStorage.setItem(`orderBoxState-${orderId}`, JSON.stringify({
+            buttonText, buttonState, boxClasses
+        }));
+    }
 });
 
 function fetchOrderDetails(orderId) {
