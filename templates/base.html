@@ -219,7 +219,11 @@
         </div>
         <div class="flex items-center">
             <a href="{% url 'tabel' %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Table</a>
-            <button class="dark-button green ml-2" onclick="saveOrder()">Save</button>
+            <form>
+                {% csrf_token %}
+                <!-- ...existing form fields... -->
+                <button class="dark-button red ml-2" type="button" onclick="saveOrder()">Save Order</button>
+            </form>
             <button class="dark-button red ml-2" id="sendButton">Send</button>
             <button class="dark-button yellow ml-2" id="koButton">KO</button>
         </div>
@@ -315,8 +319,7 @@
                 totalAmount: totalAmount.toFixed(2),
                 gstAmount: gstAmount.toFixed(2),
                 grandTotal: grandTotal.toFixed(2),
-                paymentType: document.querySelector('input[name="payment_type"]:checked').value,
-                orderType: document.querySelector('input[name="order_type"]:checked').value,
+                // Removed paymentType and orderType
                 time: new Date().toLocaleTimeString('en-US', { hour12: true }),
                 date: new Date().toISOString().split('T')[0],
                 tableId: selectedTable
@@ -354,7 +357,8 @@
                     document.getElementById('totalAmount').innerText = 'Total: ₹0.00';
                     document.getElementById('gstAmount').innerText = 'GST (18%): ₹0.00';
                     document.getElementById('grandTotal').innerText = 'Grand Total: ₹0.00';
-                    window.location.href = "{% url 'ko' %}";  // Redirect to KO page
+                    document.getElementById('selectionSidebar').classList.remove('open'); // Close the selection sidebar
+                    // window.location.href = "{% url 'ko' %}";  // Comment out or remove this line to prevent redirection
                 } else {
                     alert('Failed to save order: ' + data.error);
                 }
@@ -490,7 +494,8 @@
                     document.getElementById('totalAmount').innerText = 'Total: ₹0.00';
                     document.getElementById('gstAmount').innerText = 'GST (18%): ₹0.00';
                     document.getElementById('grandTotal').innerText = 'Grand Total: ₹0.00';
-                    window.location.href = "{% url 'ko' %}";  // Redirect to KO page
+                    document.getElementById('selectionSidebar').classList.remove('open'); // Close the selection sidebar
+                    // window.location.href = "{% url 'ko' %}";  // Comment out or remove this line to prevent redirection
                 } else {
                     alert('Failed to send order: ' + data.error);
                 }
