@@ -31,6 +31,7 @@ urlpatterns = [
     path('table-status/', views.get_table_status, name='table_status'),
     path('order-data/', views.order_data, name='order_data'),
     path('order-details/<int:pk>/', views.order_details, name='order_details'),
+    path('order-details/<str:order_id>/', views.order_details, name='order_details'),  # Add this line
     path('delete-order/<str:order_id>/', views.delete_order, name='delete_order'),
     path('verify-password/', views.verify_password, name='verify_password'),
     path('save-note/', save_note, name='save_note'),  # Ensure save_note is handled here
@@ -38,4 +39,6 @@ urlpatterns = [
     path('store-order/', store_order, name='store_order'),  # Ensure store_order is handled here
     path('ko/', views.ko_view, name='ko'),  # Add ko view
     # path('save-order-status/<int:order_id>/', views.update_ko_order_status, name='update_ko_order_status'),
+    path('fetch-order-data/', views.fetch_order_data, name='fetch_order_data'),  # Add fetch_order_data view
+    path('get-order-details/', views.get_order_details, name='get_order_details'),  # New URL for fetching order details
 ]

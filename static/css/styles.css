@@ -39,6 +39,7 @@ button:hover {
 .inventory-categories {
     max-height: 24rem; /* Adjust the height as needed */
     overflow-y: auto;
+
 }
 
 #sidebar {

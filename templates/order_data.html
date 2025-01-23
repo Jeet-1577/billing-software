@@ -1,5 +1,7 @@
 {% extends "base.html" %}
+{% load static tailwind_tags %}
 {% load static %}
+
 
 {% block title %}Order Data{% endblock %}
 
@@ -59,7 +61,7 @@
                 <tr class="hover:bg-gray-700 {% if order.status == 'deleted' %}bg-red-700{% endif %}" style="display: table; width: 100%; table-layout: fixed;">
                     <td class="py-2 px-4 border-b border-gray-700 text-center">
                         {% if order.status == 'deleted' and order.deletion_reason %}
-                            <a href="#" class="deleted-order-id hover:text-blue-500 underline" data-deletion-reason="{{ order.deletion_reason }}" data-deleted-by="{{ order.deleted_by }}">{{ order.order_id }}</a>
+                            <a href="#" class="deleted-order-id hover:text-blue-500 underline" data-deletion-reason="{{ order.deletion_reason }}" data-deleted_by="{{ order.deleted_by }}">{{ order.order_id }}</a>
                         {% else %}
                             {{ order.order_id }}
                         {% endif %}
@@ -96,7 +98,7 @@
     <div class="bg-gray-800 rounded-lg p-6 w-[600px] max-h-[80vh] overflow-y-auto shadow-lg">
         <div class="flex justify-between items-center mb-4">
             <h3 class="text-xl font-bold text-white">Order Details</h3>
-            <button onclick="closeOrderDetailsModal()" class="text-gray-400 hover:text-white" aria-label="Close order details popup">
+            <button id="closeOrderDetailsModal" class="text-gray-400 hover:text-white" aria-label="Close order details popup">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -180,318 +182,31 @@
     th:last-child, td:last-child {
         width: 12.5%; /* Ensure the Actions column takes up equal space */
     }
+
+    /* Customize scrollbar for items container */
+.items-container::-webkit-scrollbar {
+    width: 6px; /* Reduced from 8px to make it slimmer */
+}
+
+.items-container::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.4); /* Adjusted to match project colors */
+    border-radius: 3px; /* Slightly smaller radius for a sleeker look */
+}
+
+.items-container::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.6); /* Enhanced visibility on hover */
+}
+
+.items-container::-webkit-scrollbar-track {
+    background-color: rgba(0, 0, 0, 0.1); /* Matching the design with a subtle track color */
+}
+
+/* For Firefox */
+.items-container {
+    scrollbar-width: thin; /* Makes the scrollbar thinner */
+    scrollbar-color: rgba(255, 255, 255, 0.4) rgba(0, 0, 0, 0.1); /* Thumb and track colors */
+}
 </style>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const filterStatus = document.getElementById('filterStatus');
-        const filterPaymentType = document.getElementById('filterPaymentType');
-        const filterOrderType = document.getElementById('filterOrderType');
-        const filterFromDate = document.getElementById('filterFromDate');
-        const filterToDate = document.getElementById('filterToDate');
-        const searchOrderId = document.getElementById('searchOrderId');
-
-        filterStatus.addEventListener('change', applyFilters);
-        filterPaymentType.addEventListener('change', applyFilters);
-        filterOrderType.addEventListener('change', applyFilters);
-        filterFromDate.addEventListener('change', applyFilters);
-        filterToDate.addEventListener('change', applyFilters);
-        searchOrderId.addEventListener('input', applyFilters);
-
-        function applyFilters() {
-            const status = filterStatus.value.toLowerCase();
-            const paymentType = filterPaymentType.value.toLowerCase();
-            const orderType = filterOrderType.value.toLowerCase();
-            const fromDate = filterFromDate.value;
-            const toDate = filterToDate.value;
-            const orderId = searchOrderId.value.toLowerCase();
-
-            document.querySelectorAll('tbody tr').forEach(row => {
-                const rowStatus = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
-                const rowPaymentType = row.querySelector('td:nth-child(5)').textContent.toLowerCase();
-                const rowOrderType = row.querySelector('td:nth-child(6)').textContent.toLowerCase();
-                const rowDate = row.querySelector('td:nth-child(7)').textContent;
-                const rowOrderId = row.querySelector('td:nth-child(1)').textContent.toLowerCase();
-
-                const matchesStatus = !status || rowStatus.includes(status);
-                const matchesPaymentType = !paymentType || rowPaymentType.includes(paymentType);
-                const matchesOrderType = !orderType || rowOrderType.includes(orderType);
-                const matchesDate = (!fromDate || rowDate >= fromDate) && (!toDate || rowDate <= toDate);
-                const matchesOrderId = !orderId || rowOrderId.includes(orderId);
-
-                if (matchesStatus && matchesPaymentType && matchesOrderType && matchesDate && matchesOrderId) {
-                    row.style.display = 'table-row';
-                } else {
-                    row.style.display = 'none';
-                }
-            });
-        }
-
-        document.querySelectorAll('.view-order').forEach(button => {
-            button.addEventListener('click', function() {
-                const orderId = this.getAttribute('data-order-id');
-                fetchOrderDetails(orderId);
-            });
-        });
-
-        document.querySelectorAll('.delete-order').forEach(button => {
-            button.addEventListener('click', function() {
-                const orderId = this.getAttribute('data-order-id');
-                openDeleteOrderModal(orderId);
-            });
-        });
-
-        let currentOrderId = null;
-
-        function openDeleteOrderModal(orderId) {
-            currentOrderId = orderId;
-            document.getElementById('deleteOrderModal').classList.remove('hidden');
-            setTimeout(() => {
-                document.getElementById('deleteOrderModal').classList.add('opacity-100', 'scale-100');
-            }, 10);
-        }
-
-        // Handle form submission
-        document.getElementById('deleteOrderForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            const password = document.getElementById('password').value;
-            const employeeId = document.getElementById('employeeId').value;
-            const reason = document.getElementById('reason').value;
-
-            if (reason) {
-                deleteOrder(currentOrderId, reason, password, employeeId);
-            } else {
-                alert('Deletion reason is required.');
-            }
-        });
-
-        // Handle modal cancellation
-        document.getElementById('cancelDelete').addEventListener('click', function() {
-            closeDeleteOrderModal();
-        });
-
-        function closeDeleteOrderModal() {
-            document.getElementById('deleteOrderModal').classList.remove('opacity-100', 'scale-100');
-            setTimeout(() => {
-                document.getElementById('deleteOrderModal').classList.add('hidden');
-                document.getElementById('deleteOrderForm').reset();
-                currentOrderId = null;
-            }, 300);
-        }
-
-        function deleteOrder(orderId, reason, password, employeeId) {
-            fetch(`/delete-order/${orderId}/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: JSON.stringify({ reason: reason, employee_id: employeeId, password: password })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    const row = document.querySelector(`button[data-order-id="${orderId}"]`).closest('tr');
-                    row.classList.add('bg-red-700');
-
-                    // Update the Order ID cell to be a clickable link
-                    const orderIdCell = row.querySelector('td:nth-child(1)');
-                    orderIdCell.innerHTML = `
-                        <a href="#" class="deleted-order-id hover:text-blue-500 underline" 
-                           data-deletion-reason="${reason}" 
-                           data-deleted-by="${employeeId}">
-                           ${orderId}
-                        </a>
-                    `;
-
-                    // Re-bind the event listener to the new link
-                    orderIdCell.querySelector('.deleted-order-id').addEventListener('click', function(event) {
-                        event.preventDefault();
-                        const reason = this.getAttribute('data-deletion-reason');
-                        const employeeId = this.getAttribute('data-deleted-by');
-                        const displayText = `Reason: ${reason || 'No reason provided.'}\nDeleted by Employee ID: ${employeeId || 'N/A'}`;
-                        document.getElementById('deletionReasonContent').innerText = displayText;
-                        document.getElementById('deletionReasonModal').classList.remove('hidden');
-                        setTimeout(() => {
-                            document.getElementById('deletionReasonModal').classList.add('opacity-100', 'scale-100');
-                        }, 10);
-                    });
-
-                    closeDeleteOrderModal();
-                    alert('Order deleted successfully!');
-                } else {
-                    alert('Failed to delete order: ' + data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while deleting the order.');
-            });
-        }
-
-        // Implement event delegation for deleted-order-id links
-        document.body.addEventListener('click', function(event) {
-            if (event.target.matches('.deleted-order-id')) {
-                event.preventDefault();
-                const reason = event.target.getAttribute('data-deletion-reason');
-                const employeeId = event.target.getAttribute('data-deleted-by');
-                const displayText = `Reason: ${reason || 'No reason provided.'}\nDeleted by Employee ID: ${employeeId || 'N/A'}`;
-                document.getElementById('deletionReasonContent').innerText = displayText;
-                document.getElementById('deletionReasonModal').classList.remove('hidden');
-                setTimeout(() => {
-                    document.getElementById('deletionReasonModal').classList.add('opacity-100', 'scale-100');
-                }, 10);
-            }
-        });
-
-        // Event listener for deleted order IDs to display employee ID
-        document.querySelectorAll('.deleted-order-id').forEach(function(element) {
-            element.addEventListener('click', function(event) {
-                event.preventDefault();
-                const reason = this.getAttribute('data-deletion-reason');
-                const employeeId = this.getAttribute('data-deleted-by');  // Assuming this attribute is set
-                const displayText = `Reason: ${reason || 'No reason provided.'}\nDeleted by Employee ID: ${employeeId || 'N/A'}`;
-                document.getElementById('deletionReasonContent').innerText = displayText;
-                document.getElementById('deletionReasonModal').classList.remove('hidden');
-                setTimeout(() => {
-                    document.getElementById('deletionReasonModal').classList.add('opacity-100', 'scale-100');
-                }, 10);
-            });
-        });
-
-        // Event listener to close the modal
-        document.getElementById('closeModal').addEventListener('click', function() {
-            document.getElementById('deletionReasonModal').classList.remove('opacity-100', 'scale-100');
-            setTimeout(() => {
-                document.getElementById('deletionReasonModal').classList.add('hidden');
-            }, 300);
-        });
-    });
-
-    function fetchOrderDetails(orderId) {
-        fetch(`/order-details/${orderId}/`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    displayOrderDetails(data.order);
-                } else {
-                    alert('Failed to fetch order details: ' + data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while fetching the order details.');
-            });
-    }
-
-    function displayOrderDetails(order) {
-        const orderDetailsContent = document.getElementById('orderDetailsContent');
-        orderDetailsContent.innerHTML = `
-            <div class="border-b border-gray-700 pb-2 mb-2">
-                <h4 class="text-lg font-bold">Order ID: ${order.order_id}</h4>
-                <div class="grid grid-cols-2 gap-4">
-                    <p><strong>Date:</strong> ${order.date}</p>
-                    <p><strong>Time:</strong> ${order.time}</p>
-                    <p><strong>Payment Type:</strong> ${order.payment_type}</p>
-                    <p><strong>Order Type:</strong> ${order.order_type}</p>
-                    <p><strong>Status:</strong> ${order.status}</p>
-                </div>
-            </div>
-            <div class="border-b border-gray-700 pb-2 mb-2">
-                <h4 class="text-lg font-bold">Items:</h4>
-                <ul class="list-disc pl-5 space-y-2">
-                    ${order.items.map(item => `
-                        <li>
-                            <p><strong>${item.name}</strong> (x${item.quantity}) - ₹${parseFloat(item.total_price).toFixed(2)}</p>
-                            ${item.customizations.length > 0 ? `
-                                <ul class="list-disc pl-5 space-y-1">
-                                    ${item.customizations.map(c => `
-                                        <li>${c.name} - ₹${parseFloat(c.price).toFixed(2)}</li>
-                                    `).join('')}
-                                </ul>
-                            ` : ''}
-                        </li>
-                    `).join('')}
-                </ul>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <p><strong>Subtotal:</strong> ₹${parseFloat(order.subtotal).toFixed(2)}</p>
-                <p><strong>GST Amount:</strong> ₹${parseFloat(order.gst_amount).toFixed(2)}</p>
-                <p><strong>Grand Total:</strong> ₹${parseFloat(order.grand_total).toFixed(2)}</p>
-            </div>
-        `;
-
-        const modal = document.getElementById('orderDetailsModal');
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    }
-
-    function closeOrderDetailsModal() {
-        const modal = document.getElementById('orderDetailsModal');
-        modal.classList.remove('flex');
-        modal.classList.add('hidden');
-    }
-
-    function promptForPassword(orderId) {
-        const password = prompt("Enter your password to delete this order:");
-        if (password) {
-            verifyPassword(password, orderId);
-        }
-    }
-
-    function verifyPassword(password, orderId) {
-        fetch(`/verify-password/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify({ password: password })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                promptForReason(orderId);
-            } else {
-                alert('Password incorrect. Cannot delete the order.');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while verifying the password.');
-        });
-    }
-
-    function promptForReason(orderId) {
-        const reason = prompt("Enter the reason for deleting this order:");
-        if (reason) {
-            deleteOrder(orderId, reason);
-        }
-    }
-
-    function deleteOrder(orderId, reason) {
-        fetch(`/delete-order/${orderId}/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify({ reason: reason })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                const row = document.querySelector(`button[data-order-id="${orderId}"]`).closest('tr');
-                row.classList.add('bg-red-700');
-                alert('Order deleted successfully!');
-            } else {
-                alert('Failed to delete order: ' + data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while deleting the order.');
-        });
-    }
-</script>
+<script src="{% static 'js/order_data.js' %}"></script>
 {% endblock %}

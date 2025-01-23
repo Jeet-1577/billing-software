@@ -638,3 +638,71 @@ def store_order(request):
             return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
 
     return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
+
+@csrf_exempt
+def fetch_order_data(request):
+    if request.method == 'GET':
+        order_id = request.GET.get('order_id')
+        if not order_id:
+            return JsonResponse({'status': 'failed', 'error': 'Order ID not provided'}, status=400)
+        try:
+            order = Order.objects.get(order_id=order_id)
+            order_data = {
+                'order_id': order.order_id,
+                'date': order.date.strftime('%Y-%m-%d') if hasattr(order, 'date') else 'N/A',
+                'time': order.time.strftime('%H:%M:%S') if hasattr(order, 'time') else 'N/A',
+                'payment_type': order.payment_type,
+                'order_type': order.order_type,
+                'subtotal': str(order.subtotal),
+                'gst_amount': str(order.gst_amount),
+                'grand_total': str(order.grand_total),
+                'items': [
+                    {
+                        'name': item.name,
+                        'quantity': item.quantity,
+                        'total_price': str(item.total_price),
+                        'customizations': item.customizations
+                    }
+                    for item in order.items.all()
+                ]
+            }
+            return JsonResponse({'status': 'success', 'order': order_data})
+        except Order.DoesNotExist:
+            return JsonResponse({'status': 'failed', 'error': 'Order not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
+    return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
+
+@csrf_exempt
+def get_order_details(request):
+    if request.method == 'GET':
+        order_id = request.GET.get('order_id')
+        if not order_id:
+            return JsonResponse({'status': 'failed', 'error': 'Order ID not provided'}, status=400)
+        try:
+            order = Order.objects.get(order_id=order_id)
+            order_data = {
+                'order_id': order.order_id,
+                'date': order.date.strftime('%Y-%m-%d') if hasattr(order, 'date') else 'N/A',
+                'time': order.time.strftime('%H:%M:%S') if hasattr(order, 'time') else 'N/A',
+                'payment_type': order.payment_type,
+                'order_type': order.order_type,
+                'subtotal': str(order.subtotal),
+                'gst_amount': str(order.gst_amount),
+                'grand_total': str(order.grand_total),
+                'items': [
+                    {
+                        'name': item.name,
+                        'quantity': item.quantity,
+                        'total_price': str(item.total_price),
+                        'customizations': item.customizations
+                    }
+                    for item in order.items.all()
+                ]
+            }
+            return JsonResponse({'status': 'success', 'order': order_data})
+        except Order.DoesNotExist:
+            return JsonResponse({'status': 'failed', 'error': 'Order not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
+    return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
