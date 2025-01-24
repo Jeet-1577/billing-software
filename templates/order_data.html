@@ -57,7 +57,9 @@
             </thead>
             <tbody id="ordersTableBody" class="overflow-y-auto max-h-[500px]" style="display: block; scrollbar-width: none; -ms-overflow-style: none;">
                 {% for order in orders %}
-                <tr class="hover:bg-gray-700 {% if order.status == 'deleted' %}bg-red-700{% endif %}" style="display: table; width: 100%; table-layout: fixed;">
+                <tr class="hover:bg-gray-700 {% if order.status == 'deleted' %}bg-red-700{% endif %}"
+                    data-status="{{ order.status }}"
+                    style="display: table; width: 100%; table-layout: fixed;">
                     <td class="py-2 px-4 border-b border-gray-700 text-center">
                         {% if order.status == 'deleted' and order.deletion_reason %}
                             <a href="#" class="deleted-order-id hover:text-blue-500 underline" data-deletion-reason="{{ order.deletion_reason }}" data-deleted_by="{{ order.deleted_by }}">{{ order.order_id }}</a>

@@ -287,6 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         Array.from(rows).forEach(row => {
             const cells = row.getElementsByTagName('td');
+            const rowStatus = (row.dataset.status || '').toLowerCase();
             if (cells.length >= 9) { // Ensure enough cells
                 const rowOrderId = cells[0].textContent.toLowerCase();
                 const rowSubtotal = cells[1].textContent.toLowerCase();
@@ -296,14 +297,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 const rowOrderType = cells[5].textContent.toLowerCase();
                 const rowDate = cells[6].textContent;
                 const rowTime = cells[7].textContent.toLowerCase();
-                const rowStatus = cells[8].textContent.toLowerCase();
+                // const rowStatus = cells[8].textContent.toLowerCase();
 
                 // Check Status
-                const statusMatch = status ? rowStatus === status : true;
+                let statusMatch = true;
+                if (status === 'deleted') {
+                    statusMatch = rowStatus === 'deleted';
+                } else if (status === 'completed') {
+                    statusMatch = rowStatus !== 'deleted';
+                } else {
+                    statusMatch = status ? rowStatus === status : true;
+                }
 
                 // Check Payment Type
                 const paymentMatch = paymentType ? rowPaymentType === paymentType : true;
-
+                
                 // Check Order Type
                 const orderTypeMatch = orderType ? rowOrderType === orderType : true;
 
