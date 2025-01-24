@@ -258,6 +258,12 @@ function promptForPassword(orderId) {
 }
 
 function verifyPassword(password, orderId) {
+    // Remove any try/catch or fallback logic
+    // Force the user to provide a valid password before proceeding
+    if (!password) {
+        alert("Password is required!");
+        return;
+    }
     fetch(`/verify-password/`, {
         method: 'POST',
         headers: {

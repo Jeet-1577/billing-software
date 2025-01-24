@@ -7,6 +7,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Event listener for "delete-order" buttons
+    document.querySelectorAll('.delete-order').forEach(button => {
+        button.addEventListener('click', function() {
+            const orderId = this.getAttribute('data-order-id');
+            openDeleteOrderModal(orderId);
+        });
+    });
+
     // Function to fetch order details from the backend
     function fetchOrderDetails(orderId) {
         fetch(`/get-order-details/?order_id=${orderId}`)
@@ -98,6 +106,23 @@ document.addEventListener('DOMContentLoaded', function() {
         modal.classList.add('flex');
     }
 
+    // Function to open the delete order modal
+    function openDeleteOrderModal(orderId) {
+        const modal = document.getElementById('deleteOrderModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        modal.setAttribute('data-order-id', orderId);
+    }
+
+    // Function to close the delete order modal
+    function closeDeleteOrderModal() {
+        const modal = document.getElementById('deleteOrderModal');
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+        modal.removeAttribute('data-order-id');
+        document.getElementById('deleteOrderForm').reset();
+    }
+
     // Function to close the modal
     function closeOrderDetailsModal() {
         const modal = document.getElementById('orderDetailsModal');
@@ -111,11 +136,120 @@ document.addEventListener('DOMContentLoaded', function() {
         closeButton.addEventListener('click', closeOrderDetailsModal);
     }
 
+    // Event listener for cancel button in the modal
+    const cancelDeleteButton = document.getElementById('cancelDelete');
+    if (cancelDeleteButton) {
+        cancelDeleteButton.addEventListener('click', closeDeleteOrderModal);
+    }
+
+    // Event listener for form submission in the modal
+    const deleteOrderForm = document.getElementById('deleteOrderForm');
+    if (deleteOrderForm) {
+        deleteOrderForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const modal = document.getElementById('deleteOrderModal');
+            const orderId = modal.getAttribute('data-order-id');
+            const employeeId = document.getElementById('employeeId').value.trim();
+            const password = document.getElementById('password').value;
+            const reason = document.getElementById('reason').value.trim();
+
+            if (!employeeId || !password || !reason) {
+                alert('All fields are required.');
+                return;
+            }
+
+            // Verify employee credentials
+            fetch('/verify-password/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCSRFToken()
+                },
+                body: JSON.stringify({ employee_id: employeeId, password: password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Proceed to delete the order
+                    deleteOrder(orderId, reason);
+                } else {
+                    alert('Authentication failed: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error verifying credentials:', error);
+                alert('An error occurred during authentication.');
+            });
+        });
+    }
+
+    // Function to delete the order
+    function deleteOrder(orderId, reason) {
+        fetch(`/delete-order/${orderId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({ reason: reason })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                closeDeleteOrderModal();
+
+                // Find the row/container of the deleted order
+                const button = document.querySelector(`.delete-order[data-order-id="${orderId}"]`);
+                if (button) {
+                    const row = button.closest('tr') || button.closest('.order-row');
+                    if (row) {
+                        // Add your existing CSS class for deleted orders
+                        row.classList.add('deleted-order');
+                    }
+                }
+                // Refresh page after successful delete
+                window.location.reload();
+            } else {
+                alert('Failed to delete order: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting order:', error);
+            alert('An error occurred while deleting the order.');
+        });
+    }
+
+    // Helper function to get CSRF token from cookies
+    function getCSRFToken() {
+        let cookieValue = null;
+        const name = 'csrftoken';
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
     // Close modal when clicking outside the modal content
     const modalOverlay = document.getElementById('orderDetailsModal');
     modalOverlay.addEventListener('click', function(event) {
         if (event.target === modalOverlay) {
             closeOrderDetailsModal();
+        }
+    });
+
+    // Close the modal when clicking outside of it
+    const deleteModalOverlay = document.getElementById('deleteOrderModal');
+    deleteModalOverlay.addEventListener('click', function(event) {
+        if (event.target === deleteModalOverlay) {
+            closeDeleteOrderModal();
         }
     });
 
@@ -206,5 +340,4 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initial filter to display all orders
     filterOrders();
 });
-
 
