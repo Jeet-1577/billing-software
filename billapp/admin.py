@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Item, Order, CustomizationOption, CustomizationCategory, OrderItem, TableOrder, Table, Employee  # Remove Note import
+from .models import Category, Item, Order, CustomizationOption, CustomizationCategory, OrderItem, TableOrder, Table  # Removed Employee import
 from django import forms
 
 class CustomizationOptionInline(admin.TabularInline):
@@ -124,4 +124,4 @@ admin.site.register(CustomizationOption)
 admin.site.register(Item, ItemAdmin)
 admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderItem, OrderItemAdmin)
-admin.site.register(Employee)  # Register the Employee model
+# admin.site.unregister(Employee)  # Remove the Employee model registration

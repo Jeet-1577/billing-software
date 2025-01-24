@@ -985,6 +985,10 @@ select {
   width: 100%;
 }
 
+.w-\[400px\] {
+  width: 400px;
+}
+
 .min-w-full {
   min-width: 100%;
 }

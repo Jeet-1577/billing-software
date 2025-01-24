@@ -62,7 +62,7 @@
                     style="display: table; width: 100%; table-layout: fixed;">
                     <td class="py-2 px-4 border-b border-gray-700 text-center">
                         {% if order.status == 'deleted' and order.deletion_reason %}
-                            <a href="#" class="deleted-order-id hover:text-blue-500 underline" data-deletion-reason="{{ order.deletion_reason }}" data-deleted_by="{{ order.deleted_by }}">{{ order.order_id }}</a>
+                            <a href="#" class="deleted-order-id hover:text-blue-500 underline" data-deletion-reason="{{ order.deletion_reason }}" data-deleted_by="{{ order.deleted_by.name }}">{{ order.order_id }}</a>
                         {% else %}
                             {{ order.order_id }}
                         {% endif %}
@@ -146,6 +146,24 @@
                 <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Delete</button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Modal Popup for Deletion Details -->
+<div id="deletionDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-gray-800 rounded-lg p-6 w-[400px] shadow-lg">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-white">Deletion Details</h3>
+            <button id="closeDeletionDetailsModal" class="text-gray-400 hover:text-white" aria-label="Close deletion details popup">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div id="deletionDetailsContent" class="space-y-4 text-white">
+            <p><strong>Deleted By:</strong> <span id="deletedByName"></span></p>
+            <p><strong>Reason:</strong> <span id="deletionReason"></span></p>
+        </div>
     </div>
 </div>
 

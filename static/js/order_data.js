@@ -15,6 +15,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // Event listener for deleted order ID links
+    document.querySelectorAll('.deleted-order-id').forEach(link => {
+        link.addEventListener('click', function(event) {
+            event.preventDefault();
+            const deletionReason = this.getAttribute('data-deletion-reason');
+            const deletedBy = this.getAttribute('data-deleted_by');
+            showDeletionDetails(deletedBy, deletionReason);
+        });
+    });
+
     // Function to fetch order details from the backend
     function fetchOrderDetails(orderId) {
         fetch(`/get-order-details/?order_id=${orderId}`)
@@ -130,10 +140,32 @@ document.addEventListener('DOMContentLoaded', function() {
         modal.classList.add('hidden');
     }
 
+    // Function to display deletion details in the modal
+    function showDeletionDetails(deletedBy, reason) {
+        document.getElementById('deletedByName').textContent = deletedBy || 'N/A';
+        document.getElementById('deletionReason').textContent = reason || 'No reason provided.';
+        const modal = document.getElementById('deletionDetailsModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+
+    // Function to close the deletion details modal
+    function closeDeletionDetailsModal() {
+        const modal = document.getElementById('deletionDetailsModal');
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+    }
+
     // Event listener for closing the modal
     const closeButton = document.getElementById('closeOrderDetailsModal');
     if (closeButton) {
         closeButton.addEventListener('click', closeOrderDetailsModal);
+    }
+
+    // Event listener for closing the deletion details modal
+    const closeDeletionDetailsBtn = document.getElementById('closeDeletionDetailsModal');
+    if (closeDeletionDetailsBtn) {
+        closeDeletionDetailsBtn.addEventListener('click', closeDeletionDetailsModal);
     }
 
     // Event listener for cancel button in the modal
@@ -250,6 +282,14 @@ document.addEventListener('DOMContentLoaded', function() {
     deleteModalOverlay.addEventListener('click', function(event) {
         if (event.target === deleteModalOverlay) {
             closeDeleteOrderModal();
+        }
+    });
+
+    // Close modal when clicking outside the modal content
+    const deletionModalOverlay = document.getElementById('deletionDetailsModal');
+    deletionModalOverlay.addEventListener('click', function(event) {
+        if (event.target === deletionModalOverlay) {
+            closeDeletionDetailsModal();
         }
     });
 
