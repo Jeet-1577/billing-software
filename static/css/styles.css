@@ -62,3 +62,11 @@ button:hover {
     opacity: 0;
     transform: scale(0.95);
 }
+
+.flex-1 {
+    flex: 1 1 100%; /* Adjusted to take full width for vertical alignment */
+}
+
+.min-w-full {
+    min-width: 100%; /* Ensures elements take full width and stack vertically */
+}

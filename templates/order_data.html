@@ -16,7 +16,6 @@
                 <option value="">All Statuses</option>
                 <option value="pending">Pending</option>
                 <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
                 <option value="deleted">Deleted</option>
             </select>
             <select id="filterPaymentType" class="bg-gray-800 text-white rounded-lg p-2">
@@ -42,7 +41,7 @@
     </div>
 
     <div class="overflow-x-auto">
-        <table class="min-w-full bg-gray-800 text-white rounded-lg shadow-lg mx-auto">
+        <table id="ordersTable" class="min-w-full bg-gray-800 text-white rounded-lg shadow-lg mx-auto">
             <thead>
                 <tr>
                     <th class="py-2 px-4 border-b border-gray-700 text-center">Order ID</th>
@@ -56,7 +55,7 @@
                     <th class="py-2 px-4 border-b border-gray-700 text-center">Actions</th>
                 </tr>
             </thead>
-            <tbody class="overflow-y-auto max-h-[500px]" style="display: block; scrollbar-width: none; -ms-overflow-style: none;">
+            <tbody id="ordersTableBody" class="overflow-y-auto max-h-[500px]" style="display: block; scrollbar-width: none; -ms-overflow-style: none;">
                 {% for order in orders %}
                 <tr class="hover:bg-gray-700 {% if order.status == 'deleted' %}bg-red-700{% endif %}" style="display: table; width: 100%; table-layout: fixed;">
                     <td class="py-2 px-4 border-b border-gray-700 text-center">
@@ -206,6 +205,8 @@
     scrollbar-width: thin; /* Makes the scrollbar thinner */
     scrollbar-color: rgba(255, 255, 255, 0.4) rgba(0, 0, 0, 0.1); /* Thumb and track colors */
 }
+
+
 </style>
 
 <script src="{% static 'js/order_data.js' %}"></script>
