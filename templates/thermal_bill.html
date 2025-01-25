@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Thermal Bill - Order {{ order.order_id }}</title>
+    <style>
+        @media print {
+            body {
+                width: 80mm; /* Adjust width between 58mm to 80mm */
+                font-family: 'Courier New', Courier, monospace;
+                font-size: 12px;
+                margin: 0;
+                padding: 10px;
+            }
+            .header, .footer {
+                text-align: center;
+            }
+            .header img {
+                max-width: 100px;
+                margin-bottom: 10px;
+            }
+            .details, .total {
+                margin: 10px 0;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 10px 0;
+            }
+            table, th, td {
+                border: 1px dashed #000;
+            }
+            th, td {
+                padding: 5px;
+                text-align: left;
+            }
+            .thank-you {
+                margin-top: 20px;
+                text-align: center;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body onload="window.print()">
+    <div class="header">
+        <img src="{% static 'img/logo.png' %}" alt="Company Logo">
+        <h2>Your Company Name</h2>
+        <p>1234 Street Name, City, State</p>
+        <p>Phone: (123) 456-7890 | Email: info@yourcompany.com</p>
+    </div>
+    
+    <div class="details">
+        <div><strong>Order ID:</strong> {{ order.order_id }}</div>
+        <div><strong>Date:</strong> {{ order.date }}</div>
+        <div><strong>Time:</strong> {{ order.time }}</div>
+        <div><strong>Payment:</strong> {{ order.payment_type }}</div>
+        <div><strong>Order Type:</strong> {{ order.order_type }}</div>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Qty</th>
+                <th>Price (₹)</th>
+                <th>Total (₹)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in order.items %}
+            <tr>
+                <td>{{ item.name }}{% if item.customizations %} ({{ item.customizations|join:", " }}){% endif %}</td>
+                <td>{{ item.quantity }}</td>
+                <td>₹{{ item.price|floatformat:2 }}</td>
+                <td>₹{{ item.total_price|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="total">
+        <strong>Subtotal:</strong> ₹{{ order.subtotal }}
+    </div>
+    <div class="total">
+        <strong>GST (18%):</strong> ₹{{ order.gst_amount }}
+    </div>
+    <div class="total">
+        <strong>Grand Total:</strong> ₹{{ order.grand_total }}
+    </div>
+    
+    <div class="thank-you">
+        <p>Thank you for dining with us!</p>
+        <p>Please come again.</p>
+    </div>
+</body>
+</html>
