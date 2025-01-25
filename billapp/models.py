@@ -2,6 +2,10 @@ from django.db import models
 from django.contrib.auth.models import User
 from decimal import Decimal
 from django.utils import timezone
+import uuid
+
+def generate_unique_aadhar():
+    return uuid.uuid4().hex[:12]
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
@@ -85,11 +89,18 @@ class OrderItem(models.Model):
         return f"{self.name} x{self.quantity}"
 
 class Employee(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, default=1)  # Provide a default value
     employee_id = models.CharField(max_length=100, unique=True)
     name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
-    # Add other relevant fields
+    mobile_number = models.CharField(max_length=15, unique=True, default='0000000000')  # Provide a default value
+    address = models.TextField(default='')  # Provide a default value
+    aadhar = models.CharField(max_length=12, unique=True, default=generate_unique_aadhar)  # Provide a unique default value
+
+    def save(self, *args, **kwargs):
+        if not self.aadhar:
+            self.aadhar = generate_unique_aadhar()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name} ({self.employee_id})"

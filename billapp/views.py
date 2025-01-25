@@ -423,9 +423,12 @@ def delete_order(request, order_id):
     try:
         data = json.loads(request.body)
         reason = data.get('reason', '')
+        employee_id = data.get('employee_id', '')
+        employee = get_object_or_404(Employee, employee_id=employee_id)
         order = get_object_or_404(Order, order_id=order_id)
         order.status = 'deleted'
         order.deletion_reason = reason
+        order.deleted_by = employee
         order.save()
         return JsonResponse({'status': 'success'})
     except Order.DoesNotExist:

@@ -22,7 +22,7 @@ from billapp.api import api as main_api
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', main_api.urls),  # Include NinjaAPI URLs
+    path('api/', main_api.urls),  # Ensure only one instance of NinjaAPI is registered
     path('', include('billapp.urls')),  # Include app URLs
     # ...existing code...
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
