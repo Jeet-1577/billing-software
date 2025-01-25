@@ -244,16 +244,28 @@ def save_order(request):
             table_number = data['tableId'].replace('table-', '')
             table = Table.objects.get(number=table_number)
 
-            # Create TableOrder with non-zero values
-            table_order = TableOrder.objects.create(
+            # Check if a TableOrder already exists for the table
+            table_order, created = TableOrder.objects.get_or_create(
                 table=table,
-                order_id=data['orderId'],
-                subtotal=Decimal(str(data.get('totalAmount', '0'))),
-                gst_amount=Decimal(str(data.get('gstAmount', '0'))),
-                grand_total=Decimal(str(data.get('grandTotal', '0'))),
-                payment_type=data.get('paymentType', 'N/A'),
-                order_type=data.get('orderType', 'N/A')
+                defaults={
+                    'order_id': data['orderId'],
+                    'subtotal': Decimal(str(data.get('totalAmount', '0'))),
+                    'gst_amount': Decimal(str(data.get('gstAmount', '0'))),
+                    'grand_total': Decimal(str(data.get('grandTotal', '0'))),
+                    'payment_type': data.get('paymentType', 'N/A'),
+                    'order_type': data.get('orderType', 'N/A')
+                }
             )
+
+            if not created:
+                # Update existing TableOrder
+                table_order.order_id = data['orderId']
+                table_order.subtotal = Decimal(str(data.get('totalAmount', '0')))
+                table_order.gst_amount = Decimal(str(data.get('gstAmount', '0')))
+                table_order.grand_total = Decimal(str(data.get('grandTotal', '0')))
+                table_order.payment_type = data.get('paymentType', 'N/A')
+                table_order.order_type = data.get('orderType', 'N/A')
+                table_order.save()
 
             # Create Order instance
             order = Order.objects.create(
@@ -264,8 +276,11 @@ def save_order(request):
                 payment_type=data.get('paymentType', 'N/A'),
                 order_type=data.get('orderType', 'N/A'),
                 order_details=data.get('items', []),
-                is_temporary=False  # Ensure is_temporary is set to False
+                is_temporary=False
             )
+
+            item_names = []
+            item_customizations = []
 
             # Add items to Order
             for item_data in data.get('items', []):
@@ -280,13 +295,25 @@ def save_order(request):
                         customization_price=Decimal(str(item_data.get('customizationPrice', '0')))
                     )
                     order.items.add(order_item)  # Add order item to Order
+
+                    # Collect item names and customizations
+                    item_names.append(order_item.name)
+                    item_customizations.append({
+                        'name': order_item.name,
+                        'customizations': [c['name'] for c in order_item.customizations]
+                    })
                 except Exception as e:
                     print(f"Error processing item {item_data}: {e}")
                     raise
 
             order.save()
             table_order.orders.add(order)  # Add Order to TableOrder
+
+            # Save item names and customizations in TableOrder
+            table_order.item_names = item_names
+            table_order.item_customizations = item_customizations
             table_order.save()
+
             print("Final TableOrder saved:", table_order.order_id, "for table:", table_order.table.number)
 
             return JsonResponse({

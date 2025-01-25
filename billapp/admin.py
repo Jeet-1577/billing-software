@@ -145,20 +145,31 @@ class TableAdmin(admin.ModelAdmin):
 @admin.register(TableOrder)
 class TableOrderAdmin(admin.ModelAdmin):
     list_display = (
-        'table_number',  # Adjusted for related fields
+        'table_number',
         'order_id',
         'subtotal',
         'gst_amount',
         'grand_total',
         'created_at',
-        'updated_at'  # Ensure this field exists in the model
+        'updated_at',
+        'get_item_names',  # New field
+        'get_item_customizations'  # New field
     )
-    search_fields = ('table__number', 'orders__order_id')  # Adjusted for related fields
+    search_fields = ('table__number', 'orders__order_id')
     readonly_fields = ('created_at', 'updated_at')
+    exclude = ('orders',)  # Exclude the orders field
 
     def table_number(self, obj):
         return obj.table.number
     table_number.short_description = 'Table Number'
+
+    def get_item_names(self, obj):
+        return ", ".join(obj.item_names)
+    get_item_names.short_description = 'Item Names'
+
+    def get_item_customizations(self, obj):
+        return ", ".join([f"{item['name']} ({', '.join(item['customizations'])})" for item in obj.item_customizations])
+    get_item_customizations.short_description = 'Item Customizations'
 
     def order_count(self, obj):
         return obj.orders.count()

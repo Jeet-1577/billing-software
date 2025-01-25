@@ -168,7 +168,6 @@ class TableOrder(models.Model):
     table = models.OneToOneField(
         Table, on_delete=models.CASCADE, related_name='table_order'
     )
-    # Updated 'order_id' field with a default generator
     order_id = models.CharField(
         max_length=100,
         unique=True,
@@ -182,6 +181,13 @@ class TableOrder(models.Model):
     grand_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)  # Corrected to auto-update on modification
+    
+    # New fields for item names and customizations
+    item_names = models.JSONField(default=list)
+    item_customizations = models.JSONField(default=list)
+    
+    # Add a ManyToManyField for Order
+    orders = models.ManyToManyField(Order, related_name='table_orders')
 
     def __str__(self):
         return f"TableOrder for Table {self.table.number} - Order {self.order_id}"
