@@ -129,6 +129,7 @@ class Order(models.Model):
     status = models.CharField(max_length=20, choices=ORDER_STATUS_CHOICES, default='pending')
     deletion_reason = models.TextField(null=True, blank=True)  # New field for deletion reason
     deleted_by = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
+    is_temporary = models.BooleanField(default=False)  # **Added field**
     time = models.TimeField(auto_now_add=True)
     date = models.DateField(auto_now_add=True)
     created_at = models.DateTimeField(auto_now_add=True)

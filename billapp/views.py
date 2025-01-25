@@ -186,7 +186,8 @@ def place_order(request):
                 grand_total=Decimal(str(data.get('grandTotal', '0'))),
                 payment_type=data.get('paymentType', 'N/A'),
                 order_type=data.get('orderType', 'N/A'),
-                order_details=data.get('items', [])
+                order_details=data.get('items', []),
+                is_temporary=False  # Ensure is_temporary is set to False
             )
 
             # Add items to order
