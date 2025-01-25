@@ -1,8 +1,7 @@
 from django.db import models
-from django.contrib.auth.models import User
 from decimal import Decimal
 from django.utils import timezone
-import uuid
+import uuid  # Add this import
 
 def generate_unique_aadhar():
     return uuid.uuid4().hex[:12]
@@ -89,7 +88,6 @@ class OrderItem(models.Model):
         return f"{self.name} x{self.quantity}"
 
 class Employee(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, default=1)  # Provide a default value
     employee_id = models.CharField(max_length=100, unique=True)
     name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
@@ -127,7 +125,7 @@ class Order(models.Model):
     time = models.TimeField(auto_now_add=True)
     date = models.DateField(auto_now_add=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Order {self.order_id} - ₹{self.grand_total}"
@@ -178,7 +176,7 @@ class KoOrder(models.Model):
     time = models.TimeField(auto_now_add=True)
     date = models.DateField(auto_now_add=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"KoOrder {self.order_id} - ₹{self.grand_total}"
