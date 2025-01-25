@@ -2,6 +2,7 @@ from django.db import models
 from decimal import Decimal
 from django.utils import timezone
 import uuid  # Add this import
+from django.contrib.auth.hashers import make_password, check_password
 
 def generate_unique_aadhar():
     return uuid.uuid4().hex[:12]
@@ -94,11 +95,17 @@ class Employee(models.Model):
     mobile_number = models.CharField(max_length=15, unique=True, default='0000000000')  # Provide a default value
     address = models.TextField(default='')  # Provide a default value
     aadhar = models.CharField(max_length=12, unique=True, default=generate_unique_aadhar)  # Provide a unique default value
+    password = models.CharField(max_length=128)  # Password field
 
     def save(self, *args, **kwargs):
         if not self.aadhar:
             self.aadhar = generate_unique_aadhar()
+        if self.password and not self.password.startswith('pbkdf2_'):
+            self.password = make_password(self.password)
         super().save(*args, **kwargs)
+
+    def check_password(self, raw_password):
+        return check_password(raw_password, self.password)
 
     def __str__(self):
         return f"{self.name} ({self.employee_id})"

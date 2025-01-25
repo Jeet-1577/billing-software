@@ -2,7 +2,6 @@
 {% load static tailwind_tags %}
 {% load static %}
 
-
 {% block title %}Order Data{% endblock %}
 
 {% block content %}
@@ -78,10 +77,6 @@
                         <button class="view-order" data-order-id="{{ order.order_id }}">
                             <img src="{% static 'img/seen.png' %}" alt="View" class="h-6 w-6">
                         </button>
-                        <span class="mx-2"></span> <!-- Add gap between buttons -->
-                        <button class="delete-order" data-order-id="{{ order.order_id }}"{% if order.status == 'deleted' %} disabled{% endif %}>
-                            <img src="{% static 'img/delete.png' %}" alt="Delete" class="h-6 w-6">
-                        </button>
                     </td>
                 </tr>
                 {% empty %}
@@ -108,44 +103,6 @@
         <div id="orderDetailsContent" class="space-y-4 text-white">
             <!-- Order details will be dynamically added here -->
         </div>
-    </div>
-</div>
-
-<!-- Modal Structure -->
-<div id="deletionReasonModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 hidden transition-opacity duration-300">
-    <div class="bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md transform transition-all scale-95">
-        <h2 class="text-xl font-semibold mb-4 text-white">Deletion Reason</h2>
-        <p id="deletionReasonContent" class="text-gray-300 mb-6"></p>
-        <div class="flex justify-end">
-            <button id="closeModal" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500">
-                Close
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Combined Password, Employee ID, and Reason Modal -->
-<div id="deleteOrderModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 hidden transition-opacity duration-300">
-    <div class="bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-md transform transition-all scale-95">
-        <h2 class="text-xl font-semibold mb-4 text-white">Delete Order</h2>
-        <form id="deleteOrderForm">
-            <div class="mb-4">
-                <label for="password" class="block text-white mb-2">Password:</label>
-                <input type="password" id="password" name="password" required class="w-full p-2 rounded bg-gray-700 text-white" autocomplete="new-password">
-            </div>
-            <div class="mb-4">
-                <label for="employeeId" class="block text-white mb-2">Employee ID:</label>
-                <input type="text" id="employeeId" name="employeeId" required class="w-full p-2 rounded bg-gray-700 text-white" autocomplete="off">
-            </div>
-            <div class="mb-4">
-                <label for="reason" class="block text-white mb-2">Reason for Deletion:</label>
-                <textarea id="reason" name="reason" required class="w-full p-2 rounded bg-gray-700 text-white" rows="3"></textarea>
-            </div>
-            <div class="flex justify-end">
-                <button type="button" id="cancelDelete" class="px-4 py-2 mr-2 bg-gray-600 text-white rounded hover:bg-gray-700">Cancel</button>
-                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Delete</button>
-            </div>
-        </form>
     </div>
 </div>
 
@@ -225,7 +182,6 @@
     scrollbar-width: thin; /* Makes the scrollbar thinner */
     scrollbar-color: rgba(255, 255, 255, 0.4) rgba(0, 0, 0, 0.1); /* Thumb and track colors */
 }
-
 
 </style>
 

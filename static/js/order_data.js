@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.status === 'success') {
                     // Proceed to delete the order
-                    deleteOrder(orderId, reason);
+                    deleteOrder(orderId, reason, employeeId, password);
                 } else {
                     alert('Authentication failed: ' + data.message);
                 }
@@ -216,14 +216,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Function to delete the order
-    function deleteOrder(orderId, reason) {
+    function deleteOrder(orderId, reason, employeeId, password) {
         fetch(`/delete-order/${orderId}/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCSRFToken()
+                'X-CSRFToken': getCSRFToken()  // Include CSRF token
             },
-            body: JSON.stringify({ reason: reason })
+            body: JSON.stringify({ reason: reason, employee_id: employeeId, password: password })
         })
         .then(response => response.json())
         .then(data => {

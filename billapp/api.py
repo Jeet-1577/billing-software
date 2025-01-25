@@ -4,6 +4,7 @@ from decimal import Decimal
 from django.db import transaction
 from .models import Order, OrderItem, Table, TableOrder
 from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 import json
 
 api = NinjaAPI(version='2.0.0')  # Add version parameter
@@ -38,6 +39,7 @@ class OrderResponseSchema(Schema):
     items_count: int
 
 # API Endpoints
+@csrf_exempt
 @api.post("/orders/place", response=OrderResponseSchema)
 @transaction.atomic
 def place_order_api(request, order_data: OrderRequestSchema):
@@ -117,6 +119,7 @@ def get_table_orders(request, table_number: int):
         } for order in orders]
     }
 
+@csrf_exempt
 @api.post("/tables/release")
 @transaction.atomic
 def release_table(request, table_id: str):

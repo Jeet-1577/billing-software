@@ -151,8 +151,6 @@ def table_view(request):
     # Pass the table numbers to the template
     return render(request, 'tabel.html', {'table_numbers': table_numbers})
 
-
-
 @csrf_exempt
 @transaction.atomic
 def place_order(request):
@@ -324,6 +322,8 @@ def view_table_orders(request, table_number):
                 'grand_total': str(order.grand_total),
                 'items': [
                     {
+                'items': [
+                    {
                         'name': item.name,
                         'price': str(item.price),
                         'quantity': item.quantity,
@@ -420,21 +420,45 @@ def order_details(request, pk):
 @csrf_exempt
 @require_POST
 def delete_order(request, order_id):
-    try:
-        data = json.loads(request.body)
-        reason = data.get('reason', '')
-        employee_id = data.get('employee_id', '')
-        employee = get_object_or_404(Employee, employee_id=employee_id)
-        order = get_object_or_404(Order, order_id=order_id)
-        order.status = 'deleted'
-        order.deletion_reason = reason
-        order.deleted_by = employee
-        order.save()
-        return JsonResponse({'status': 'success'})
-    except Order.DoesNotExist:
-        return JsonResponse({'status': 'failed', 'error': 'Order not found'}, status=404)
-    except Exception as e:
-        return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            employee_id = data.get('employee_id')
+            password = data.get('password')
+            reason = data.get('reason', '')
+
+            if not employee_id or not password:
+                return JsonResponse({'status': 'failed', 'error': 'Employee ID and password are required.'}, status=400)
+
+            # Authenticate employee
+            employee = get_object_or_404(Employee, employee_id=employee_id)
+            if not employee.check_password(password):
+                return JsonResponse({'status': 'failed', 'error': 'Invalid password.'}, status=400)
+
+            # Fetch the order
+            order = get_object_or_404(Order, order_id=order_id)
+
+            if order.status == 'deleted':
+                return JsonResponse({'status': 'failed', 'error': 'Order is already deleted.'}, status=400)
+
+            # Update order status
+            order.status = 'deleted'
+            order.deletion_reason = reason
+            order.deleted_by = employee
+            order.save()
+
+            return JsonResponse({'status': 'success', 'message': 'Order deleted successfully.'}, status=200)
+
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'failed', 'error': 'Invalid JSON data.'}, status=400)
+        except Order.DoesNotExist:
+            return JsonResponse({'status': 'failed', 'error': 'Order does not exist.'}, status=404)
+        except Employee.DoesNotExist:
+            return JsonResponse({'status': 'failed', 'error': 'Employee does not exist.'}, status=404)
+        except Exception as e:
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
+
+    return JsonResponse({'status': 'failed', 'error': 'Invalid request method.'}, status=405)
 
 @csrf_exempt
 @require_POST
@@ -442,20 +466,16 @@ def verify_password(request):
     try:
         data = json.loads(request.body)
         password = data.get('password', '')
-        user = authenticate(username=request.user.username, password=password)
-        if user is not None:
-            return JsonResponse({'status': 'success'})
-        else:
-            return JsonResponse({'status': 'failed'}, status=400)
-    except Exception as e:
-        password = data.get('password', '')
-        return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
+        employee_id = data.get('employee_id', '')  # Retrieve employee_id from the request
 
-        user = authenticate(username=request.user.username, password=password)
-        if user is not None:
+        # Fetch the employee based on employee_id
+        employee = get_object_or_404(Employee, employee_id=employee_id)
+
+        # Check if the provided password is correct
+        if employee.check_password(password):
             return JsonResponse({'status': 'success'})
         else:
-            return JsonResponse({'status': 'failed'}, status=400)
+            return JsonResponse({'status': 'failed', 'error': 'Invalid password'}, status=400)
     except Exception as e:
         return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
 

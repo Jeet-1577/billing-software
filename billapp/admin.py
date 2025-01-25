@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import Category, Item, Order, CustomizationOption, CustomizationCategory, OrderItem, TableOrder, Table, Employee
 from django import forms
+from django.contrib.auth.hashers import make_password
 
 class CustomizationOptionInline(admin.TabularInline):
     model = CustomizationOption
@@ -106,7 +107,21 @@ class OrderItemAdmin(admin.ModelAdmin):
         obj.quantity = 1  # Set default quantity
         super().save_model(request, obj, form, change)
 
+class EmployeeAdminForm(forms.ModelForm):
+    class Meta:
+        model = Employee
+        fields = ('employee_id', 'name', 'email', 'mobile_number', 'address', 'aadhar', 'password')
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if instance.password and not instance.password.startswith('pbkdf2_'):
+            instance.password = make_password(instance.password)
+        if commit:
+            instance.save()
+        return instance
+
 class EmployeeAdmin(admin.ModelAdmin):
+    form = EmployeeAdminForm
     list_display = ('employee_id', 'name', 'email', 'mobile_number', 'aadhar')
     search_fields = ('employee_id', 'name', 'email', 'mobile_number', 'aadhar')
     readonly_fields = ()
