@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Item, Order, CustomizationOption, CustomizationCategory, OrderItem, TableOrder, Table, Employee
+from .models import Category, Item, Order, CustomizationOption, CustomizationCategory, OrderItem, Table, Employee, TableOrder
 from django import forms
 from django.contrib.auth.hashers import make_password
 
@@ -144,8 +144,25 @@ class TableAdmin(admin.ModelAdmin):
 
 @admin.register(TableOrder)
 class TableOrderAdmin(admin.ModelAdmin):
-    list_display = ('table',)
-    filter_horizontal = ('orders',)  # Easier order selection for TableOrder
+    list_display = (
+        'table_number',  # Adjusted for related fields
+        'order_id',
+        'subtotal',
+        'gst_amount',
+        'grand_total',
+        'created_at',
+        'updated_at'  # Ensure this field exists in the model
+    )
+    search_fields = ('table__number', 'orders__order_id')  # Adjusted for related fields
+    readonly_fields = ('created_at', 'updated_at')
+
+    def table_number(self, obj):
+        return obj.table.number
+    table_number.short_description = 'Table Number'
+
+    def order_count(self, obj):
+        return obj.orders.count()
+    order_count.short_description = 'Number of Orders'
 
 # Register other models
 admin.site.register(Category)

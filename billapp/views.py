@@ -242,10 +242,10 @@ def save_order(request):
                 }, status=400)
 
             table_number = data['tableId'].replace('table-', '')
-            table, _ = Table.objects.get_or_create(number=table_number)
 
-            # Create order with non-zero values
-            order = Order.objects.create(
+            # Create TableOrder with non-zero values
+            table_order = TableOrder.objects.create(
+                table_number=table_number,
                 order_id=data['orderId'],
                 subtotal=Decimal(str(data.get('totalAmount', '0'))),
                 gst_amount=Decimal(str(data.get('gstAmount', '0'))),
@@ -255,40 +255,18 @@ def save_order(request):
                 order_details=data.get('items', [])
             )
 
-            # Create order items with proper validation
-            for item_data in data.get('items', []):
-                if not isinstance(item_data, dict):
-                    continue
-                    
-                order_item = OrderItem.objects.create(
-                    name=item_data.get('name', ''),
-                    price=Decimal(str(item_data.get('price', '0'))),
-                    quantity=int(item_data.get('quantity', 0)),
-                    customizations=item_data.get('customizations', []),
-                    total_price=Decimal(str(item_data.get('totalPrice', '0'))),
-                    base_price=Decimal(str(item_data.get('price', '0'))),
-                    customization_price=Decimal(str(item_data.get('customizationPrice', '0'))),
-                    item_details=item_data
-                )
-                order.items.add(order_item)
-
-            # Link order to table
-            table_order, _ = TableOrder.objects.get_or_create(table=table)
-            table_order.orders.add(order)
-
-            print("Final order saved:", order.order_id, "with items:", order.items.count())
+            print("Final TableOrder saved:", table_order.order_id, "for table:", table_order.table_number)
 
             return JsonResponse({
                 'status': 'success',
-                'order_id': order.order_id,
-                'items_count': order.items.count()
+                'order_id': table_order.order_id
             })
 
         except json.JSONDecodeError:
             return JsonResponse({'status': 'failed', 'error': 'Invalid JSON data'}, status=400)
         except Exception as e:
             import traceback
-            print("Error saving order:", str(e))
+            print("Error saving TableOrder:", str(e))
             print(traceback.format_exc())
             return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
 
@@ -309,34 +287,6 @@ def release_table(request):
         except Exception as e:
             return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
     return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
-
-def view_table_orders(request, table_number):
-    try:
-        table = Table.objects.get(number=table_number)
-        orders = table.orders.all()
-        orders_data = []
-        for order in orders:
-            orders_data.append({
-                'order_id': order.order_id,
-                'subtotal': str(order.subtotal),
-                'gst_amount': str(order.gst_amount),
-                'grand_total': str(order.grand_total),
-                'items': [
-                    {
-                        'name': item.name,
-                        'price': str(item.price),
-                        'quantity': item.quantity,
-                        'customizations': item.customizations,
-                        'total_price': str(item.total_price)
-                    }
-                    for item in order.items.all()
-                ]
-            })
-        return JsonResponse({'status': 'success', 'orders': orders_data})
-    except Table.DoesNotExist:
-        return JsonResponse({'status': 'failed', 'error': 'Table not found'}, status=404)
-    except Exception as e:
-        return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
 
 @require_POST
 def book_table(request, table_id):

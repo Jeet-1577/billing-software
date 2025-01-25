@@ -7,6 +7,9 @@ from django.contrib.auth.hashers import make_password, check_password
 def generate_unique_aadhar():
     return uuid.uuid4().hex[:12]
 
+def generate_order_id():
+    return uuid.uuid4().hex  # Generates a unique 32-character hexadecimal string
+
 class Category(models.Model):
     name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -162,13 +165,40 @@ class Table(models.Model):
         return f"Table {self.number} ({self.place})"
 
 class TableOrder(models.Model):
-    table = models.OneToOneField(Table, on_delete=models.CASCADE, related_name='table_order')
-    orders = models.ManyToManyField(Order, blank=True)
+    table = models.OneToOneField(
+        Table, on_delete=models.CASCADE, related_name='table_order'
+    )
+    orders = models.ManyToManyField(
+        Order, blank=True, related_name='table_orders'
+    )  # Allow multiple orders to be associated with a table
+    
+    # Updated 'order_id' field with a default generator
+    order_id = models.CharField(
+        max_length=100,
+        unique=True,
+        default=generate_order_id  # Sets a unique default using the generator function
+    )
+    
+    payment_type = models.CharField(max_length=50, default='N/A')  # Provide a default value
+    order_type = models.CharField(max_length=50, default='N/A')  # Provide a default value
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    gst_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    grand_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)  # Corrected to auto-update on modification
 
     def __str__(self):
-        return f"TableOrder for Table {self.table.number}"
+        return f"TableOrder for Table {self.table.number} - Order {self.order_id}"
+
+    def calculate_totals(self):
+        """
+        Method to calculate and update subtotal, gst_amount, and grand_total
+        based on associated orders.
+        """
+        self.subtotal = sum(order.subtotal for order in self.orders.all())
+        self.gst_amount = sum(order.gst_amount for order in self.orders.all())
+        self.grand_total = sum(order.grand_total for order in self.orders.all())
+        self.save()
 
 class KoOrder(models.Model):
     order_id = models.CharField(max_length=100, unique=True)

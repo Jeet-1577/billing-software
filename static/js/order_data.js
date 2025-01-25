@@ -221,7 +221,7 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRFToken': getCSRFToken()  // Include CSRF token
+                'X-CSRFToken': getCSRFToken()
             },
             body: JSON.stringify({ reason: reason, employee_id: employeeId, password: password })
         })
@@ -242,8 +242,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Refresh page after successful delete
                 window.location.reload();
             } else {
-                // Display the actual error message from the backend
-                alert('Failed to delete order: ' + data.error);
+                alert('Failed to delete order: ' + data.message);
             }
         })
         .catch(error => {
