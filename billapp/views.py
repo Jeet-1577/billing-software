@@ -734,3 +734,41 @@ def delete_order(request, order_id):
 
     logger.warning("Invalid request method for delete_order view.")
     return JsonResponse({'status': 'failed', 'error': 'Invalid request method.'}, status=405)
+
+@csrf_exempt
+def get_table_order_details(request):
+    if request.method == 'GET':
+        table_number = request.GET.get('table_number')
+        if not table_number:
+            return JsonResponse({'status': 'failed', 'error': 'Table number not provided'}, status=400)
+        try:
+            table = Table.objects.get(number=table_number)
+            table_order = TableOrder.objects.get(table=table)
+            order_items = table_order.orders.all()
+            items = []
+            for order in order_items:
+                for item in order.items.all():
+                    items.append({
+                        'name': item.name,
+                        'quantity': item.quantity,
+                        'total_price': str(item.total_price),
+                        'customizations': item.customizations
+                    })
+            table_order_data = {
+                'order_id': table_order.order_id,
+                'created_at': table_order.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                'payment_type': table_order.payment_type,
+                'order_type': table_order.order_type,
+                'subtotal': str(table_order.subtotal),
+                'gst_amount': str(table_order.gst_amount),
+                'grand_total': str(table_order.grand_total),
+                'items': items
+            }
+            return JsonResponse({'status': 'success', 'table_order': table_order_data})
+        except Table.DoesNotExist:
+            return JsonResponse({'status': 'failed', 'error': 'Table not found'}, status=404)
+        except TableOrder.DoesNotExist:
+            return JsonResponse({'status': 'failed', 'error': 'TableOrder not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
+    return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)

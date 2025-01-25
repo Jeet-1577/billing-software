@@ -42,4 +42,5 @@ urlpatterns = [
     # path('save-order-status/<int:order_id>/', views.update_ko_order_status, name='update_ko_order_status'),
     path('fetch-order-data/', views.fetch_order_data, name='fetch_order_data'),  # Add fetch_order_data view
     path('get-order-details/', views.get_order_details, name='get_order_details'),  # New URL for fetching order details
+    path('get-table-order-details/', views.get_table_order_details, name='get_table_order_details'),  # Add get_table_order_details view
 ]

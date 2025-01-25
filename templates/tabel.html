@@ -204,26 +204,28 @@
 
     function viewOrder(event, tableId) {
         event.stopPropagation();
-        const tableNumber = tableId.replace('table-', '');
-        fetch(`/view-table-orders/${tableNumber}/`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.status === 'success') {
-                localStorage.setItem('orderData', JSON.stringify(data.orders));
-                window.location.href = '/inventory/';
-            } else {
-                alert('Failed to fetch orders: ' + data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while fetching the orders.');
-        });
+        const tableNumber = tableId.replace('table-', ''); // Extract the table number
+    
+        fetch(`/get-table-order-details/?table_number=${tableNumber}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    console.log('Orders fetched:', data.table_order);
+                    localStorage.setItem('orderData', JSON.stringify(data.table_order));
+                   // Redirect or handle the data
+                } else {
+                    alert('Failed to fetch orders: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while fetching the orders.');
+            });
     }
 </script>
 
