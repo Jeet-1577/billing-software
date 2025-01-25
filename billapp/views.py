@@ -242,26 +242,60 @@ def save_order(request):
                 }, status=400)
 
             table_number = data['tableId'].replace('table-', '')
+            table = Table.objects.get(number=table_number)
 
             # Create TableOrder with non-zero values
             table_order = TableOrder.objects.create(
-                table_number=table_number,
+                table=table,
+                order_id=data['orderId'],
+                subtotal=Decimal(str(data.get('totalAmount', '0'))),
+                gst_amount=Decimal(str(data.get('gstAmount', '0'))),
+                grand_total=Decimal(str(data.get('grandTotal', '0'))),
+                payment_type=data.get('paymentType', 'N/A'),
+                order_type=data.get('orderType', 'N/A')
+            )
+
+            # Create Order instance
+            order = Order.objects.create(
                 order_id=data['orderId'],
                 subtotal=Decimal(str(data.get('totalAmount', '0'))),
                 gst_amount=Decimal(str(data.get('gstAmount', '0'))),
                 grand_total=Decimal(str(data.get('grandTotal', '0'))),
                 payment_type=data.get('paymentType', 'N/A'),
                 order_type=data.get('orderType', 'N/A'),
-                order_details=data.get('items', [])
+                order_details=data.get('items', []),
+                is_temporary=False  # Ensure is_temporary is set to False
             )
 
-            print("Final TableOrder saved:", table_order.order_id, "for table:", table_order.table_number)
+            # Add items to Order
+            for item_data in data.get('items', []):
+                try:
+                    order_item = OrderItem.objects.create(
+                        name=item_data.get('name', ''),
+                        price=Decimal(str(item_data.get('price', '0'))),
+                        quantity=int(item_data.get('quantity', 0)),
+                        customizations=item_data.get('customizations', []),
+                        total_price=Decimal(str(item_data.get('totalPrice', '0'))),
+                        base_price=Decimal(str(item_data.get('price', '0'))),
+                        customization_price=Decimal(str(item_data.get('customizationPrice', '0')))
+                    )
+                    order.items.add(order_item)  # Add order item to Order
+                except Exception as e:
+                    print(f"Error processing item {item_data}: {e}")
+                    raise
+
+            order.save()
+            table_order.orders.add(order)  # Add Order to TableOrder
+            table_order.save()
+            print("Final TableOrder saved:", table_order.order_id, "for table:", table_order.table.number)
 
             return JsonResponse({
                 'status': 'success',
                 'order_id': table_order.order_id
             })
 
+        except Table.DoesNotExist:
+            return JsonResponse({'status': 'failed', 'error': 'Table not found'}, status=404)
         except json.JSONDecodeError:
             return JsonResponse({'status': 'failed', 'error': 'Invalid JSON data'}, status=400)
         except Exception as e:

@@ -168,10 +168,6 @@ class TableOrder(models.Model):
     table = models.OneToOneField(
         Table, on_delete=models.CASCADE, related_name='table_order'
     )
-    orders = models.ManyToManyField(
-        Order, blank=True, related_name='table_orders'
-    )  # Allow multiple orders to be associated with a table
-    
     # Updated 'order_id' field with a default generator
     order_id = models.CharField(
         max_length=100,
