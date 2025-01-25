@@ -322,8 +322,6 @@ def view_table_orders(request, table_number):
                 'grand_total': str(order.grand_total),
                 'items': [
                     {
-                'items': [
-                    {
                         'name': item.name,
                         'price': str(item.price),
                         'quantity': item.quantity,
@@ -419,49 +417,6 @@ def order_details(request, pk):
 
 @csrf_exempt
 @require_POST
-def delete_order(request, order_id):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            employee_id = data.get('employee_id')
-            password = data.get('password')
-            reason = data.get('reason', '')
-
-            if not employee_id or not password:
-                return JsonResponse({'status': 'failed', 'error': 'Employee ID and password are required.'}, status=400)
-
-            # Authenticate employee
-            employee = get_object_or_404(Employee, employee_id=employee_id)
-            if not employee.check_password(password):
-                return JsonResponse({'status': 'failed', 'error': 'Invalid password.'}, status=400)
-
-            # Fetch the order
-            order = get_object_or_404(Order, order_id=order_id)
-
-            if order.status == 'deleted':
-                return JsonResponse({'status': 'failed', 'error': 'Order is already deleted.'}, status=400)
-
-            # Update order status
-            order.status = 'deleted'
-            order.deletion_reason = reason
-            order.deleted_by = employee
-            order.save()
-
-            return JsonResponse({'status': 'success', 'message': 'Order deleted successfully.'}, status=200)
-
-        except json.JSONDecodeError:
-            return JsonResponse({'status': 'failed', 'error': 'Invalid JSON data.'}, status=400)
-        except Order.DoesNotExist:
-            return JsonResponse({'status': 'failed', 'error': 'Order does not exist.'}, status=404)
-        except Employee.DoesNotExist:
-            return JsonResponse({'status': 'failed', 'error': 'Employee does not exist.'}, status=404)
-        except Exception as e:
-            return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
-
-    return JsonResponse({'status': 'failed', 'error': 'Invalid request method.'}, status=405)
-
-@csrf_exempt
-@require_POST
 def verify_password(request):
     try:
         data = json.loads(request.body)
@@ -545,6 +500,51 @@ def send_order(request):
                         total_price=Decimal(str(item_data.get('totalPrice', '0'))),
                         base_price=Decimal(str(item_data.get('price', '0'))),
                         customization_price=Decimal(str(item_data.get('customizationPrice', '0'))),
+                        item_details=item_data
+                    )
+                    ko_order.items.add(order_item)
+                except Exception as e:
+                    print(f"Error processing item {item_data}: {e}")
+                    raise
+
+            ko_order.save()
+            print("Final KoOrder saved:", ko_order.order_id, "with items:", ko_order.items.count())
+
+            return JsonResponse({
+                'status': 'success',
+                'order_id': ko_order.order_id,
+                'items_count': ko_order.items.count()
+            })
+
+        except json.JSONDecodeError:
+            print("Invalid JSON data")
+            return JsonResponse({'status': 'failed', 'error': 'Invalid JSON data'}, status=400)
+        except Exception as e:
+            import traceback
+            print("Error saving KoOrder:", str(e))
+            print(traceback.format_exc())
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
+
+    return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
+
+@csrf_exempt
+def ko_view(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            # Process the order data as needed
+            return JsonResponse({'status': 'success'})
+        except json.JSONDecodeError:
+            return JsonResponse({'status': 'failed', 'error': 'Invalid JSON data'}, status=400)
+        except Exception as e:
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
+    
+    # Fetch orders with status 'sent' from KoOrder
+    orders = KoOrder.objects.filter(status='sent')
+    return render(request, 'ko.html', {'orders': orders})
+
+@csrf_exempt
+@transaction.atomic
                         item_details=item_data
                     )
                     ko_order.items.add(order_item)
