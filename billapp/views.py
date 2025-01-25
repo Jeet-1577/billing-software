@@ -545,51 +545,6 @@ def ko_view(request):
 
 @csrf_exempt
 @transaction.atomic
-                        item_details=item_data
-                    )
-                    ko_order.items.add(order_item)
-                except Exception as e:
-                    print(f"Error processing item {item_data}: {e}")
-                    raise
-
-            ko_order.save()
-            print("Final KoOrder saved:", ko_order.order_id, "with items:", ko_order.items.count())
-
-            return JsonResponse({
-                'status': 'success',
-                'order_id': ko_order.order_id,
-                'items_count': ko_order.items.count()
-            })
-
-        except json.JSONDecodeError:
-            print("Invalid JSON data")
-            return JsonResponse({'status': 'failed', 'error': 'Invalid JSON data'}, status=400)
-        except Exception as e:
-            import traceback
-            print("Error saving KoOrder:", str(e))
-            print(traceback.format_exc())
-            return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
-
-    return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
-
-@csrf_exempt
-def ko_view(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            # Process the order data as needed
-            return JsonResponse({'status': 'success'})
-        except json.JSONDecodeError:
-            return JsonResponse({'status': 'failed', 'error': 'Invalid JSON data'}, status=400)
-        except Exception as e:
-            return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
-    
-    # Fetch orders with status 'sent' from KoOrder
-    orders = KoOrder.objects.filter(status='sent')
-    return render(request, 'ko.html', {'orders': orders})
-
-@csrf_exempt
-@transaction.atomic
 def store_order(request):
     if request.method == 'POST':
         try:
@@ -729,3 +684,57 @@ def get_order_details(request):
         except Exception as e:
             return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
     return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
+
+@csrf_exempt
+@transaction.atomic
+def delete_order(request, order_id):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            employee_id = data.get('employee_id')
+            password = data.get('password')
+            reason = data.get('reason', '')
+            
+            logger.debug(f"Delete order request received for order_id={order_id} by employee_id={employee_id}")
+
+            if not employee_id or not password:
+                logger.warning("Employee ID or password missing in the delete order request.")
+                return JsonResponse({'status': 'failed', 'error': 'Employee ID and password are required.'}, status=400)
+
+            # Authenticate employee
+            employee = get_object_or_404(Employee, employee_id=employee_id)
+            if not employee.check_password(password):
+                logger.warning(f"Invalid password for employee_id={employee_id}")
+                return JsonResponse({'status': 'failed', 'error': 'Invalid password.'}, status=400)
+
+            # Fetch the order
+            order = get_object_or_404(Order, order_id=order_id)
+
+            if order.status == 'deleted':
+                logger.info(f"Order {order_id} is already deleted.")
+                return JsonResponse({'status': 'failed', 'error': 'Order is already deleted.'}, status=400)
+
+            # Update order status
+            order.status = 'deleted'
+            order.deletion_reason = reason
+            order.deleted_by = employee
+            order.save()
+
+            logger.info(f"Order {order_id} deleted successfully by employee_id={employee_id}")
+            return JsonResponse({'status': 'success', 'message': 'Order deleted successfully.'}, status=200)
+
+        except json.JSONDecodeError:
+            logger.error("Invalid JSON data in delete order request.")
+            return JsonResponse({'status': 'failed', 'error': 'Invalid JSON data.'}, status=400)
+        except Order.DoesNotExist:
+            logger.error(f"Order {order_id} does not exist.")
+            return JsonResponse({'status': 'failed', 'error': 'Order does not exist.'}, status=404)
+        except Employee.DoesNotExist:
+            logger.error(f"Employee {employee_id} does not exist.")
+            return JsonResponse({'status': 'failed', 'error': 'Employee does not exist.'}, status=404)
+        except Exception as e:
+            logger.exception("Unexpected error during order deletion.")
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
+
+    logger.warning("Invalid request method for delete_order view.")
+    return JsonResponse({'status': 'failed', 'error': 'Invalid request method.'}, status=405)

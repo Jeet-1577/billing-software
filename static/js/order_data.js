@@ -242,7 +242,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Refresh page after successful delete
                 window.location.reload();
             } else {
-                alert('Failed to delete order: ' + data.message);
+                // Display the actual error message from the backend
+                alert('Failed to delete order: ' + data.error);
             }
         })
         .catch(error => {
