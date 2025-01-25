@@ -267,22 +267,10 @@ def save_order(request):
                 table_order.order_type = data.get('orderType', 'N/A')
                 table_order.save()
 
-            # Create Order instance
-            order = Order.objects.create(
-                order_id=data['orderId'],
-                subtotal=Decimal(str(data.get('totalAmount', '0'))),
-                gst_amount=Decimal(str(data.get('gstAmount', '0'))),
-                grand_total=Decimal(str(data.get('grandTotal', '0'))),
-                payment_type=data.get('paymentType', 'N/A'),
-                order_type=data.get('orderType', 'N/A'),
-                order_details=data.get('items', []),
-                is_temporary=False
-            )
-
             item_names = []
             item_customizations = []
 
-            # Add items to Order
+            # Add items to TableOrder
             for item_data in data.get('items', []):
                 try:
                     order_item = OrderItem.objects.create(
@@ -294,7 +282,6 @@ def save_order(request):
                         base_price=Decimal(str(item_data.get('price', '0'))),
                         customization_price=Decimal(str(item_data.get('customizationPrice', '0')))
                     )
-                    order.items.add(order_item)  # Add order item to Order
 
                     # Collect item names and customizations
                     item_names.append(order_item.name)
@@ -305,9 +292,6 @@ def save_order(request):
                 except Exception as e:
                     print(f"Error processing item {item_data}: {e}")
                     raise
-
-            order.save()
-            table_order.orders.add(order)  # Add Order to TableOrder
 
             # Save item names and customizations in TableOrder
             table_order.item_names = item_names
