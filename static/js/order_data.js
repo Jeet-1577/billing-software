@@ -37,6 +37,8 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.status === 'success') {
                     displayOrderDetails(data.order);
+                    // Store order data in localStorage as an array
+                    localStorage.setItem('orderData', JSON.stringify([data.order]));
                 } else {
                     alert('Failed to fetch order details: ' + data.error);
                 }
