@@ -19,10 +19,12 @@ from django.urls import path, include
 from django.conf.urls.static import static
 from django.conf import settings
 from billapp.api import api as main_api
+from billapp import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', main_api.urls),  # Ensure only one instance of NinjaAPI is registered
     path('', include('billapp.urls')),  # Include app URLs
-    # ...existing code...
+    path('api/', include('billapp.urls')),  # Include API URLs under 'api/' prefix
+    path("__reload__/", include("django_browser_reload.urls")),
+
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

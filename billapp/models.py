@@ -165,9 +165,7 @@ class Table(models.Model):
         return f"Table {self.number} ({self.place})"
 
 class TableOrder(models.Model):
-    table = models.OneToOneField(
-        Table, on_delete=models.CASCADE, related_name='table_order'
-    )
+    table = models.ForeignKey(Table, on_delete=models.CASCADE)
     order_id = models.CharField(
         max_length=100,
         unique=True,

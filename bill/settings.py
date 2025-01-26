@@ -57,6 +57,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     #added mauallly
+    "django_browser_reload.middleware.BrowserReloadMiddleware",
 
     "django_browser_reload.middleware.BrowserReloadMiddleware",
 

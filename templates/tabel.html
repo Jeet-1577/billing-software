@@ -131,14 +131,7 @@
         <div class="table-timer" id="timer-{{ table.id }}"></div>
         <div class="flag-icon"></div>
         {% endif %}
-        <svg xmlns="http://www.w3.org/2000/svg" class="eye-icon h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" onclick="viewOrder(event, '{{ table.id }}')">
-            <path 
-                stroke-linecap="round" 
-                stroke-linejoin="round" 
-                stroke-width="2" 
-                d="M15 12a3 3 0 1 1 -6 0 3 3 0 0 1 6 0zm-3-9a9 9 0 0 0 -9 9 9 0 0 0 18 0 9 9 0 0 0 -9-9z" 
-            />
-        </svg>
+        <img src="{% static 'img/printer.png' %}" class="eye-icon h-6 w-6" data-table-id="{{ table.id }}" alt="Printer Icon">
     </div>
     {% endfor %}
 </div>
@@ -214,7 +207,7 @@
         })
         .then(data => {
             if (data.status === 'success') {
-                localStorage.setItem('orderData', JSON.stringify(data.orders));
+                localStorage.setItem('orderData', JSON.stringify(data.order));
                 window.location.href = '/inventory/';
             } else {
                 alert('Failed to fetch orders: ' + data.error);
@@ -223,6 +216,71 @@
         .catch(error => {
             console.error('Error:', error);
             alert('An error occurred while fetching the orders.');
+        });
+    }
+
+    // Add event listeners for printer icons to fetch and display order details
+    document.querySelectorAll('.eye-icon').forEach(function(icon) {
+        icon.addEventListener('click', function() {
+            var tableId = this.getAttribute('data-table-id');
+            fetch(`/api/get-table-order-details/${tableId}/`)  // Updated URL path
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.status === 'success') {
+                        showOrderDetailsModal(data.order);
+                    } 
+                })
+                
+        });
+    });
+
+    // Function to display order details in a modal
+    function showOrderDetailsModal(order) {
+        // Create modal HTML
+        var modal = document.createElement('div');
+        modal.id = 'orderDetailsModal';
+        modal.innerHTML = `
+            <div class="modal-overlay">
+                <div class="modal-content">
+                    <span class="close-button">&times;</span>
+                    <h2>Order Details</h2>
+                    <p><strong>Order ID:</strong> ${order.order_id}</p>
+                    <p><strong>Subtotal:</strong> ${order.subtotal}</p>
+                    <p><strong>GST Amount:</strong> ${order.gst_amount}</p>
+                    <p><strong>Grand Total:</strong> ${order.grand_total}</p>
+                    <h3>Items:</h3>
+                    <ul>
+                        ${order.items.map(item => `
+                            <li>
+                                ${item.name} - Quantity: ${item.quantity} - Price: ${item.price} - Customizations: ${item.customizations.join(', ')}
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        // Show the modal
+        modal.style.display = 'block';
+
+        // Close the modal when the close button is clicked
+        modal.querySelector('.close-button').addEventListener('click', function() {
+            modal.style.display = 'none';
+            modal.remove();
+        });
+
+        // Close the modal when clicking outside the modal content
+        window.addEventListener('click', function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+                modal.remove();
+            }
         });
     }
 </script>

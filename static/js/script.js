@@ -362,29 +362,79 @@ function getCookie(name) {
     return cookieValue;
 }
 
-function fetchOrderDetails(orderId) {
-    if (!orderId) {
-        console.error('Invalid Order ID:', orderId);
-        alert('Invalid Order ID.');
-        return;
-    }
+// Add event listeners for printer icons to fetch and display order details
+document.querySelectorAll('.eye-icon').forEach(function(icon) {
+    icon.addEventListener('click', function(event) {
+        event.stopPropagation(); // Prevent triggering parent click events
+        var tableId = this.getAttribute('data-table-id');
+        if (!tableId) {
+            alert('Table ID not found.');
+            return;
+        }
+        console.log(`Fetching order details for table_id=${tableId}`);
+        fetch(`/api/get-table-order-details/${tableId}/`)  // Updated URL path
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Received data:', data);
+                if (data.status === 'success') {
+                    showOrderDetailsModal(data.order);
+                } else {
+                    alert('Failed to fetch order details: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching order details:', error);
+                alert('An error occurred while fetching order details.');
+            });
+    });
+});
 
-    fetch(`/order-details/${orderId}/`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.status === 'success') {
-                showOrderDetailsModal(data.order);
-            } else {
-                alert('Failed to fetch order details: ' + (data.error || 'Unknown error'));
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching order details:', error);
-            alert('An error occurred while fetching the order details.');
-        });
+// Function to display order details in a modal
+function showOrderDetailsModal(order) {
+    // Create modal HTML
+    var modal = document.createElement('div');
+    modal.id = 'orderDetailsModal';
+    modal.innerHTML = `
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <span class="close-button">&times;</span>
+                <h2>Order Details</h2>
+                <p><strong>Order ID:</strong> ${order.order_id}</p>
+                <p><strong>Subtotal:</strong> ${order.subtotal}</p>
+                <p><strong>GST Amount:</strong> ${order.gst_amount}</p>
+                <p><strong>Grand Total:</strong> ${order.grand_total}</p>
+                <h3>Items:</h3>
+                <ul>
+                    ${order.items.map(item => `
+                        <li>
+                            ${item.name} - Quantity: ${item.quantity} - Price: ${item.price} - Customizations: ${item.customizations.join(', ')}
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Show the modal
+    modal.style.display = 'block';
+
+    // Close the modal when the close button is clicked
+    modal.querySelector('.close-button').addEventListener('click', function() {
+        modal.style.display = 'none';
+        modal.remove();
+    });
+
+    // Close the modal when clicking outside the modal content
+    window.addEventListener('click', function(event) {
+        if (event.target == modal) {
+            modal.style.display = 'none';
+            modal.remove();
+        }
+    });
 }

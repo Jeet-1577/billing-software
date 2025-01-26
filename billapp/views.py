@@ -748,3 +748,48 @@ def delete_order(request, order_id):
 
     logger.warning("Invalid request method for delete_order view.")
     return JsonResponse({'status': 'failed', 'error': 'Invalid request method.'}, status=405)
+
+from django.contrib.admin.views.decorators import staff_member_required
+
+@csrf_exempt
+@staff_member_required
+def get_table_order_details(request, table_id):
+    try:
+        # Fetch the table and its associated TableOrder
+        table = Table.objects.get(id=table_id)
+        table_order = TableOrder.objects.get(table=table)
+
+        # Prepare the response data
+        response_data = {
+            'table_number': table.number,
+            'is_booked': table.is_booked,
+            'orders': [
+                {
+                    'order_id': order.order_id,
+                    'items': [
+                        {
+                            'name': order_item.name,
+                            'base_price': str(order_item.base_price),
+                            'customization_price': str(order_item.customization_price),
+                            'price': str(order_item.price),
+                            'quantity': order_item.quantity,
+                            'customizations': order_item.customizations,
+                            'total_price': str(order_item.total_price),
+                        }
+                        for order_item in order.items.all()
+                    ],
+                    'subtotal': str(order.subtotal),
+                    'gst_amount': str(order.gst_amount),
+                    'grand_total': str(order.grand_total),
+                    'payment_type': order.payment_type,
+                    'order_type': order.order_type,
+                    'status': order.status,
+                }
+                for order in table_order.orders.all()
+            ],
+        }
+        return JsonResponse(response_data)
+    except Table.DoesNotExist:
+        return JsonResponse({'error': 'Table not found'}, status=404)
+    except TableOrder.DoesNotExist:
+        return JsonResponse({'error': 'No orders found for this table'}, status=404)
