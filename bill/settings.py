@@ -95,19 +95,19 @@ WSGI_APPLICATION = 'bill.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'new1',  # Updated database name
-        'USER': 'mrjac2',  # Database user
-        'PASSWORD': '1577',  # User's password
-        'HOST': 'localhost',  # Host, usually localhost
-        'PORT': '5432',  # Default PostgreSQL port
+        'NAME': 'new2',
+        'USER': 'jac2',
+        'PASSWORD': '1577',
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
-# Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
     },
     {
@@ -148,3 +148,4 @@ STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesSto
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
