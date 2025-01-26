@@ -755,11 +755,13 @@ from django.contrib.admin.views.decorators import staff_member_required
 @staff_member_required
 def get_table_order_details(request, table_id):
     try:
-        # Fetch the table and its associated TableOrder
+        print(f"Fetching details for table_id: {table_id}")  # Debugging print statement
         table = Table.objects.get(id=table_id)
+        print(f"Table found: {table}")  # Debugging print statement
+        
         table_order = TableOrder.objects.get(table=table)
+        print(f"TableOrder found: {table_order}")  # Debugging print statement
 
-        # Prepare the response data
         response_data = {
             'table_number': table.number,
             'is_booked': table.is_booked,
@@ -793,3 +795,6 @@ def get_table_order_details(request, table_id):
         return JsonResponse({'error': 'Table not found'}, status=404)
     except TableOrder.DoesNotExist:
         return JsonResponse({'error': 'No orders found for this table'}, status=404)
+    except Exception as e:
+        print(f"Unexpected error: {e}")  # Debugging print statement
+        return JsonResponse({'error': 'An unexpected error occurred'}, status=500)

@@ -117,6 +117,90 @@
         padding: 2px 5px;
         border-radius: 3px;
     }
+    .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1000; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgba(0, 0, 0, 0.9); /* Darker overlay for consistency */
+        backdrop-filter: blur(5px); /* Optional: Adds a blur effect */
+    }
+    
+    .modal-content {
+        background-color: #1a1a1a; /* Dark background to match other popups */
+        color: #e0e0e0; /* Light text color for readability */
+        margin: 5% auto; /* Reduced top margin for better alignment */
+        padding: 30px;
+        border: 2px solid #333;
+        width: 70%; /* Adjusted width for a more prominent display */
+        border-radius: 10px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
+        position: relative;
+    }
+    
+    .close-button {
+        color: #e0e0e0;
+        position: absolute;
+        top: 15px;
+        right: 20px;
+        font-size: 30px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .close-button:hover,
+    .close-button:focus {
+        color: #ff6347; /* Highlight color on hover/focus */
+        text-decoration: none;
+    }
+    
+    .order-section h3,
+    .order-section h4,
+    .order-section p,
+    .order-section li {
+        color: #e0e0e0; /* Consistent light text within the modal */
+    }
+    
+    .order-section ul {
+        list-style-type: disc;
+        margin-left: 25px;
+    }
+    
+    .order-section ul ul {
+        list-style-type: circle;
+    }
+    
+    /* Enhanced Button Styles Within Modal */
+    .modal-content button {
+        background-color: #444;
+        color: #e0e0e0;
+        border: none;
+        padding: 12px 25px;
+        margin-top: 15px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 1rem;
+    }
+    
+    .modal-content button:hover {
+        background-color: #555;
+    }
+    
+    /* Optional: Add transition effects for smoother appearance */
+    .modal-content {
+        animation-name: fadeIn;
+        animation-duration: 0.5s;
+    }
+    
+    @keyframes fadeIn {
+        from {opacity: 0;}
+        to {opacity: 1;}
+    }
+    
 </style>
 
 <div class="button-container">
@@ -134,6 +218,20 @@
         <img src="{% static 'img/printer.png' %}" class="eye-icon h-6 w-6" data-table-id="{{ table.id }}" alt="Printer Icon">
     </div>
     {% endfor %}
+</div>
+
+<!-- Modal Structure -->
+<div id="orderDetailsModal" class="modal">
+    <div class="modal-content">
+        <span class="close-button">&times;</span>
+        <h2>Order Details</h2>
+        <div id="orderDetailsContent">
+            <!-- Order details will be injected here by JavaScript -->
+        </div>
+        <!-- Optional: Add action buttons -->
+        <button onclick="printOrder()">Print Order</button>
+        <button onclick="closeModal()">Close</button>
+    </div>
 </div>
 
 <script>
@@ -219,70 +317,105 @@
         });
     }
 
-    // Add event listeners for printer icons to fetch and display order details
-    document.querySelectorAll('.eye-icon').forEach(function(icon) {
-        icon.addEventListener('click', function() {
-            var tableId = this.getAttribute('data-table-id');
-            fetch(`/api/get-table-order-details/${tableId}/`)  // Updated URL path
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Network response was not ok');
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    if (data.status === 'success') {
-                        showOrderDetailsModal(data.order);
-                    } 
-                })
-                
-        });
-    });
-
-    // Function to display order details in a modal
-    function showOrderDetailsModal(order) {
-        // Create modal HTML
-        var modal = document.createElement('div');
-        modal.id = 'orderDetailsModal';
-        modal.innerHTML = `
-            <div class="modal-overlay">
-                <div class="modal-content">
-                    <span class="close-button">&times;</span>
-                    <h2>Order Details</h2>
-                    <p><strong>Order ID:</strong> ${order.order_id}</p>
-                    <p><strong>Subtotal:</strong> ${order.subtotal}</p>
-                    <p><strong>GST Amount:</strong> ${order.gst_amount}</p>
-                    <p><strong>Grand Total:</strong> ${order.grand_total}</p>
-                    <h3>Items:</h3>
-                    <ul>
-                        ${order.items.map(item => `
-                            <li>
-                                ${item.name} - Quantity: ${item.quantity} - Price: ${item.price} - Customizations: ${item.customizations.join(', ')}
-                            </li>
-                        `).join('')}
-                    </ul>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-
-        // Show the modal
-        modal.style.display = 'block';
-
-        // Close the modal when the close button is clicked
-        modal.querySelector('.close-button').addEventListener('click', function() {
-            modal.style.display = 'none';
-            modal.remove();
+    document.addEventListener('DOMContentLoaded', () => {
+        // Event listener for 'eye-icon' (to fetch and display order details)
+        document.querySelectorAll('.eye-icon').forEach(function(icon) {
+            icon.addEventListener('click', function(event) {
+                event.stopPropagation(); // Prevent triggering other click events
+                const tableId = this.getAttribute('data-table-id');
+                fetch(`/api/get-table-order-details/${tableId}/`) // API URL
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            alert('Failed to fetch order details: ' + data.error);
+                        } else if (data.orders && Array.isArray(data.orders)) {
+                            showOrderDetailsModal(data.orders);
+                        } else {
+                            alert('No orders found for this table.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching order details:', error);
+                        alert('An error occurred while fetching order details.');
+                    });
+            });
         });
 
-        // Close the modal when clicking outside the modal content
-        window.addEventListener('click', function(event) {
-            if (event.target == modal) {
-                modal.style.display = 'none';
-                modal.remove();
+        // Function to show the order details modal
+        function showOrderDetailsModal(orders) {
+            const modal = document.getElementById('orderDetailsModal');
+            const modalContent = document.getElementById('orderDetailsContent');
+
+            // Clear any existing content
+            modalContent.innerHTML = '';
+
+            if (!orders || orders.length === 0) {
+                modalContent.innerHTML = '<p>No orders found for this table.</p>';
+            } else {
+                orders.forEach(order => {
+                    const orderElement = document.createElement('div');
+                    orderElement.classList.add('order-section');
+                    orderElement.innerHTML = `
+                        <h3>Order ID: ${order.order_id}</h3>
+                        <p><strong>Payment Type:</strong> ${order.payment_type}</p>
+                        <p><strong>Order Type:</strong> ${order.order_type}</p>
+                        <p><strong>Subtotal:</strong> ₹${order.subtotal}</p>
+                        <p><strong>GST Amount:</strong> ₹${order.gst_amount}</p>
+                        <p><strong>Grand Total:</strong> ₹${order.grand_total}</p>
+                        <h4>Items:</h4>
+                        <ul>
+                            ${order.items.map(item => `
+                                <li>
+                                    <strong>${item.name}</strong> - Quantity: ${item.quantity} - Price: ₹${item.price}
+                                    ${item.customizations && item.customizations.length > 0 ? `
+                                        <ul>
+                                            ${item.customizations.map(cust => `<li>${cust}</li>`).join('')}
+                                        </ul>
+                                    ` : ''}
+                                </li>
+                            `).join('')}
+                        </ul>
+                        <hr>
+                    `;
+                    modalContent.appendChild(orderElement);
+                });
             }
-        });
-    }
+
+            // Show the modal
+            modal.style.display = 'block';
+
+            // Close the modal when the close button is clicked
+            const closeButton = modal.querySelector('.close-button');
+            closeButton.onclick = function() {
+                modal.style.display = 'none';
+            };
+
+            // Close the modal when clicking outside the modal content
+            window.onclick = function(event) {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            };
+        }
+
+        // Optional: Function to print the order
+        window.printOrder = function() {
+            const modalContent = document.getElementById('orderDetailsContent').innerHTML;
+            const printWindow = window.open('', '', 'height=600,width=800');
+            printWindow.document.write('<html><head><title>Print Order</title>');
+            printWindow.document.write('</head><body >');
+            printWindow.document.write(modalContent);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // Optional: Function to close the modal
+        window.closeModal = function() {
+            const modal = document.getElementById('orderDetailsModal');
+            modal.style.display = 'none';
+        }
+    });
 </script>
 
 {% endblock %}
