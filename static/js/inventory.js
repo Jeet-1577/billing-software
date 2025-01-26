@@ -16,6 +16,39 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    function loadOrderToSidebar(orders) {
+        // Ensure orders is an array
+        if (!Array.isArray(orders)) {
+            orders = [orders]; // Convert to array if it's a single object
+        }
+
+        const sidebar = document.getElementById('orderSidebar');
+        if (!sidebar) {
+            return; // Exit if sidebar element is not found
+        }
+        sidebar.innerHTML = ''; // Clear existing content
+
+        orders.forEach(order => {
+            const orderItem = document.createElement('div');
+            orderItem.classList.add('order-item');
+            orderItem.innerHTML = `
+                <p><strong>Order ID:</strong> ${order.order_id}</p>
+                <p><strong>Date:</strong> ${order.date}</p>
+                <p><strong>Time:</strong> ${order.time}</p>
+                <p><strong>Items:</strong></p>
+                <ul>
+                    ${order.items.map(item => `
+                        <li>${item.name} (x${item.quantity}) - ₹${parseFloat(item.total_price).toFixed(2)}</li>
+                    `).join('')}
+                </ul>
+                <p><strong>Subtotal:</strong> ₹${parseFloat(order.subtotal).toFixed(2)}</p>
+                <p><strong>GST Amount:</strong> ₹${parseFloat(order.gst_amount).toFixed(2)}</p>
+                <p><strong>Grand Total:</strong> ₹${parseFloat(order.grand_total).toFixed(2)}</p>
+            `;
+            sidebar.appendChild(orderItem);
+        });
+    }
+
     var sidebar = document.getElementById('sidebar');
     var sidebarToggle = document.getElementById('sidebarToggle');
     var searchInput = document.getElementById('searchInput');
