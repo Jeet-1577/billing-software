@@ -1052,54 +1052,44 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-document.addEventListener('DOMContentLoaded', function() {
-    // ...existing code...
-
-    function loadOrderToSidebar(orders) {
-        // Ensure orders is an array
-        if (!Array.isArray(orders)) {
-            console.error('Expected orders to be an array, but got:', orders);
-            orders = [orders]; // Convert to array if it's a single object
-        }
-
-        const sidebar = document.getElementById('orderSidebar');
-        if (!sidebar) {
-            console.error('Order sidebar element not found.');
-            return;
-        }
-        sidebar.innerHTML = ''; // Clear existing content
-
-        orders.forEach(order => {
-            const orderItem = document.createElement('div');
-            orderItem.classList.add('order-item');
-            orderItem.innerHTML = `
-                <p><strong>Order ID:</strong> ${order.order_id}</p>
-                <p><strong>Date:</strong> ${order.date}</p>
-                <p><strong>Time:</strong> ${order.time}</p>
-                <p><strong>Items:</strong></p>
-                <ul>
-                    ${order.items.map(item => `
-                        <li>${item.name} (x${item.quantity}) - ₹${parseFloat(item.total_price).toFixed(2)}</li>
-                    `).join('')}
-                </ul>
-                <p><strong>Subtotal:</strong> ₹${parseFloat(order.subtotal).toFixed(2)}</p>
-                <p><strong>GST Amount:</strong> ₹${parseFloat(order.gst_amount).toFixed(2)}</p>
-                <p><strong>Grand Total:</strong> ₹${parseFloat(order.grand_total).toFixed(2)}</p>
-            `;
-            sidebar.appendChild(orderItem);
-        });
+function loadOrderToSidebar(orders) {
+    // Ensure orders is an array
+    if (!Array.isArray(orders)) {
+        console.error('Expected orders to be an array, but got:', orders);
+        return;
     }
 
-    // Load orders from localStorage
-    const storedOrders = localStorage.getItem('orderData');
-    if (storedOrders) {
-        try {
-            const orders = JSON.parse(storedOrders);
-            loadOrderToSidebar(orders);
-        } catch (error) {
-            console.error('Failed to parse stored orders:', error);
-        }
-    }
+    const sidebar = document.getElementById('orderSidebar');
+    sidebar.innerHTML = ''; // Clear existing content
 
-    // ...existing code...
-});
+    orders.forEach(order => {
+        const orderItem = document.createElement('div');
+        orderItem.classList.add('order-item');
+        orderItem.innerHTML = `
+            <p><strong>Order ID:</strong> ${order.order_id}</p>
+            <p><strong>Date:</strong> ${order.date}</p>
+            <p><strong>Time:</strong> ${order.time}</p>
+            <p><strong>Items:</strong></p>
+            <ul>
+                ${order.items.map(item => `
+                    <li>${item.name} (x${item.quantity}) - ₹${parseFloat(item.total_price).toFixed(2)}</li>
+                `).join('')}
+            </ul>
+            <p><strong>Subtotal:</strong> ₹${parseFloat(order.subtotal).toFixed(2)}</p>
+            <p><strong>GST Amount:</strong> ₹${parseFloat(order.gst_amount).toFixed(2)}</p>
+            <p><strong>Grand Total:</strong> ₹${parseFloat(order.grand_total).toFixed(2)}</p>
+        `;
+        sidebar.appendChild(orderItem);
+    });
+}
+
+// Load orders from localStorage
+const storedOrders = localStorage.getItem('orderData');
+if (storedOrders) {
+    try {
+        const orders = JSON.parse(storedOrders);
+        loadOrderToSidebar(orders);
+    } catch (error) {
+        console.error('Failed to parse stored orders:', error);
+    }
+}
