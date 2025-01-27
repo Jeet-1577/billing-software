@@ -322,29 +322,6 @@ function getCSRFToken() {
     return document.querySelector('[name=csrfmiddlewaretoken]').value;
 }
 
-// Example of how to call the save_note endpoint
-function saveNote(itemId, note) {
-    fetch('/save-note/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')  // Ensure CSRF token is included
-        },
-        body: JSON.stringify({ itemId: itemId, note: note })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if(data.status === 'success'){
-            alert('Note saved successfully!');
-        } else {
-            alert('Error saving note: ' + data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-}
-
 // Helper function to get CSRF token
 function getCookie(name) {
     let cookieValue = null;

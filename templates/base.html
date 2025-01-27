@@ -332,7 +332,9 @@
 
         function saveOrderToTable(orderData) {
             const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
+        
+            console.log("Sending order data:", orderData); // Log the payload
+        
             fetch('/save-order/', {
                 method: 'POST',
                 headers: {
@@ -342,23 +344,20 @@
                 body: JSON.stringify(orderData)
             })
             .then(response => {
+                console.log("Response status:", response.status); // Log the response status
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    return response.json().then(err => {
+                        console.error("Server error:", err);
+                        throw new Error(err.error || "Failed to save order");
+                    });
                 }
                 return response.json();
             })
             .then(data => {
-                console.log("Response from server:", data);  // Debug print
+                console.log("Response from server:", data);
                 if (data.status === 'success') {
                     alert('Order saved successfully!');
                     clearSelectedItems();
-                    localStorage.removeItem('selectedTable');
-                    document.getElementById('selectedTable').innerText = '';
-                    document.getElementById('totalAmount').innerText = 'Total: ₹0.00';
-                    document.getElementById('gstAmount').innerText = 'GST (18%): ₹0.00';
-                    document.getElementById('grandTotal').innerText = 'Grand Total: ₹0.00';
-                    document.getElementById('selectionSidebar').classList.remove('open'); // Close the selection sidebar
-                    // window.location.href = "{% url 'ko' %}";  // Comment out or remove this line to prevent redirection
                 } else {
                     alert('Failed to save order: ' + data.error);
                 }
@@ -368,7 +367,7 @@
                 alert('An error occurred while saving the order.');
             });
         }
-
+        
         function clearSelectedItems() {
             const selectedItems = document.getElementsByClassName('item-cube selected');
             while (selectedItems.length > 0) {

@@ -236,102 +236,63 @@ def save_order(request):
             print("Received order data:", data)
 
             if not data.get('items'):
-                return JsonResponse({
-                    'status': 'failed',
-                    'error': 'No items in order'
-                }, status=400)
+                return JsonResponse({'status': 'failed', 'error': 'No items in order'}, status=400)
 
+            # Fetch the table
             table_number = data['tableId'].replace('table-', '')
-            table = Table.objects.get(number=table_number)
+            try:
+                table = Table.objects.get(number=table_number)
+            except Table.DoesNotExist:
+                return JsonResponse({'status': 'failed', 'error': 'Table not found'}, status=404)
 
-            # Check if a TableOrder already exists for the table
+            # Create or update the TableOrder
             table_order, created = TableOrder.objects.get_or_create(
                 table=table,
+                order_id=data['orderId'],
                 defaults={
-                    'order_id': data['orderId'],
                     'subtotal': Decimal(str(data.get('totalAmount', '0'))),
                     'gst_amount': Decimal(str(data.get('gstAmount', '0'))),
                     'grand_total': Decimal(str(data.get('grandTotal', '0'))),
                     'payment_type': data.get('paymentType', 'N/A'),
-                    'order_type': data.get('orderType', 'N/A')
+                    'order_type': data.get('orderType', 'N/A'),
                 }
             )
 
             if not created:
-                # Update existing TableOrder
-                table_order.order_id = data['orderId']
+                # Update the existing TableOrder
                 table_order.subtotal = Decimal(str(data.get('totalAmount', '0')))
                 table_order.gst_amount = Decimal(str(data.get('gstAmount', '0')))
                 table_order.grand_total = Decimal(str(data.get('grandTotal', '0')))
-                table_order.payment_type = data.get('paymentType', 'N/A')
-                table_order.order_type = data.get('orderType', 'N/A')
                 table_order.save()
 
-            # Create Order instance
-            order = Order.objects.create(
-                order_id=data['orderId'],
-                subtotal=Decimal(str(data.get('totalAmount', '0'))),
-                gst_amount=Decimal(str(data.get('gstAmount', '0'))),
-                grand_total=Decimal(str(data.get('grandTotal', '0'))),
-                payment_type=data.get('paymentType', 'N/A'),
-                order_type=data.get('orderType', 'N/A'),
-                order_details=data.get('items', []),
-                is_temporary=False
-            )
-
+            # Extract and save item names and customizations
             item_names = []
             item_customizations = []
+            for item_data in data['items']:
+                item_names.append(item_data['name'])
+                item_customizations.append({
+                    'name': item_data['name'],
+                    'customizations': [customization['name'] for customization in item_data.get('customizations', [])]
+                })
 
-            # Add items to Order
-            for item_data in data.get('items', []):
-                try:
-                    order_item = OrderItem.objects.create(
-                        name=item_data.get('name', ''),
-                        price=Decimal(str(item_data.get('price', '0'))),
-                        quantity=int(item_data.get('quantity', 0)),
-                        customizations=item_data.get('customizations', []),
-                        total_price=Decimal(str(item_data.get('totalPrice', '0'))),
-                        base_price=Decimal(str(item_data.get('price', '0'))),
-                        customization_price=Decimal(str(item_data.get('customizationPrice', '0')))
-                    )
-                    order.items.add(order_item)  # Add order item to Order
-
-                    # Collect item names and customizations
-                    item_names.append(order_item.name)
-                    item_customizations.append({
-                        'name': order_item.name,
-                        'customizations': [c['name'] for c in order_item.customizations]
-                    })
-                except Exception as e:
-                    print(f"Error processing item {item_data}: {e}")
-                    raise
-
-            order.save()
-            table_order.orders.add(order)  # Add Order to TableOrder
-
-            # Save item names and customizations in TableOrder
             table_order.item_names = item_names
             table_order.item_customizations = item_customizations
             table_order.save()
 
-            print("Final TableOrder saved:", table_order.order_id, "for table:", table_order.table.number)
+            print(f"TableOrder saved: {table_order.order_id}")
 
-            return JsonResponse({
-                'status': 'success',
-                'order_id': table_order.order_id
-            })
+            return JsonResponse({'status': 'success', 'order_id': table_order.order_id})
 
-        except Table.DoesNotExist:
-            return JsonResponse({'status': 'failed', 'error': 'Table not found'}, status=404)
         except json.JSONDecodeError:
             return JsonResponse({'status': 'failed', 'error': 'Invalid JSON data'}, status=400)
         except Exception as e:
             import traceback
-            print("Error saving TableOrder:", str(e))
+            print("Error saving order:", str(e))
             print(traceback.format_exc())
-            return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
 
     return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
+
 
 @csrf_exempt
 def release_table(request):
@@ -445,21 +406,6 @@ def verify_password(request):
             return JsonResponse({'status': 'failed', 'error': 'Invalid password'}, status=400)
     except Exception as e:
         return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
-
-@csrf_exempt
-def save_note(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            item_id = data.get('itemId')
-            note = data.get('note')
-            order_item = get_object_or_404(OrderItem, id=item_id)
-            order_item.note = note
-            order_item.save()
-            return JsonResponse({'status': 'success'})
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'error': str(e)})
-    return JsonResponse({'status': 'error', 'error': 'Invalid request method'})
 
 @csrf_exempt
 @transaction.atomic
