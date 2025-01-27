@@ -171,34 +171,50 @@ class TableOrder(models.Model):
         unique=True,
         default=generate_order_id  # Sets a unique default using the generator function
     )
-    
-    payment_type = models.CharField(max_length=50, default='N/A')  # Provide a default value
-    order_type = models.CharField(max_length=50, default='N/A')  # Provide a default value
+    payment_type = models.CharField(max_length=50, default='N/A')
+    order_type = models.CharField(max_length=50, default='N/A')
     subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     gst_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     grand_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)  # Corrected to auto-update on modification
-    
-    # New fields for item names and customizations
+    updated_at = models.DateTimeField(auto_now=True)
+
     item_names = models.JSONField(default=list)
     item_customizations = models.JSONField(default=list)
-    
-    # Add a ManyToManyField for Order
+
     orders = models.ManyToManyField(Order, related_name='table_orders')
 
     def __str__(self):
         return f"TableOrder for Table {self.table.number} - Order {self.order_id}"
 
     def calculate_totals(self):
-        """
-        Method to calculate and update subtotal, gst_amount, and grand_total
-        based on associated orders.
-        """
         self.subtotal = sum(order.subtotal for order in self.orders.all())
         self.gst_amount = sum(order.gst_amount for order in self.orders.all())
         self.grand_total = sum(order.grand_total for order in self.orders.all())
         self.save()
+
+    def save(self, *args, **kwargs):
+        # Ensure the instance has an ID before referencing self.orders
+        if not self.pk:
+            super().save(*args, **kwargs)
+
+        # Before saving, update item_names and item_customizations
+        item_names = []
+        item_customizations = []
+
+        for order in self.orders.all():
+            for item in order.items.all():
+                item_names.append(item.name)
+                customizations = [c.get('name', '') for c in item.customizations]
+                item_customizations.append({
+                    'name': item.name,
+                    'customizations': customizations
+                })
+
+        self.item_names = item_names
+        self.item_customizations = item_customizations
+
+        super().save(*args, **kwargs)
 
 class KoOrder(models.Model):
     order_id = models.CharField(max_length=100, unique=True)
