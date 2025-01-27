@@ -245,29 +245,39 @@ def save_order(request):
             except Table.DoesNotExist:
                 return JsonResponse({'status': 'failed', 'error': 'Table not found'}, status=404)
 
-            # Create or update the TableOrder
-            table_order, created = TableOrder.objects.get_or_create(
-                table=table,
-                order_id=data['orderId'],
-                defaults={
-                    'subtotal': Decimal(str(data.get('totalAmount', '0'))),
-                    'gst_amount': Decimal(str(data.get('gstAmount', '0'))),
-                    'grand_total': Decimal(str(data.get('grandTotal', '0'))),
-                    'payment_type': data.get('paymentType', 'N/A'),
-                    'order_type': data.get('orderType', 'N/A'),
-                }
-            )
+            # Check if a TableOrder already exists for this table and orderId
+            existing_table_order = TableOrder.objects.filter(table=table, order_id=data['orderId']).first()
 
-            if not created:
-                # Update the existing TableOrder
+            if existing_table_order:
+                # If an order already exists for this table, update it
+                table_order = existing_table_order
                 table_order.subtotal = Decimal(str(data.get('totalAmount', '0')))
                 table_order.gst_amount = Decimal(str(data.get('gstAmount', '0')))
                 table_order.grand_total = Decimal(str(data.get('grandTotal', '0')))
+                table_order.payment_type = data.get('paymentType', 'N/A')
+                table_order.order_type = data.get('orderType', 'N/A')
                 table_order.save()
+
+                print(f"Existing TableOrder updated: {table_order.order_id}")
+            else:
+                # If no order exists, create a new TableOrder
+                table_order = TableOrder.objects.create(
+                    table=table,
+                    order_id=data['orderId'],
+                    subtotal=Decimal(str(data.get('totalAmount', '0'))),
+                    gst_amount=Decimal(str(data.get('gstAmount', '0'))),
+                    grand_total=Decimal(str(data.get('grandTotal', '0'))),
+                    payment_type=data.get('paymentType', 'N/A'),
+                    order_type=data.get('orderType', 'N/A'),
+                )
+
+                print(f"New TableOrder created: {table_order.order_id}")
 
             # Extract and save item names and customizations
             item_names = []
             item_customizations = []
+            order_instances = []  # To store Order instances
+
             for item_data in data['items']:
                 item_names.append(item_data['name'])
                 item_customizations.append({
@@ -275,9 +285,22 @@ def save_order(request):
                     'customizations': [customization['name'] for customization in item_data.get('customizations', [])]
                 })
 
+                # Create Order instances for each item
+                order = Order.objects.create(
+                    product=item_data['name'],
+                    quantity=item_data['quantity'],
+                    price=item_data['price'],
+                    # Add any other necessary fields here
+                )
+                order_instances.append(order)
+
+            # After saving the TableOrder, associate the created orders with it
+            table_order.orders.add(*order_instances)
+
+            # Update item names and customizations in the table_order
             table_order.item_names = item_names
             table_order.item_customizations = item_customizations
-            table_order.save()
+            table_order.save()  # Save any additional changes after adding orders
 
             print(f"TableOrder saved: {table_order.order_id}")
 
@@ -292,7 +315,6 @@ def save_order(request):
             return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
 
     return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
-
 
 @csrf_exempt
 def release_table(request):

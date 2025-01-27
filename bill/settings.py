@@ -96,13 +96,14 @@ WSGI_APPLICATION = 'bill.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'new2',
-        'USER': 'jac2',
-        'PASSWORD': '1577',
-        'HOST': 'localhost',
-        'PORT': '5432',
+        'NAME': 'new3',  # Replace with your new database name
+        'USER': 'jac3',  # Replace with your PostgreSQL username
+        'PASSWORD': '1577',  # Replace with your PostgreSQL password
+        'HOST': 'localhost',  # Or your database server address
+        'PORT': '5432',  # Default PostgreSQL port
     }
 }
+
 
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 

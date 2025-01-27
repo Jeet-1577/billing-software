@@ -152,12 +152,12 @@ class TableOrderAdmin(admin.ModelAdmin):
         'grand_total',
         'created_at',
         'updated_at',
-        'get_item_names',  # New field
-        'get_item_customizations'  # New field
+        'get_item_names',  
+        'get_item_customizations'  
     )
     search_fields = ('table__number', 'orders__order_id')
     readonly_fields = ('created_at', 'updated_at')
-    exclude = ('orders',)  # Exclude the orders field
+    exclude = ('orders',)
 
     def table_number(self, obj):
         return obj.table.number
@@ -171,9 +171,6 @@ class TableOrderAdmin(admin.ModelAdmin):
         return ", ".join([f"{item['name']} ({', '.join(item['customizations'])})" for item in obj.item_customizations])
     get_item_customizations.short_description = 'Item Customizations'
 
-    def order_count(self, obj):
-        return obj.orders.count()
-    order_count.short_description = 'Number of Orders'
 
 # Register other models
 admin.site.register(Category)
