@@ -23,8 +23,9 @@ from billapp import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('billapp.urls')),  # Include app URLs
-    path('api/', include('billapp.urls')),  # Include API URLs under 'api/' prefix
-    path("__reload__/", include("django_browser_reload.urls")),
+    path('', include('billapp.urls')),  # Include billapp URLs
+    path('api/', main_api.urls),        # Include API URLs
+    path("__reload__/", include("django_browser_reload.urls")),  # Include django_browser_reload once
+]
 
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

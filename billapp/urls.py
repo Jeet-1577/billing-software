@@ -18,7 +18,6 @@ urlpatterns = [
     path('tabel/', views.table_view, name='tabel'),
     path('tables/', views.table_view, name='tables'),
     # path('tables/', table_view, name='table_view'),
-    path("__reload__/", include("django_browser_reload.urls")),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('place-order/', views.place_order, name='place_order'),  # Ensure place_order is handled here
     path('save-order/', views.save_order, name='save_order'),
