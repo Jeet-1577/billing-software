@@ -96,8 +96,8 @@ WSGI_APPLICATION = 'bill.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'new2',
-        'USER': 'jac2',
+        'NAME': 'new3',
+        'USER': 'jac3',
         'PASSWORD': '1577',
         'HOST': 'localhost',
         'PORT': '5432',
