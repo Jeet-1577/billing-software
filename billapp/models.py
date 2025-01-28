@@ -167,57 +167,6 @@ class Table(models.Model):
     def __str__(self):
         return f"Table {self.number} ({self.place})"
 
-class TableOrder(models.Model):
-    table = models.ForeignKey(Table, on_delete=models.CASCADE, related_name='table_orders')
-    tableorder_id = models.CharField(
-        max_length=100,
-        unique=True,
-        default=generate_tableorder_id,
-        editable=False
-    )
-    payment_type = models.CharField(max_length=50, default='N/A')
-    order_type = models.CharField(max_length=50, default='N/A')
-    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    gst_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    grand_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    item_names = models.JSONField(default=list, blank=True)  # Added field
-    item_customizations = models.JSONField(default=list, blank=True)  # Added field
-    orders = models.ManyToManyField(Order, related_name='table_orders')
-
-    def __str__(self):
-        return f"TableOrder {self.tableorder_id} for Table {self.table.number}"
-
-    def calculate_totals(self):
-        self.subtotal = sum(order.subtotal for order in self.orders.all())
-        self.gst_amount = sum(order.gst_amount for order in self.orders.all())
-        self.grand_total = sum(order.grand_total for order in self.orders.all())
-        
-        # Update item_names and item_customizations
-        item_names = []
-        item_customizations = []
-
-        for order in self.orders.all():
-            for item in order.items.all():
-                item_names.append(item.name)
-                customizations = [c.get('name', '') for c in item.customizations]
-                item_customizations.append({
-                    'name': item.name,
-                    'customizations': customizations
-                })
-
-        self.item_names = item_names
-        self.item_customizations = item_customizations
-        
-        self.save()
-    
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-
-    class Meta:
-        verbose_name = "Table Order"
-        verbose_name_plural = "Table Orders"
 
 class KoOrder(models.Model):
     order_id = models.CharField(max_length=100, unique=True)

@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Category, Item, Order, Table, TableOrder, Employee, OrderItem, KoOrder  # Ensure Employee, OrderItem, and KoOrder are imported
+from .models import Category, Item, Order, Table, Employee, OrderItem, KoOrder  # Ensure Employee, OrderItem, and KoOrder are imported
 from .forms import CategoryForm, ItemForm
 from django.http import JsonResponse
 import json
@@ -224,81 +224,6 @@ def place_order(request):
             print("Error saving order:", str(e))
             print(traceback.format_exc())
             return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
-
-    return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
-
-@csrf_exempt
-@transaction.atomic
-def save_order(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            print("Received order data:", data)
-
-            if not data.get('items'):
-                return JsonResponse({'status': 'failed', 'error': 'No items in order'}, status=400)
-
-            # Fetch the table
-            table_number = data['tableId'].replace('table-', '')
-            try:
-                table = Table.objects.get(number=table_number)
-            except Table.DoesNotExist:
-                return JsonResponse({'status': 'failed', 'error': 'Table not found'}, status=404)
-
-            # Create OrderItems
-            order_items = []
-            for item_data in data.get('items', []):
-                order_item = OrderItem.objects.create(
-                    name=item_data.get('name', ''),
-                    price=Decimal(str(item_data.get('price', '0'))),
-                    quantity=int(item_data.get('quantity', 0)),
-                    customizations=item_data.get('customizations', []),
-                    total_price=Decimal(str(item_data.get('totalPrice', '0'))),
-                    base_price=Decimal(str(item_data.get('price', '0'))),
-                    customization_price=Decimal(str(item_data.get('customizationPrice', '0'))),
-                    item_details=item_data
-                )
-                order_items.append(order_item)
-
-            # Create Order
-            order = Order.objects.create(
-                order_id=data['orderId'],
-                subtotal=Decimal(str(data.get('totalAmount', '0'))),
-                gst_amount=Decimal(str(data.get('gstAmount', '0'))),
-                grand_total=Decimal(str(data.get('grandTotal', '0'))),
-                payment_type=data.get('paymentType', 'N/A'),
-                order_type=data.get('orderType', 'N/A'),
-                order_details=data.get('items', [])
-            )
-            order.items.set(order_items)
-
-            # Create and save the TableOrder
-            table_order = TableOrder.objects.create(
-                table=table,
-                subtotal=order.subtotal,
-                gst_amount=order.gst_amount,
-                grand_total=order.grand_total,
-                payment_type=order.payment_type,
-                order_type=order.order_type
-            )
-            table_order.orders.add(order)
-
-            # Trigger calculation of totals and update item_names & item_customizations
-            table_order.calculate_totals()
-
-            print(f"Saved TableOrder: {table_order.tableorder_id}")
-            # The model's save method will populate item_names and item_customizations
-
-            return JsonResponse({
-                'status': 'success',
-                'tableorder_id': table_order.tableorder_id
-            })
-
-        except Exception as e:
-            import traceback
-            print("Error saving order:", str(e))
-            print(traceback.format_exc())
-            return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
 
     return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
 
@@ -702,53 +627,3 @@ def delete_order(request, order_id):
 
     logger.warning("Invalid request method for delete_order view.")
     return JsonResponse({'status': 'failed', 'error': 'Invalid request method.'}, status=405)
-
-from django.contrib.admin.views.decorators import staff_member_required
-
-@csrf_exempt
-@staff_member_required
-def get_table_order_details(request, table_id):
-    try:
-        print(f"Fetching details for table_id: {table_id}")  # Debugging print statement
-        table = Table.objects.get(id=table_id)
-        print(f"Table found: {table}")  # Debugging print statement
-        
-        table_order = TableOrder.objects.get(table=table)
-        print(f"TableOrder found: {table_order}")  # Debugging print statement
-
-        response_data = {
-            'table_number': table.number,
-            'is_booked': table.is_booked,
-            'orders': [
-                {
-                    'order_id': order.order_id,
-                    'items': [
-                        {
-                            'name': order_item.name,
-                            'base_price': str(order_item.base_price),
-                            'customization_price': str(order_item.customization_price),
-                            'price': str(order_item.price),
-                            'quantity': order_item.quantity,
-                            'customizations': order_item.customizations,
-                            'total_price': str(order_item.total_price),
-                        }
-                        for order_item in order.items.all()
-                    ],
-                    'subtotal': str(order.subtotal),
-                    'gst_amount': str(order.gst_amount),
-                    'grand_total': str(order.grand_total),
-                    'payment_type': order.payment_type,
-                    'order_type': order.order_type,
-                    'status': order.status,
-                }
-                for order in table_order.orders.all()
-            ],
-        }
-        return JsonResponse(response_data)
-    except Table.DoesNotExist:
-        return JsonResponse({'error': 'Table not found'}, status=404)
-    except TableOrder.DoesNotExist:
-        return JsonResponse({'error': 'No orders found for this table'}, status=404)
-    except Exception as e:
-        print(f"Unexpected error: {e}")  # Debugging print statement
-        return JsonResponse({'error': 'An unexpected error occurred'}, status=500)

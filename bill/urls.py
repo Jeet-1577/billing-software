@@ -26,5 +26,6 @@ urlpatterns = [
     path('', include('billapp.urls')),  # Include app URLs
     path('api/', include('billapp.urls')),  # Include API URLs under 'api/' prefix
     path("__reload__/", include("django_browser_reload.urls")),
+    # path('table_order/<int:table_id>/', views.get_table_order_details, name='get_table_order_details'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

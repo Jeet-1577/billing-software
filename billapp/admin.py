@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Item, Order, CustomizationOption, CustomizationCategory, OrderItem, Table, Employee, TableOrder
+from .models import Category, Item, Order, CustomizationOption, CustomizationCategory, OrderItem, Table, Employee
 from django import forms
 from django.contrib.auth.hashers import make_password
 
@@ -141,41 +141,6 @@ admin.site.register(Employee, EmployeeAdmin)
 class TableAdmin(admin.ModelAdmin):
     list_display = ('number',)
     search_fields = ('number',)
-
-@admin.register(TableOrder)
-class TableOrderAdmin(admin.ModelAdmin):
-    list_display = (
-        'tableorder_id',  # Replace order_id with tableorder_id
-        'table_number',
-        'subtotal',
-        'gst_amount',
-        'grand_total',
-        'created_at',
-        'updated_at',
-        'get_item_names',
-        'get_item_customizations'
-    )
-    search_fields = ('table__number', 'orders__order_id')
-    readonly_fields = ('created_at', 'updated_at')
-    exclude = ('orders',)
-
-    def table_number(self, obj):
-        return obj.table.number
-    table_number.short_description = 'Table Number'
-
-    def get_item_names(self, obj):
-        # Ensure item_names is a list before joining
-        if isinstance(obj.item_names, list):
-            return ", ".join(obj.item_names)
-        return "No items"
-    get_item_names.short_description = 'Item Names'
-
-    def get_item_customizations(self, obj):
-        # Ensure item_customizations is a list before iterating
-        if isinstance(obj.item_customizations, list):
-            return ", ".join([f"{item['name']} ({', '.join(item['customizations'])})" for item in obj.item_customizations])
-        return "No customizations"
-    get_item_customizations.short_description = 'Item Customizations'
 
 # Register other models
 admin.site.register(Category)

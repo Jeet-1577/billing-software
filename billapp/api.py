@@ -2,7 +2,7 @@ from ninja import NinjaAPI, Schema
 from typing import List, Optional
 from decimal import Decimal
 from django.db import transaction
-from .models import Order, OrderItem, Table, TableOrder
+from .models import Order, OrderItem, Table
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
@@ -83,8 +83,7 @@ def place_order_api(request, order_data: OrderRequestSchema):
         if order_data.tableId:
             table_number = order_data.tableId.replace('table-', '')
             table, _ = Table.objects.get_or_create(number=table_number)
-            table_order, _ = TableOrder.objects.get_or_create(table=table)
-            table_order.orders.add(order)
+            table.orders.add(order)
 
         return {
             "status": "success",

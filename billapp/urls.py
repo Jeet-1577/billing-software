@@ -20,7 +20,7 @@ urlpatterns = [
     # path('tables/', table_view, name='table_view'),
     path('dashboard/', views.dashboard, name='dashboard'),
     path('place-order/', views.place_order, name='place_order'),  # Ensure place_order is handled here
-    path('save-order/', views.save_order, name='save_order'),
+    # path('save-order/', views.place_order, name='save_order'),  # **Added line**
     # Remove the TableOrder related URL
     # path('view-table-orders/<int:table_number>/', views.view_table_orders, name='view_table_orders'),
     path('release-table/', views.release_table, name='release_table'),
@@ -44,5 +44,5 @@ urlpatterns = [
 ]
 
 urlpatterns += [
-    path('api/get-table-order-details/<int:table_id>/', views.get_table_order_details, name='get_table_order_details'),
+    # path('api/get-table-order-details/<int:table_id>/', views.get_table_order_details, name='get_table_order_details'),
 ]
