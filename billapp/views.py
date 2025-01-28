@@ -245,8 +245,8 @@ def save_order(request):
             except Table.DoesNotExist:
                 return JsonResponse({'status': 'failed', 'error': 'Table not found'}, status=404)
 
-            # Create new TableOrder
-            table_order = TableOrder.objects.create(
+            # Create new TableOrder without specifying an ID
+            table_order = TableOrder(
                 table=table,
                 subtotal=Decimal(str(data.get('totalAmount', '0'))),
                 gst_amount=Decimal(str(data.get('gstAmount', '0'))),
@@ -254,45 +254,34 @@ def save_order(request):
                 payment_type=data.get('paymentType', 'N/A'),
                 order_type=data.get('orderType', 'N/A'),
             )
+            
+            # Save with force_insert=True to ensure a new record is created
+            table_order.save(force_insert=True)
 
-            # Extract and save item names and customizations
+            # Process items
             item_names = []
             item_customizations = []
-            order_instances = []  # To store Order instances
 
             for item_data in data['items']:
                 item_names.append(item_data['name'])
                 item_customizations.append({
                     'name': item_data['name'],
-                    'customizations': [customization['name'] for customization in item_data.get('customizations', [])]
+                    'customizations': [
+                        customization['name'] 
+                        for customization in item_data.get('customizations', [])
+                    ]
                 })
 
-                # Create Order instances for each item
-                order = Order.objects.create(
-                    product=item_data['name'],
-                    quantity=item_data['quantity'],
-                    price=item_data['price'],
-                    # Add any other necessary fields here
-                )
-                order_instances.append(order)
-
-            # After saving the TableOrder, associate the created orders with it
-            table_order.orders.add(*order_instances)
-
-            # Update item names and customizations in the table_order
+            # Update item names and customizations
             table_order.item_names = item_names
             table_order.item_customizations = item_customizations
-            table_order.save()  # Save any additional changes after adding orders
-
-            print(f"TableOrder saved: {table_order.order_id}")
+            table_order.save()
 
             return JsonResponse({
                 'status': 'success',
-                'tableorder_id': table_order.tableorder_id  # Return tableorder_id instead of order_id
+                'tableorder_id': table_order.tableorder_id
             })
 
-        except json.JSONDecodeError:
-            return JsonResponse({'status': 'failed', 'error': 'Invalid JSON data'}, status=400)
         except Exception as e:
             import traceback
             print("Error saving order:", str(e))

@@ -196,28 +196,33 @@ class TableOrder(models.Model):
         self.save()
 
     def save(self, *args, **kwargs):
-        # Ensure the instance has an ID before referencing self.orders
-        if not self.pk:
-            super().save(*args, **kwargs)
-
-        # Before saving, update item_names and item_customizations
-        item_names = []
-        item_customizations = []
-
-        for order in self.orders.all():
-            for item in order.items.all():
-                item_names.append(item.name)
-                customizations = [c.get('name', '') for c in item.customizations]
-                item_customizations.append({
-                    'name': item.name,
-                    'customizations': customizations
-                })
-
-        self.item_names = item_names
-        self.item_customizations = item_customizations
-
+        if not self.pk and not kwargs.get('force_insert', False):
+            # If this is a new instance and force_insert is not set
+            # Let Django handle the ID generation
+            kwargs['force_insert'] = True
+            
         super().save(*args, **kwargs)
 
+        if hasattr(self, 'orders'):
+            # Update item names and customizations
+            item_names = []
+            item_customizations = []
+
+            for order in self.orders.all():
+                for item in order.items.all():
+                    item_names.append(item.name)
+                    customizations = [c.get('name', '') for c in item.customizations]
+                    item_customizations.append({
+                        'name': item.name,
+                        'customizations': customizations
+                    })
+
+            self.item_names = item_names
+            self.item_customizations = item_customizations
+            
+            # Save again without force_insert
+            kwargs['force_insert'] = False
+            super().save(*args, **kwargs)
 
 class KoOrder(models.Model):
     order_id = models.CharField(max_length=100, unique=True)
