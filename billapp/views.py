@@ -245,7 +245,7 @@ def save_order(request):
             except Table.DoesNotExist:
                 return JsonResponse({'status': 'failed', 'error': 'Table not found'}, status=404)
 
-            # Create new TableOrder without specifying an ID
+            # Step 1: Create and save the TableOrder before adding Orders
             table_order = TableOrder(
                 table=table,
                 subtotal=Decimal(str(data.get('totalAmount', '0'))),
@@ -254,28 +254,60 @@ def save_order(request):
                 payment_type=data.get('paymentType', 'N/A'),
                 order_type=data.get('orderType', 'N/A'),
             )
-            
-            # Save with force_insert=True to ensure a new record is created
-            table_order.save(force_insert=True)
+            table_order.save()  # Ensure TableOrder is saved in the DB
 
-            # Process items
+            # Prepare items data
             item_names = []
             item_customizations = []
 
+            # Step 2: Build Orders and OrderItems, then link them to TableOrder
             for item_data in data['items']:
                 item_names.append(item_data['name'])
+                custom_options = item_data.get('customizations', [])
+
+                customizations_list = [
+                    c.get('name', '') for c in custom_options
+                ]
                 item_customizations.append({
                     'name': item_data['name'],
-                    'customizations': [
-                        customization['name'] 
-                        for customization in item_data.get('customizations', [])
-                    ]
+                    'customizations': customizations_list
                 })
 
-            # Update item names and customizations
+                # Create one Order per item (or group them if desired)
+                new_order = Order.objects.create(
+                    order_id=f"{table_order.tableorder_id}-{len(item_names)}",
+                    subtotal=Decimal(str(item_data.get('price', '0'))),
+                    gst_amount=Decimal('0'),
+                    grand_total=Decimal(str(item_data.get('totalPrice', '0'))),
+                    payment_type=table_order.payment_type,
+                    order_type=table_order.order_type,
+                    order_details=item_data
+                )
+
+                # Create OrderItem
+                new_order_item = OrderItem.objects.create(
+                    name=item_data['name'],
+                    price=Decimal(str(item_data.get('price', '0'))),
+                    quantity=int(item_data.get('quantity', 1)),
+                    customizations=custom_options,
+                    total_price=Decimal(str(item_data.get('totalPrice', '0'))),
+                    base_price=Decimal(str(item_data.get('price', '0'))),
+                    item_details=item_data
+                )
+                new_order.items.add(new_order_item)
+                new_order.save()
+
+                # Now link the order to the existing TableOrder
+                table_order.orders.add(new_order)
+
+            # Step 3: Update TableOrder item fields and save again
             table_order.item_names = item_names
             table_order.item_customizations = item_customizations
             table_order.save()
+
+            print(f"Saved TableOrder: {table_order.tableorder_id}")
+            print(f"Items: {table_order.item_names}")
+            print(f"Customizations: {table_order.item_customizations}")
 
             return JsonResponse({
                 'status': 'success',
