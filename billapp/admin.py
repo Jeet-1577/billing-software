@@ -177,7 +177,6 @@ class TableOrderAdmin(admin.ModelAdmin):
         return "No customizations"
     get_item_customizations.short_description = 'Item Customizations'
 
-
 # Register other models
 admin.site.register(Category)
 admin.site.register(CustomizationCategory, CustomizationCategoryAdmin)

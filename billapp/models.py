@@ -168,7 +168,7 @@ class Table(models.Model):
         return f"Table {self.number} ({self.place})"
 
 class TableOrder(models.Model):
-    table = models.ForeignKey(Table, on_delete=models.CASCADE)
+    table = models.ForeignKey(Table, on_delete=models.CASCADE, related_name='table_orders')
     tableorder_id = models.CharField(
         max_length=100,
         unique=True,
@@ -182,8 +182,8 @@ class TableOrder(models.Model):
     grand_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    item_names = models.JSONField(default=list)
-    item_customizations = models.JSONField(default=list)
+    item_names = models.JSONField(default=list, blank=True)  # Added field
+    item_customizations = models.JSONField(default=list, blank=True)  # Added field
     orders = models.ManyToManyField(Order, related_name='table_orders')
 
     def __str__(self):
@@ -193,36 +193,31 @@ class TableOrder(models.Model):
         self.subtotal = sum(order.subtotal for order in self.orders.all())
         self.gst_amount = sum(order.gst_amount for order in self.orders.all())
         self.grand_total = sum(order.grand_total for order in self.orders.all())
-        self.save()
+        
+        # Update item_names and item_customizations
+        item_names = []
+        item_customizations = []
 
+        for order in self.orders.all():
+            for item in order.items.all():
+                item_names.append(item.name)
+                customizations = [c.get('name', '') for c in item.customizations]
+                item_customizations.append({
+                    'name': item.name,
+                    'customizations': customizations
+                })
+
+        self.item_names = item_names
+        self.item_customizations = item_customizations
+        
+        self.save()
+    
     def save(self, *args, **kwargs):
-        if not self.pk and not kwargs.get('force_insert', False):
-            # If this is a new instance and force_insert is not set
-            # Let Django handle the ID generation
-            kwargs['force_insert'] = True
-            
         super().save(*args, **kwargs)
 
-        if hasattr(self, 'orders'):
-            # Update item names and customizations
-            item_names = []
-            item_customizations = []
-
-            for order in self.orders.all():
-                for item in order.items.all():
-                    item_names.append(item.name)
-                    customizations = [c.get('name', '') for c in item.customizations]
-                    item_customizations.append({
-                        'name': item.name,
-                        'customizations': customizations
-                    })
-
-            self.item_names = item_names
-            self.item_customizations = item_customizations
-            
-            # Save again without force_insert
-            kwargs['force_insert'] = False
-            super().save(*args, **kwargs)
+    class Meta:
+        verbose_name = "Table Order"
+        verbose_name_plural = "Table Orders"
 
 class KoOrder(models.Model):
     order_id = models.CharField(max_length=100, unique=True)
