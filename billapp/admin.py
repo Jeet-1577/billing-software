@@ -152,8 +152,8 @@ class TableOrderAdmin(admin.ModelAdmin):
         'grand_total',
         'created_at',
         'updated_at',
-        'get_item_names',  
-        'get_item_customizations'  
+        'get_item_names',
+        'get_item_customizations'
     )
     search_fields = ('table__number', 'orders__order_id')
     readonly_fields = ('created_at', 'updated_at')
@@ -164,11 +164,17 @@ class TableOrderAdmin(admin.ModelAdmin):
     table_number.short_description = 'Table Number'
 
     def get_item_names(self, obj):
-        return ", ".join(obj.item_names)
+        # Ensure item_names is a list before joining
+        if isinstance(obj.item_names, list):
+            return ", ".join(obj.item_names)
+        return "No items"
     get_item_names.short_description = 'Item Names'
 
     def get_item_customizations(self, obj):
-        return ", ".join([f"{item['name']} ({', '.join(item['customizations'])})" for item in obj.item_customizations])
+        # Ensure item_customizations is a list before iterating
+        if isinstance(obj.item_customizations, list):
+            return ", ".join([f"{item['name']} ({', '.join(item['customizations'])})" for item in obj.item_customizations])
+        return "No customizations"
     get_item_customizations.short_description = 'Item Customizations'
 
 
