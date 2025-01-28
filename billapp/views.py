@@ -245,33 +245,15 @@ def save_order(request):
             except Table.DoesNotExist:
                 return JsonResponse({'status': 'failed', 'error': 'Table not found'}, status=404)
 
-            # Check if a TableOrder already exists for this table and orderId
-            existing_table_order = TableOrder.objects.filter(table=table, order_id=data['orderId']).first()
-
-            if existing_table_order:
-                # If an order already exists for this table, update it
-                table_order = existing_table_order
-                table_order.subtotal = Decimal(str(data.get('totalAmount', '0')))
-                table_order.gst_amount = Decimal(str(data.get('gstAmount', '0')))
-                table_order.grand_total = Decimal(str(data.get('grandTotal', '0')))
-                table_order.payment_type = data.get('paymentType', 'N/A')
-                table_order.order_type = data.get('orderType', 'N/A')
-                table_order.save()
-
-                print(f"Existing TableOrder updated: {table_order.order_id}")
-            else:
-                # If no order exists, create a new TableOrder
-                table_order = TableOrder.objects.create(
-                    table=table,
-                    order_id=data['orderId'],
-                    subtotal=Decimal(str(data.get('totalAmount', '0'))),
-                    gst_amount=Decimal(str(data.get('gstAmount', '0'))),
-                    grand_total=Decimal(str(data.get('grandTotal', '0'))),
-                    payment_type=data.get('paymentType', 'N/A'),
-                    order_type=data.get('orderType', 'N/A'),
-                )
-
-                print(f"New TableOrder created: {table_order.order_id}")
+            # Create new TableOrder
+            table_order = TableOrder.objects.create(
+                table=table,
+                subtotal=Decimal(str(data.get('totalAmount', '0'))),
+                gst_amount=Decimal(str(data.get('gstAmount', '0'))),
+                grand_total=Decimal(str(data.get('grandTotal', '0'))),
+                payment_type=data.get('paymentType', 'N/A'),
+                order_type=data.get('orderType', 'N/A'),
+            )
 
             # Extract and save item names and customizations
             item_names = []
@@ -304,7 +286,10 @@ def save_order(request):
 
             print(f"TableOrder saved: {table_order.order_id}")
 
-            return JsonResponse({'status': 'success', 'order_id': table_order.order_id})
+            return JsonResponse({
+                'status': 'success',
+                'tableorder_id': table_order.tableorder_id  # Return tableorder_id instead of order_id
+            })
 
         except json.JSONDecodeError:
             return JsonResponse({'status': 'failed', 'error': 'Invalid JSON data'}, status=400)

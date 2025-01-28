@@ -10,6 +10,9 @@ def generate_unique_aadhar():
 def generate_order_id():
     return uuid.uuid4().hex  # Generates a unique 32-character hexadecimal string
 
+def generate_tableorder_id():
+    return f"TO-{uuid.uuid4().hex[:8]}"  # Generates a unique ID with "TO-" prefix
+
 class Category(models.Model):
     name = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -166,10 +169,11 @@ class Table(models.Model):
 
 class TableOrder(models.Model):
     table = models.ForeignKey(Table, on_delete=models.CASCADE)
-    order_id = models.CharField(
+    tableorder_id = models.CharField(
         max_length=100,
         unique=True,
-        default=generate_order_id  # Sets a unique default using the generator function
+        default=generate_tableorder_id,
+        editable=False
     )
     payment_type = models.CharField(max_length=50, default='N/A')
     order_type = models.CharField(max_length=50, default='N/A')
@@ -178,14 +182,12 @@ class TableOrder(models.Model):
     grand_total = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
     item_names = models.JSONField(default=list)
     item_customizations = models.JSONField(default=list)
-
     orders = models.ManyToManyField(Order, related_name='table_orders')
 
     def __str__(self):
-        return f"TableOrder for Table {self.table.number} - Order {self.order_id}"
+        return f"TableOrder {self.tableorder_id} for Table {self.table.number}"
 
     def calculate_totals(self):
         self.subtotal = sum(order.subtotal for order in self.orders.all())
@@ -215,6 +217,7 @@ class TableOrder(models.Model):
         self.item_customizations = item_customizations
 
         super().save(*args, **kwargs)
+
 
 class KoOrder(models.Model):
     order_id = models.CharField(max_length=100, unique=True)

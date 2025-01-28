@@ -145,8 +145,8 @@ class TableAdmin(admin.ModelAdmin):
 @admin.register(TableOrder)
 class TableOrderAdmin(admin.ModelAdmin):
     list_display = (
+        'tableorder_id',  # Replace order_id with tableorder_id
         'table_number',
-        'order_id',
         'subtotal',
         'gst_amount',
         'grand_total',
