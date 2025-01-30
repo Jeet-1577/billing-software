@@ -367,7 +367,7 @@ document.querySelectorAll('.eye-icon').forEach(function(icon) {
             .then(data => {
                 console.log('Received data:', data);
                 if (data.status === 'success') {
-                    showOrderDetailsModal(data.table_order); // Pass data.table_order not data
+                    showOrderDetailsModal(data.table_orders); // Pass data.table_orders not data
                 } else {
                     alert('Failed to fetch order details: ' + data.error);
                 }
@@ -380,49 +380,40 @@ document.querySelectorAll('.eye-icon').forEach(function(icon) {
 });
 
 // Function to display order details in a modal
-function showOrderDetailsModal(tableOrder) {
-    if (!tableOrder) {
-        console.error("tableOrder is undefined");
+function showOrderDetailsModal(tableOrders) {
+    if (!tableOrders || !Array.isArray(tableOrders)) {
+        console.error("tableOrders is undefined or not an array");
         return;
-    }
-    if (typeof tableOrder.items === 'string') {
-        try {
-            tableOrder.items = JSON.parse(tableOrder.items);
-        } catch (error) {
-            console.error("Failed to parse tableOrder.items:", error);
-            tableOrder.items = [];
-        }
-    }
-    if (!Array.isArray(tableOrder.items)) {
-        tableOrder.items = [];
     }
 
     const modal = document.getElementById('orderDetailsModal');
     const modalContent = document.getElementById('orderDetailsContent');
     const tableNumberElement = document.getElementById('tableNumber');
 
-    // Set the table number
-    tableNumberElement.innerText = tableOrder.table_number;
+    // Set the table number (assuming all orders are for the same table)
+    if (tableOrders.length > 0) {
+        tableNumberElement.innerText = `Table Number: ${tableOrders[0].table_number}`;
+    }
 
-    modalContent.innerHTML = `
+    // Debug log to verify the received data
+    console.log("Received tableOrders:", tableOrders); // Remove or comment out in production
+
+    modalContent.innerHTML = tableOrders.map(tableOrder => `
         <div class="bg-gray-700 p-4 rounded-lg mb-4">
             <h3 class="text-lg font-semibold text-white">Table Order ID: ${tableOrder.table_order_id}</h3>
-            <div class="gap-4 mt-4">
-                <div>
-                    <div class="flex space-x-4">
-                        <p class="text-gray-300"><span class="font-medium">Payment Type:</span> ${tableOrder.payment_type}</p>
-                        <p class="text-gray-300"><span class="font-medium">Order Type:</span> ${tableOrder.order_type}</p>
-                    </div>
-                </div>
+            <div class="flex justify-between mt-2">
+                <p class="text-gray-300"><span class="font-medium">Status:</span> ${tableOrder.status}</p>
+                <p class="text-gray-300"><span class="font-medium">Date:</span> ${new Date(tableOrder.created_at).toLocaleDateString()}</p>
+                <p class="text-gray-300"><span class="font-medium">Time:</span> ${new Date(tableOrder.created_at).toLocaleTimeString()}</p>
             </div>
-            <div class="mt-4">
+            <div class="mt-4">  
                 <h4 class="font-medium text-white mb-2">Items:</h4>
                 <div class="items-section overflow-y-scroll max-h-40 h-32">
                     <ul class="space-y-2">
-                        ${tableOrder.items.map(item => `
+                        ${Array.isArray(tableOrder.items) && tableOrder.items.length > 0 ? tableOrder.items.map(item => `
                             <li class="text-gray-300">
                                 <span class="font-medium">${item.name}</span> - Quantity: ${item.quantity} - Price: ₹${item.price}
-                                ${item.customizations && item.customizations.length > 0 ? `
+                                ${Array.isArray(item.customizations) && item.customizations.length > 0 ? `
                                     <ul class="ml-4 mt-1 space-y-1">
                                         ${item.customizations.map(cust => `
                                             <li class="text-gray-300">
@@ -433,17 +424,17 @@ function showOrderDetailsModal(tableOrder) {
                                     </ul>
                                 ` : ''}
                             </li>
-                        `).join('')}
+                        `).join('') : '<li class="text-gray-300">No items available.</li>'}
                     </ul>
                 </div>
-                <div class="flex space-x-8 mt-4 justify-between">
-                    <p class="text-gray-300 text-left"><span class="font-medium">Subtotal:</span> ₹${tableOrder.subtotal}</p>
-                    <p class="text-gray-300 text-left"><span class="font-medium">GST Amount:</span> ₹${tableOrder.gst_amount}</p>
-                    <p class="text-gray-300 text-left"><span class="font-medium">Grand Total:</span> ₹${tableOrder.grand_total}</p>
-                </div>
+                  <div class="flex justify-between mt-2">
+                <p class="text-gray-300"><span class="font-medium">Subtotal:</span> ₹${tableOrder.subtotal}</p>
+                <p class="text-gray-300"><span class="font-medium">GST Amount:</span> ₹${tableOrder.gst_amount}</p>
+                <p class="text-gray-300"><span class="font-medium">Grand Total:</span> ₹${tableOrder.grand_total}</p>
+            </div>
             </div>
         </div>
-    `;
+    `).join('');
 
     modal.classList.remove('hidden');
     modal.style.display = 'flex';

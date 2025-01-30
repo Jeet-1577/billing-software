@@ -639,9 +639,20 @@ def table_order_view(request, table_number):
 def create_table_order(request):
     try:
         data = json.loads(request.body)
+        items = data.get('items', [])
+        formatted_items = []
+        for item in items:
+            formatted_item = {
+                'name': item.get('name', ''),
+                'quantity': item.get('quantity', 0),
+                'price': item.get('price', 0),
+                'customizations': item.get('customizations', [])
+            }
+            formatted_items.append(formatted_item)
+        
         table_order = TableOrder.objects.create(
             table_number=data['table_number'],
-            items=data.get('items', []),
+            items=formatted_items,
             customizations=data.get('customizations', []),
             subtotal=Decimal(str(data.get('subtotal', '0'))),
             gst_amount=Decimal(str(data.get('gst_amount', '0'))),
@@ -661,7 +672,18 @@ def update_table_order(request, table_order_id):
     try:
         data = json.loads(request.body)
         table_order = get_object_or_404(TableOrder, table_order_id=table_order_id)
-        table_order.items = data.get('items', table_order.items)
+        items = data.get('items', table_order.items)
+        formatted_items = []
+        for item in items:
+            formatted_item = {
+                'name': item.get('name', ''),
+                'quantity': item.get('quantity', 0),
+                'price': item.get('price', 0),
+                'customizations': item.get('customizations', [])
+            }
+            formatted_items.append(formatted_item)
+        
+        table_order.items = formatted_items
         table_order.customizations = data.get('customizations', table_order.customizations)
         table_order.subtotal = Decimal(str(data.get('subtotal', table_order.subtotal)))
         table_order.gst_amount = Decimal(str(data.get('gst_amount', table_order.gst_amount)))
@@ -722,25 +744,38 @@ def save_table_order(request):
     else:
         return JsonResponse({'status': 'error', 'error': 'Invalid request method.'})
 
+@csrf_exempt
 def get_table_order_details(request, table_id):
     try:
-        table_order = TableOrder.objects.get(table_number=table_id)
-        order_data = {
-            'table_order_id': table_order.table_order_id,
-            'table_number': table_order.table_number,
-            # Instead of json.loads(table_order.items), use table_order.items directly if it's a JSONField
-            'items': table_order.items,
-            'subtotal': str(table_order.subtotal),
-            'gst_amount': str(table_order.gst_amount),
-            'grand_total': str(table_order.grand_total),
-            'payment_type': table_order.payment_type,
-            'order_type': table_order.order_type,
-            'status': table_order.status,
-            'created_at': table_order.created_at,
-            'updated_at': table_order.updated_at,
-        }
-        return JsonResponse({'status': 'success', 'table_order': order_data})
+        table_orders = TableOrder.objects.filter(table_number=table_id).order_by('-created_at')
+        orders_data = []
+        for order in table_orders:
+            # Deserialize 'items' if it is a JSON string
+            items = json.loads(order.items) if isinstance(order.items, str) else order.items
+            formatted_items = []
+            for item in items:
+                formatted_item = {
+                    'name': item.get('name', ''),
+                    'quantity': item.get('quantity', 0),
+                    'price': item.get('price', 0),
+                    'customizations': item.get('customizations', [])
+                }
+                formatted_items.append(formatted_item)
+            orders_data.append({
+                'table_order_id': order.table_order_id,
+                'table_number': order.table_number,
+                'subtotal': str(order.subtotal),
+                'gst_amount': str(order.gst_amount),
+                'grand_total': str(order.grand_total),
+                'status': order.status,
+                'created_at': order.created_at.strftime('%d/%m/%Y, %I:%M:%S %p'),
+                'items': formatted_items
+            })
+        # Debug log to verify the data being sent
+        print(f"Sending orders data: {orders_data}")  # Remove or comment out in production
+        return JsonResponse({'status': 'success', 'table_orders': orders_data})
     except TableOrder.DoesNotExist:
-        return JsonResponse({'status': 'failed', 'error': 'Table order not found'}, status=404)
+        return JsonResponse({'status': 'failed', 'error': 'Table orders not found'}, status=404)
     except Exception as e:
+        print(f"Error in get_table_order_details: {str(e)}")  # Remove or comment out in production
         return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
