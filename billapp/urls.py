@@ -41,8 +41,14 @@ urlpatterns = [
     # path('save-order-status/<int:order_id>/', views.update_ko_order_status, name='update_ko_order_status'),
     path('fetch-order-data/', views.fetch_order_data, name='fetch_order_data'),  # Add fetch_order_data view
     path('get-order-details/', views.get_order_details, name='get_order_details'),  # Ensure this line is present
+    path('table-order/<int:table_number>/', views.table_order_view, name='table_order'),
+    path('table-order/create/', views.create_table_order, name='create_table_order'),
+    path('table-order/<str:table_order_id>/update/', views.update_table_order, name='update_table_order'),
+    path('table-order/<str:table_order_id>/delete/', views.delete_table_order, name='delete_table_order'),
 ]
 
 urlpatterns += [
     # path('api/get-table-order-details/<int:table_id>/', views.get_table_order_details, name='get_table_order_details'),
+    # Remove or comment out TableOrder related URLs
+    # path('table-order/<int:table_id>/', views.table_order_view, name='table_order_view'),
 ]

@@ -79,12 +79,6 @@ def place_order_api(request, order_data: OrderRequestSchema):
             )
             order.items.add(order_item)
 
-        # If table order, link to table
-        if order_data.tableId:
-            table_number = order_data.tableId.replace('table-', '')
-            table, _ = Table.objects.get_or_create(number=table_number)
-            table.orders.add(order)
-
         return {
             "status": "success",
             "order_id": order.order_id,

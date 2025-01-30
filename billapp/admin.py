@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Item, Order, CustomizationOption, CustomizationCategory, OrderItem, Table, Employee
+from .models import Category, Item, Order, CustomizationOption, CustomizationCategory, OrderItem, Table, Employee,TableOrder  # Removed TableOrder
 from django import forms
 from django.contrib.auth.hashers import make_password
 
@@ -141,6 +141,13 @@ admin.site.register(Employee, EmployeeAdmin)
 class TableAdmin(admin.ModelAdmin):
     list_display = ('number',)
     search_fields = ('number',)
+
+@admin.register(TableOrder)
+class TableOrderAdmin(admin.ModelAdmin):
+    list_display = ('table_order_id', 'table_number', 'subtotal', 'gst_amount', 'grand_total', 'status', 'created_at')
+    search_fields = ('table_order_id', 'table_number')
+    list_filter = ('status', 'created_at')
+    readonly_fields = ('created_at', 'updated_at')
 
 # Register other models
 admin.site.register(Category)

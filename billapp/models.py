@@ -10,8 +10,8 @@ def generate_unique_aadhar():
 def generate_order_id():
     return uuid.uuid4().hex  # Generates a unique 32-character hexadecimal string
 
-def generate_tableorder_id():
-    return f"TO-{uuid.uuid4().hex[:8]}"  # Generates a unique ID with "TO-" prefix
+def generate_table_order_id():
+    return f"TO-{uuid.uuid4().hex[:8].upper()}"
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
@@ -167,6 +167,35 @@ class Table(models.Model):
     def __str__(self):
         return f"Table {self.number} ({self.place})"
 
+class TableOrder(models.Model):
+    table_order_id = models.CharField(max_length=100, unique=True, default=generate_table_order_id)
+    table_number = models.IntegerField(default=1)
+    items = models.JSONField(default=list)
+    customizations = models.JSONField(default=list)
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    gst_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    grand_total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    payment_type = models.CharField(max_length=50, default='CASH')
+    order_type = models.CharField(max_length=50, default='DINE_IN')
+    first_order_time = models.TimeField(auto_now_add=True)
+    last_order_time = models.TimeField(auto_now=True)
+    order_date = models.DateField(auto_now_add=True)
+    status = models.CharField(max_length=20, default='active')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    table = models.ForeignKey('Table', on_delete=models.CASCADE)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Table Order {self.table_order_id} - Table {self.table_number}"
+
+    def calculate_totals(self):
+        self.subtotal = sum(item.get('total_price', 0) for item in self.items)
+        self.gst_amount = self.subtotal * Decimal('0.18')
+        self.grand_total = self.subtotal + self.gst_amount
+        self.save()
 
 class KoOrder(models.Model):
     order_id = models.CharField(max_length=100, unique=True)

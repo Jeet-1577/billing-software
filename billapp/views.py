@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Category, Item, Order, Table, Employee, OrderItem, KoOrder  # Ensure Employee, OrderItem, and KoOrder are imported
+from .models import Category, Item, Order, Table, Employee, OrderItem, KoOrder, TableOrder  # Ensure Employee, OrderItem, and KoOrder are imported
 from .forms import CategoryForm, ItemForm
 from django.http import JsonResponse
 import json
@@ -187,7 +187,6 @@ def place_order(request):
                 payment_type=data.get('paymentType', 'N/A'),
                 order_type=data.get('orderType', 'N/A'),
                 order_details=data.get('items', []),
-                # is_temporary=False  # Ensure is_temporary is set to False
             )
 
             # Add items to order
@@ -627,3 +626,60 @@ def delete_order(request, order_id):
 
     logger.warning("Invalid request method for delete_order view.")
     return JsonResponse({'status': 'failed', 'error': 'Invalid request method.'}, status=405)
+
+def table_order_view(request, table_number):
+    try:
+        table_order = TableOrder.objects.get(table_number=table_number)
+        return render(request, 'table_order.html', {'table_order': table_order})
+    except TableOrder.DoesNotExist:
+        return render(request, 'error.html', {'error_message': 'Table order not found.'})
+
+@csrf_exempt
+@require_POST
+def create_table_order(request):
+    try:
+        data = json.loads(request.body)
+        table_order = TableOrder.objects.create(
+            table_number=data['table_number'],
+            items=data.get('items', []),
+            customizations=data.get('customizations', []),
+            subtotal=Decimal(str(data.get('subtotal', '0'))),
+            gst_amount=Decimal(str(data.get('gst_amount', '0'))),
+            grand_total=Decimal(str(data.get('grand_total', '0'))),
+            payment_type=data.get('payment_type', 'CASH'),
+            order_type=data.get('order_type', 'DINE_IN'),
+            notes=data.get('notes', '')
+        )
+        table_order.calculate_totals()
+        return JsonResponse({'status': 'success', 'table_order_id': table_order.table_order_id})
+    except Exception as e:
+        return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
+
+@csrf_exempt
+@require_POST
+def update_table_order(request, table_order_id):
+    try:
+        data = json.loads(request.body)
+        table_order = get_object_or_404(TableOrder, table_order_id=table_order_id)
+        table_order.items = data.get('items', table_order.items)
+        table_order.customizations = data.get('customizations', table_order.customizations)
+        table_order.subtotal = Decimal(str(data.get('subtotal', table_order.subtotal)))
+        table_order.gst_amount = Decimal(str(data.get('gst_amount', table_order.gst_amount)))
+        table_order.grand_total = Decimal(str(data.get('grand_total', table_order.grand_total)))
+        table_order.payment_type = data.get('payment_type', table_order.payment_type)
+        table_order.order_type = data.get('order_type', table_order.order_type)
+        table_order.notes = data.get('notes', table_order.notes)
+        table_order.calculate_totals()
+        return JsonResponse({'status': 'success', 'table_order_id': table_order.table_order_id})
+    except Exception as e:
+        return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
+
+@csrf_exempt
+@require_POST
+def delete_table_order(request, table_order_id):
+    try:
+        table_order = get_object_or_404(TableOrder, table_order_id=table_order_id)
+        table_order.delete()
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
