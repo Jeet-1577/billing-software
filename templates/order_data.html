@@ -173,6 +173,13 @@
     </div>
 </div>
 
+<div class="bg-gray-700 p-4 rounded-lg mb-4">
+    <h3 class="text-lg font-semibold text-white">Order ID: {{ order.order_id }}</h3>
+    <p class="text-white"><span class="font-medium">Date:</span> {{ order.date }}</p>
+    <p class="text-white"><span class="font-medium">Total:</span> ₹{{ order.grand_total }}</p>
+    <!-- ...additional fields... -->
+</div>
+
 <style>
     /* Hide scrollbar for WebKit browsers */
     .overflow-y-auto::-webkit-scrollbar {

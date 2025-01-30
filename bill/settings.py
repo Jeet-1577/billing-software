@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
 ]
 
 TAILWIND_APP_NAME = 'theme'
@@ -63,11 +64,15 @@ MIDDLEWARE = [
 
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 
 # Add these settings
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
+
+CORS_ALLOW_ALL_ORIGINS = True
+# or use: CORS_ALLOWED_ORIGINS = ['https://rsms.me']
 
 ROOT_URLCONF = 'bill.urls'
 

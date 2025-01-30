@@ -1,0 +1,3 @@
+
+# ...existing lines...
+django-cors-headers

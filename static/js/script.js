@@ -45,6 +45,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    const someElement = document.getElementById('someId'); 
+    if (someElement) {
+        someElement.addEventListener('click', () => {
+            // ...existing code...
+        });
+    }
+
 // Utility Functions
 function prepareOrderData() {
     const selectedItems = document.querySelectorAll('.item-cube.selected');
@@ -359,7 +367,7 @@ document.querySelectorAll('.eye-icon').forEach(function(icon) {
             .then(data => {
                 console.log('Received data:', data);
                 if (data.status === 'success') {
-                    showOrderDetailsModal(data.order);
+                    showOrderDetailsModal(data.table_order); // Pass data.table_order not data
                 } else {
                     alert('Failed to fetch order details: ' + data.error);
                 }
@@ -373,11 +381,15 @@ document.querySelectorAll('.eye-icon').forEach(function(icon) {
 
 // Function to display order details in a modal
 function showOrderDetailsModal(tableOrder) {
+    if (!tableOrder) {
+        console.error("tableOrder is undefined");
+        return;
+    }
     if (typeof tableOrder.items === 'string') {
         try {
             tableOrder.items = JSON.parse(tableOrder.items);
-        } catch (e) {
-            console.error('Failed to parse items:', e);
+        } catch (error) {
+            console.error("Failed to parse tableOrder.items:", error);
             tableOrder.items = [];
         }
     }
@@ -385,45 +397,54 @@ function showOrderDetailsModal(tableOrder) {
         tableOrder.items = [];
     }
 
-    // Create modal HTML
-    var modal = document.createElement('div');
-    modal.id = 'orderDetailsModal';
-    modal.innerHTML = `
-        <div class="modal-overlay">
-            <div class="modal-content">
-                <span class="close-button">&times;</span>
-                <h2>Order Details</h2>
-                <p><strong>Order ID:</strong> ${tableOrder.order_id}</p>
-                <p><strong>Subtotal:</strong> ${tableOrder.subtotal}</p>
-                <p><strong>GST Amount:</strong> ${tableOrder.gst_amount}</p>
-                <p><strong>Grand Total:</strong> ${tableOrder.grand_total}</p>
-                <h3>Items:</h3>
-                <ul>
-                    ${tableOrder.items.map(item => `
-                        <li>
-                            ${item.name} - Quantity: ${item.quantity} - Price: ${item.price} - Customizations: ${item.customizations.join(', ')}
-                        </li>
-                    `).join('')}
-                </ul>
+    const modal = document.getElementById('orderDetailsModal');
+    const modalContent = document.getElementById('orderDetailsContent');
+    const tableNumberElement = document.getElementById('tableNumber');
+
+    // Set the table number
+    tableNumberElement.innerText = tableOrder.table_number;
+
+    modalContent.innerHTML = `
+        <div class="bg-gray-700 p-4 rounded-lg mb-4">
+            <h3 class="text-lg font-semibold text-white">Table Order ID: ${tableOrder.table_order_id}</h3>
+            <div class="gap-4 mt-4">
+                <div>
+                    <div class="flex space-x-4">
+                        <p class="text-gray-300"><span class="font-medium">Payment Type:</span> ${tableOrder.payment_type}</p>
+                        <p class="text-gray-300"><span class="font-medium">Order Type:</span> ${tableOrder.order_type}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4">
+                <h4 class="font-medium text-white mb-2">Items:</h4>
+                <div class="items-section overflow-y-scroll max-h-40 h-32">
+                    <ul class="space-y-2">
+                        ${tableOrder.items.map(item => `
+                            <li class="text-gray-300">
+                                <span class="font-medium">${item.name}</span> - Quantity: ${item.quantity} - Price: ₹${item.price}
+                                ${item.customizations && item.customizations.length > 0 ? `
+                                    <ul class="ml-4 mt-1 space-y-1">
+                                        ${item.customizations.map(cust => `
+                                            <li class="text-gray-300">
+                                                ${cust.name || cust.option_name || ''} 
+                                                ${cust.price ? `(+₹${cust.price})` : ''}
+                                            </li>
+                                        `).join('')}
+                                    </ul>
+                                ` : ''}
+                            </li>
+                        `).join('')}
+                    </ul>
+                </div>
+                <div class="flex space-x-8 mt-4 justify-between">
+                    <p class="text-gray-300 text-left"><span class="font-medium">Subtotal:</span> ₹${tableOrder.subtotal}</p>
+                    <p class="text-gray-300 text-left"><span class="font-medium">GST Amount:</span> ₹${tableOrder.gst_amount}</p>
+                    <p class="text-gray-300 text-left"><span class="font-medium">Grand Total:</span> ₹${tableOrder.grand_total}</p>
+                </div>
             </div>
         </div>
     `;
-    document.body.appendChild(modal);
 
-    // Show the modal
-    modal.style.display = 'block';
-
-    // Close the modal when the close button is clicked
-    modal.querySelector('.close-button').addEventListener('click', function() {
-        modal.style.display = 'none';
-        modal.remove();
-    });
-
-    // Close the modal when clicking outside the modal content
-    window.addEventListener('click', function(event) {
-        if (event.target == modal) {
-            modal.style.display = 'none';
-            modal.remove();
-        }
-    });
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
 }
