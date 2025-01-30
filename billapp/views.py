@@ -733,7 +733,8 @@ def save_table_order(request):
                 payment_type=payment_type,
                 order_type=order_type,
                 status=status,
-                table=table
+                table=table,
+                saved_time=timezone.now()  # Save the current time
             )
 
             return JsonResponse({'status': 'success', 'message': 'Order saved successfully.'})
@@ -768,7 +769,8 @@ def get_table_order_details(request, table_id):
                 'gst_amount': str(order.gst_amount),
                 'grand_total': str(order.grand_total),
                 'status': order.status,
-                'created_at': order.created_at.strftime('%d/%m/%Y, %I:%M:%S %p'),
+                'created_at': order.created_at.isoformat(),  # Ensure ISO format
+                'saved_time': order.saved_time.isoformat() if order.saved_time else None,  # Ensure ISO format
                 'items': formatted_items
             })
         # Debug log to verify the data being sent

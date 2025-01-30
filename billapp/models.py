@@ -181,6 +181,12 @@ class TableOrder(models.Model):
     table = models.ForeignKey('Table', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    saved_time = models.DateTimeField(null=True, blank=True)  # Add this line
+
+    def save(self, *args, **kwargs):
+        if not self.saved_time:
+            self.saved_time = timezone.now()  # Set the saved time when the order is created
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ['-created_at']
