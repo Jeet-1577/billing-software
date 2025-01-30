@@ -1,6 +1,6 @@
 from django.urls import path, include
 from . import views  # Updated import
-from .views import table_view, store_order  # Import save_note and store_order from views
+from .views import table_view, store_order, save_table_order  # Import save_note, store_order, and save_table_order from views
 
 urlpatterns = [
     path('', views.index, name='index'),
@@ -45,6 +45,7 @@ urlpatterns = [
     path('table-order/create/', views.create_table_order, name='create_table_order'),
     path('table-order/<str:table_order_id>/update/', views.update_table_order, name='update_table_order'),
     path('table-order/<str:table_order_id>/delete/', views.delete_table_order, name='delete_table_order'),
+    path('save-table-order/', save_table_order, name='save_table_order'),  # Add this line
 ]
 
 urlpatterns += [

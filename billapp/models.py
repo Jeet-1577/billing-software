@@ -177,13 +177,10 @@ class TableOrder(models.Model):
     grand_total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     payment_type = models.CharField(max_length=50, default='CASH')
     order_type = models.CharField(max_length=50, default='DINE_IN')
-    first_order_time = models.TimeField(auto_now_add=True)
-    last_order_time = models.TimeField(auto_now=True)
-    order_date = models.DateField(auto_now_add=True)
-    status = models.CharField(max_length=20, default='active')
+    status = models.CharField(max_length=20, default='active')  # Corrected keyword argument
+    table = models.ForeignKey('Table', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    table = models.ForeignKey('Table', on_delete=models.CASCADE)
 
     class Meta:
         ordering = ['-created_at']

@@ -409,6 +409,107 @@
         if (sendButton) {
             sendButton.addEventListener('click', sendOrder);
         }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function saveOrder() {
+            const selectedTable = localStorage.getItem('selectedTable');
+            if (!selectedTable) {
+                alert('Please select a table first.');
+                return;
+            }
+
+            // Extract numeric table number
+            const tableNumberMatch = selectedTable.match(/\d+/);
+            const tableNumber = tableNumberMatch ? parseInt(tableNumberMatch[0], 10) : null;
+
+            if (!tableNumber) {
+                alert('Invalid table selected.');
+                return;
+            }
+
+            const selectedItems = document.getElementsByClassName('item-cube selected');
+            const orderItems = [];
+            let subtotal = 0;
+
+            for (let i = 0; i < selectedItems.length; i++) {
+                const item = selectedItems[i];
+                const itemId = item.getAttribute('data-item-id');
+                const itemName = item.getAttribute('data-item-name');
+                const price = parseFloat(item.getAttribute('data-item-price'));
+                const quantity = parseInt(item.getAttribute('data-quantity')) || 1;
+                const customizations = item.getAttribute('data-selected-customizations') 
+                    ? JSON.parse(item.getAttribute('data-selected-customizations')) 
+                    : [];
+
+                const totalPrice = price * quantity;
+                subtotal += totalPrice;
+
+                orderItems.push({
+                    id: itemId,
+                    name: itemName,
+                    price: price,
+                    quantity: quantity,
+                    customizations: customizations,
+                    total_price: totalPrice
+                });
+            }
+
+            const gst_amount = subtotal * 0.18;
+            const grand_total = subtotal + gst_amount;
+
+            const orderData = {
+                table_order_id: `TO-${Date.now()}`,  // Generate a unique order ID
+                table_number: tableNumber,           // Use the extracted numeric table number
+                items: orderItems,
+                customizations: [],  // Add if needed
+                subtotal: subtotal.toFixed(2),
+                gst_amount: gst_amount.toFixed(2),
+                grand_total: grand_total.toFixed(2),
+                payment_type: 'CASH',  // Default or get from user input
+                order_type: 'DINE_IN',  // Default or get from user input
+                status: 'active',
+                table: tableNumber
+            };
+
+            const csrftoken = getCookie('csrftoken');
+
+            fetch('/save-table-order/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                },
+                body: JSON.stringify(orderData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Order saved successfully!');
+                    // Optionally, redirect or update UI
+                } else {
+                    alert('Failed to save order: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while saving the order.');
+            });
+        }
     </script>
     <script src="http://localhost:8000/__reload__/reload.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Updated jQuery CDN -->

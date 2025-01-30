@@ -683,3 +683,41 @@ def delete_table_order(request, table_order_id):
         return JsonResponse({'status': 'success'})
     except Exception as e:
         return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
+
+@csrf_exempt
+def save_table_order(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            table_order_id = data.get('table_order_id')
+            table_number = data.get('table_number')
+            items = data.get('items', [])
+            subtotal = data.get('subtotal', 0)
+            gst_amount = data.get('gst_amount', 0)
+            grand_total = data.get('grand_total', 0)
+            payment_type = data.get('payment_type', 'CASH')
+            order_type = data.get('order_type', 'DINE_IN')
+            status = data.get('status', 'active')
+
+            table = Table.objects.get(number=table_number)
+
+            table_order = TableOrder.objects.create(
+                table_order_id=table_order_id,
+                table_number=table_number,
+                items=json.dumps(items),
+                subtotal=subtotal,
+                gst_amount=gst_amount,
+                grand_total=grand_total,
+                payment_type=payment_type,
+                order_type=order_type,
+                status=status,
+                table=table
+            )
+
+            return JsonResponse({'status': 'success', 'message': 'Order saved successfully.'})
+        except Table.DoesNotExist:
+            return JsonResponse({'status': 'error', 'error': 'Table does not exist.'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'error': str(e)})
+    else:
+        return JsonResponse({'status': 'error', 'error': 'Invalid request method.'})
