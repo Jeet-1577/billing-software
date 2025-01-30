@@ -721,3 +721,26 @@ def save_table_order(request):
             return JsonResponse({'status': 'error', 'error': str(e)})
     else:
         return JsonResponse({'status': 'error', 'error': 'Invalid request method.'})
+
+def get_table_order_details(request, table_id):
+    try:
+        table_order = TableOrder.objects.get(table_number=table_id)
+        order_data = {
+            'table_order_id': table_order.table_order_id,
+            'table_number': table_order.table_number,
+            # Instead of json.loads(table_order.items), use table_order.items directly if it's a JSONField
+            'items': table_order.items,
+            'subtotal': str(table_order.subtotal),
+            'gst_amount': str(table_order.gst_amount),
+            'grand_total': str(table_order.grand_total),
+            'payment_type': table_order.payment_type,
+            'order_type': table_order.order_type,
+            'status': table_order.status,
+            'created_at': table_order.created_at,
+            'updated_at': table_order.updated_at,
+        }
+        return JsonResponse({'status': 'success', 'table_order': order_data})
+    except TableOrder.DoesNotExist:
+        return JsonResponse({'status': 'failed', 'error': 'Table order not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)

@@ -519,15 +519,18 @@
             icon.addEventListener('click', function(event) {
                 event.stopPropagation(); // Prevent triggering other click events
                 const tableId = this.getAttribute('data-table-id');
-                fetch(`/api/get-table-order-details/${tableId}/`) // API URL
-                    .then(response => response.json())
+                fetch(`/api/table-order/${tableId}/`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
                     .then(data => {
-                        if (data.error) {
-                            alert('Failed to fetch order details: ' + data.error);
-                        } else if (data.orders && Array.isArray(data.orders)) {
-                            showOrderDetailsModal(data.orders);
+                        if (data.status === 'success') {
+                            showOrderDetailsModal(data.table_order);
                         } else {
-                            alert('No orders found for this table.');
+                            alert('Failed to fetch order details: ' + data.error);
                         }
                     })
                     .catch(error => {
@@ -538,62 +541,49 @@
         });
 
         // Function to show the order details modal
-        function showOrderDetailsModal(orders) {
+        function showOrderDetailsModal(tableOrder) {
             const modal = document.getElementById('orderDetailsModal');
             const modalContent = document.getElementById('orderDetailsContent');
 
-            // Reverse the order of the orders array to show the latest order at the top
-            orders.reverse();
-
-            modalContent.innerHTML = '';
-
-            if (!orders || orders.length === 0) {
-                modalContent.innerHTML = '<p class="text-gray-300">No orders found for this table.</p>';
-            } else {
-                orders.forEach(order => {
-                    const orderElement = document.createElement('div');
-                    orderElement.classList.add('order-section');
-                    orderElement.innerHTML = `
-                        <div class="bg-gray-50 p-4 rounded-lg mb-4">
-                            <h3 class="text-lg font-semibold text-white">Order ID: ${order.order_id}</h3>
-                            <div class="grid grid-cols-2 gap-4 mt-4">
-                                <div>
-                                    <p class="text-gray-300"><span class="font-medium">Payment Type:</span> ${order.payment_type}</p>
-                                    <p class="text-gray-300"><span class="font-medium">Order Type:</span> ${order.order_type}</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-300"><span class="font-medium">Subtotal:</span> ₹${order.subtotal}</p>
-                                    <p class="text-gray-300"><span class="font-medium">GST Amount:</span> ₹${order.gst_amount}</p>
-                                    <p class="text-gray-300"><span class="font-medium">Grand Total:</span> ₹${order.grand_total}</p>
-                                </div>
-                            </div>
-                            <div class="mt-4">
-                                <h4 class="font-medium text-white mb-2">Items:</h4>
-                                <div class="items-section">
-                                    <ul class="space-y-2">
-                                        ${order.items.map(item => `
-                                            <li class="text-gray-300">
-                                                <span class="font-medium">${item.name}</span> - Quantity: ${item.quantity} - Price: ₹${item.price}
-                                                ${item.customizations && item.customizations.length > 0 ? `
-                                                    <ul class="ml-4 mt-1 space-y-1">
-                                                        ${item.customizations.map(cust => `
-                                                            <li class="text-gray-400">
-                                                                ${cust.name || cust.option_name || ''} 
-                                                                ${cust.price ? `(+₹${cust.price})` : ''}
-                                                            </li>
-                                                        `).join('')}
-                                                    </ul>
-                                                ` : ''}
-                                            </li>
-                                        `).join('')}
-                                    </ul>
-                                </div>
-                            </div>
+            modalContent.innerHTML = `
+                <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                    <h3 class="text-lg font-semibold text-white">Table Order ID: ${tableOrder.table_order_id}</h3>
+                    <div class="grid grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <p class="text-gray-300"><span class="font-medium">Table Number:</span> ${tableOrder.table_number}</p>
+                            <p class="text-gray-300"><span class="font-medium">Payment Type:</span> ${tableOrder.payment_type}</p>
+                            <p class="text-gray-300"><span class="font-medium">Order Type:</span> ${tableOrder.order_type}</p>
                         </div>
-                    `;
-                    modalContent.appendChild(orderElement);
-                });
-            }
+                        <div>
+                            <p class="text-gray-300"><span class="font-medium">Subtotal:</span> ₹${tableOrder.subtotal}</p>
+                            <p class="text-gray-300"><span class="font-medium">GST Amount:</span> ₹${tableOrder.gst_amount}</p>
+                            <p class="text-gray-300"><span class="font-medium">Grand Total:</span> ₹${tableOrder.grand_total}</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <h4 class="font-medium text-white mb-2">Items:</h4>
+                        <div class="items-section">
+                            <ul class="space-y-2">
+                                ${tableOrder.items.map(item => `
+                                    <li class="text-gray-300">
+                                        <span class="font-medium">${item.name}</span> - Quantity: ${item.quantity} - Price: ₹${item.price}
+                                        ${item.customizations && item.customizations.length > 0 ? `
+                                            <ul class="ml-4 mt-1 space-y-1">
+                                                ${item.customizations.map(cust => `
+                                                    <li class="text-gray-400">
+                                                        ${cust.name || cust.option_name || ''} 
+                                                        ${cust.price ? `(+₹${cust.price})` : ''}
+                                                    </li>
+                                                `).join('')}
+                                            </ul>
+                                        ` : ''}
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
 
             modal.classList.remove('hidden');
             modal.style.display = 'flex';

@@ -349,7 +349,7 @@ document.querySelectorAll('.eye-icon').forEach(function(icon) {
             return;
         }
         console.log(`Fetching order details for table_id=${tableId}`);
-        fetch(`/api/get-table-order-details/${tableId}/`)  // Updated URL path
+        fetch(`/api/table-order/${tableId}/`)  // Updated URL path
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
@@ -372,7 +372,19 @@ document.querySelectorAll('.eye-icon').forEach(function(icon) {
 });
 
 // Function to display order details in a modal
-function showOrderDetailsModal(order) {
+function showOrderDetailsModal(tableOrder) {
+    if (typeof tableOrder.items === 'string') {
+        try {
+            tableOrder.items = JSON.parse(tableOrder.items);
+        } catch (e) {
+            console.error('Failed to parse items:', e);
+            tableOrder.items = [];
+        }
+    }
+    if (!Array.isArray(tableOrder.items)) {
+        tableOrder.items = [];
+    }
+
     // Create modal HTML
     var modal = document.createElement('div');
     modal.id = 'orderDetailsModal';
@@ -381,13 +393,13 @@ function showOrderDetailsModal(order) {
             <div class="modal-content">
                 <span class="close-button">&times;</span>
                 <h2>Order Details</h2>
-                <p><strong>Order ID:</strong> ${order.order_id}</p>
-                <p><strong>Subtotal:</strong> ${order.subtotal}</p>
-                <p><strong>GST Amount:</strong> ${order.gst_amount}</p>
-                <p><strong>Grand Total:</strong> ${order.grand_total}</p>
+                <p><strong>Order ID:</strong> ${tableOrder.order_id}</p>
+                <p><strong>Subtotal:</strong> ${tableOrder.subtotal}</p>
+                <p><strong>GST Amount:</strong> ${tableOrder.gst_amount}</p>
+                <p><strong>Grand Total:</strong> ${tableOrder.grand_total}</p>
                 <h3>Items:</h3>
                 <ul>
-                    ${order.items.map(item => `
+                    ${tableOrder.items.map(item => `
                         <li>
                             ${item.name} - Quantity: ${item.quantity} - Price: ${item.price} - Customizations: ${item.customizations.join(', ')}
                         </li>

@@ -500,7 +500,16 @@
             .then(data => {
                 if (data.status === 'success') {
                     alert('Order saved successfully!');
-                    // Optionally, redirect or update UI
+                    
+                    // Clear and close the sidebar
+                    document.getElementById('selectionSidebar').innerHTML = '';  // Adjust ID as needed
+                    document.getElementById('selectionSidebar').classList.remove('open');  // Hide the sidebar
+
+                    // Clear selected table from localStorage
+                    localStorage.removeItem('selectedTable');
+
+                    // Refresh the page
+                    location.reload();
                 } else {
                     alert('Failed to save order: ' + data.error);
                 }
