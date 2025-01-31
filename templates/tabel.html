@@ -531,75 +531,111 @@
                     })
                     .then(data => {
                         if (data.status === 'success') {
-                            showOrderDetailsModal(data.table_order);
+                            showOrderDetailsModal(data.table_orders);
                         } else {
                             alert('Failed to fetch order details: ' + data.error);
                         }
                     })
-                  
+                    .catch(error => {
+                        console.error('Error fetching order details:', error);
+                        alert('An error occurred while fetching order details.');
+                    });
             });
         });
 
         // Function to show the order details modal
-        function showOrderDetailsModal(tableOrder) {
-            const modal = document.getElementById('orderDetailsModal');
-            const modalContent = document.getElementById('orderDetailsContent');
+        function showOrderDetailsModal(tableOrders) {
+    if (!tableOrders || !Array.isArray(tableOrders)) {
+        console.error("tableOrders is undefined or not an array");
+        return;
+    }
 
-            modalContent.innerHTML = `
-                <div class="bg-gray-700 p-4 rounded-lg mb-4">
-                    <h3 class="text-lg font-semibold text-white">Table Order ID: ${tableOrder.table_order_id}</h3>
-                    <div class="grid grid-cols-2 gap-4 mt-4">
-                        <div>
-                            <p class="text-white"><span class="font-medium">Table Number:</span> ${tableOrder.table_number}</p>
-                            <p class="text-white"><span class="font-medium">Payment Type:</span> ${tableOrder.payment_type}</p>
-                            <p class="text-white"><span class="font-medium">Order Type:</span> ${tableOrder.order_type}</p>
-                        </div>
-                        <div>
-                            <p class="text-white"><span class="font-medium">Subtotal:</span> ₹${tableOrder.subtotal}</p>
-                            <p class="text-white"><span class="font-medium">GST Amount:</span> ₹${tableOrder.gst_amount}</p>
-                            <p class="text-white"><span class="font-medium">Grand Total:</span> ₹${tableOrder.grand_total}</p>
-                        </div>
+    const modal = document.getElementById('orderDetailsModal');
+    const modalContent = document.getElementById('orderDetailsContent');
+    const tableNumberElement = document.getElementById('tableNumber');
+
+    // Set the table number (assuming all orders are for the same table)
+    if (tableOrders.length > 0) {
+        tableNumberElement.innerText = `Table Number: ${tableOrders[0].table_number}`;
+    }
+
+    // Render the orders inside the modal
+    modalContent.innerHTML = tableOrders.map((tableOrder, index) => {
+        const savedTime = new Date(tableOrder.saved_time);
+        const formattedSavedDate = savedTime.toLocaleDateString();
+        const formattedSavedTime = savedTime.toLocaleTimeString();
+
+        return `
+        <label class="block">
+            <input type="radio" name="selectedOrder" value="${tableOrder.table_order_id}" class="hidden peer">
+            <div class="order-item bg-gray-700 border border-gray-500 rounded-lg p-4 mb-4 cursor-pointer peer-checked:border-4 peer-checked:border-blue-700">
+                <h3 class="text-lg font-semibold text-white">Table Order ID: ${tableOrder.table_order_id}</h3>
+                <div class="flex justify-between mt-2">
+                    <p class="text-gray-300"><span class="font-medium">Status:</span> ${tableOrder.status}</p>
+                    <p class="text-gray-300"><span class="font-medium">Date:</span> ${formattedSavedDate}</p>
+                    <p class="text-gray-300"><span class="font-medium">Time:</span> ${formattedSavedTime}</p>
+                </div>
+                <div class="mt-4">
+                    <h4 class="font-medium text-white mb-2">Items:</h4>
+                    <div class="items-section overflow-y-scroll max-h-40 h-32">
+                        <ul class="space-y-2">
+                            ${Array.isArray(tableOrder.items) && tableOrder.items.length > 0 ? tableOrder.items.map(item => `
+                                <li class="text-gray-300">
+                                    <span class="font-medium">${item.name}</span> - Quantity: ${item.quantity} - Price: ₹${item.price}
+                                    ${Array.isArray(item.customizations) && item.customizations.length > 0 ? `
+                                        <ul class="ml-4 mt-1 space-y-1">
+                                            ${item.customizations.map(cust => `
+                                                <li class="text-gray-300">
+                                                    ${cust.name || cust.option_name || ''} 
+                                                    ${cust.price ? `(+₹${cust.price})` : ''}
+                                                </li>
+                                            `).join('')}
+                                        </ul>
+                                    ` : ''}
+                                </li>
+                            `).join('') : '<li class="text-gray-300">No items available.</li>'}
+                        </ul>
                     </div>
-                    <div class="mt-4">
-                        <h4 class="font-medium text-white mb-2">Items:</h4>
-                        <div class="items-section">
-                            <ul class="space-y-2">
-                                ${tableOrder.items.map(item => `
-                                    <li class="text-white">
-                                        <span class="font-medium">${item.name}</span> - Quantity: ${item.quantity} - Price: ₹${item.price}
-                                        ${item.customizations && item.customizations.length > 0 ? `
-                                            <ul class="ml-4 mt-1 space-y-1">
-                                                ${item.customizations.map(cust => `
-                                                    <li class="text-white">
-                                                        ${cust.name || cust.option_name || ''} 
-                                                        ${cust.price ? `(+₹${cust.price})` : ''}
-                                                    </li>
-                                                `).join('')}
-                                            </ul>
-                                        ` : ''}
-                                    </li>
-                                `).join('')}
-                            </ul>
-                        </div>
+                    <div class="flex justify-between mt-2">
+                        <p class="text-gray-300"><span class="font-medium">Subtotal:</span> ₹${tableOrder.subtotal}</p>
+                        <p class="text-gray-300"><span class="font-medium">GST Amount:</span> ₹${tableOrder.gst_amount}</p>
+                        <p class="text-gray-300"><span class="font-medium">Grand Total:</span> ₹${tableOrder.grand_total}</p>
                     </div>
                 </div>
-            `;
+            </div>
+        </label>
+    `;
+}).join('');
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
 
-            modal.classList.remove('hidden');
-            modal.style.display = 'flex';
-        }
+    // Add event listeners for selecting an order
+    document.querySelectorAll('.order-item').forEach(item => {
+        item.addEventListener('click', function () {
+            // Remove blue border from all orders
+            document.querySelectorAll('.order-item').forEach(el => el.classList.remove('border-blue-500'));
 
-        // Optional: Function to print the order
-        window.printOrder = function() {
+            // Add blue border to the clicked order
+            this.classList.add('border-blue-500');
+        });
+    });
+}
+
+
+        // Function to print the order details
+        function printOrder() {
             const modalContent = document.getElementById('orderDetailsContent').innerHTML;
             const printWindow = window.open('', '', 'height=600,width=800');
             printWindow.document.write('<html><head><title>Print Order</title>');
-            printWindow.document.write('</head><body >');
+            printWindow.document.write('</head><body>');
             printWindow.document.write(modalContent);
             printWindow.document.write('</body></html>');
             printWindow.document.close();
             printWindow.print();
         }
+
+        // Add event listener to the print button
+        document.getElementById('printOrderButton').addEventListener('click', printOrder);
 
         // Optional: Function to close the modal
         window.closeModal = function() {
@@ -609,7 +645,7 @@
         }
 
         document.getElementById('closeOrderDetailsModal').addEventListener('click', closeModal);
-        document.getElementById('printOrderButton').addEventListener('click', printOrder);
+        // document.getElementById('printOrderButton').addEventListener('click', printOrder);
     });
 </script>
 

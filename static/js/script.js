@@ -178,19 +178,19 @@ function placeOrder() {
     //         .then(response => response.json())
     //         .then(data => {
     //             if (data.status === 'success') {
-    //                 alert('Order placed successfully!');
-    //                 console.log(orderData);
-    //                 clearSelectedItems();
-    //             } else {
-    //                 alert('Failed to place order: ' + data.error);
-    //             }
-    //         })
-    //         .catch(error => {
-    //             console.error('Error:', error);
-    //             alert('An error occurred while placing the order.');
-    //         });
-    //     });
-    // }
+//                 alert('Order placed successfully!');
+//                 console.log(orderData);
+//                 clearSelectedItems();
+//             } else {
+//                 alert('Failed to place order: ' + data.error);
+//             }
+//         })
+//         .catch(error => {
+//             console.error('Error:', error);
+//             alert('An error occurred while placing the order.');
+//         });
+//     });
+// }
 
     function updateTotalAmount() {
         var selectedItems = document.getElementsByClassName('item-cube selected');
@@ -372,76 +372,56 @@ document.querySelectorAll('.eye-icon').forEach(function(icon) {
                     alert('Failed to fetch order details: ' + data.error);
                 }
             })
-            .catch(error => {
-                console.error('Error fetching order details:', error);
-                alert('An error occurred while fetching order details.');
-            });
     });
 });
 
 // Function to display order details in a modal
-function showOrderDetailsModal(tableOrders) {
-    if (!tableOrders || !Array.isArray(tableOrders)) {
-        console.error("tableOrders is undefined or not an array");
-        return;
-    }
+// function showOrderDetailsModal(tableOrders) {
+//     if (!tableOrders || !Array.isArray(tableOrders)) {
+//         console.error("tableOrders is undefined or not an array");
+//         return;
+//     }
 
-    const modal = document.getElementById('orderDetailsModal');
-    const modalContent = document.getElementById('orderDetailsContent');
-    const tableNumberElement = document.getElementById('tableNumber');
+//     const modal = document.getElementById('orderDetailsModal');
+//     const modalContent = document.getElementById('orderDetailsContent');
+//     const tableNumberElement = document.getElementById('tableNumber');
 
-    // Set the table number (assuming all orders are for the same table)
-    if (tableOrders.length > 0) {
-        tableNumberElement.innerText = `Table Number: ${tableOrders[0].table_number}`;
-    }
+//     // Set the table number (assuming all orders are for the same table)
+//     if (tableOrders.length > 0) {
+//         tableNumberElement.innerText = `Table Number: ${tableOrders[0].table_number}`;
+//     }
 
-    // Debug log to verify the received data
-    console.log("Received tableOrders:", tableOrders); // Remove or comment out in production
+//     // Debug log to verify the received data
+//     console.log("Received tableOrders:", tableOrders); // Remove or comment out in production
 
-    modalContent.innerHTML = tableOrders.map(tableOrder => {
-        const savedTime = new Date(tableOrder.saved_time);
-        const formattedSavedDate = savedTime.toLocaleDateString();
-        const formattedSavedTime = savedTime.toLocaleTimeString();
+//     modalContent.innerHTML = tableOrders.map(tableOrder => {
+//         const savedTime = new Date(tableOrder.saved_time);
+//         const formattedSavedDate = savedTime.toLocaleDateString();
+//         const formattedSavedTime = savedTime.toLocaleTimeString();
 
-        return `
-            <div class="bg-gray-700 p-4 rounded-lg mb-4">
-                <h3 class="text-lg font-semibold text-white">Table Order ID: ${tableOrder.table_order_id}</h3>
-                <div class="flex justify-between mt-2">
-                    <p class="text-gray-300"><span class="font-medium">Status:</span> ${tableOrder.status}</p>
-                    <p class="text-gray-300"><span class="font-medium">Date:</span> ${formattedSavedDate}</p>
-                    <p class="text-gray-300"><span class="font-medium">Time:</span> ${formattedSavedTime}</p>
-                </div>
-                <div class="mt-4">
-                    <h4 class="font-medium text-white mb-2">Items:</h4>
-                    <div class="items-section overflow-y-scroll max-h-40 h-32">
-                        <ul class="space-y-2">
-                            ${Array.isArray(tableOrder.items) && tableOrder.items.length > 0 ? tableOrder.items.map(item => `
-                                <li class="text-gray-300">
-                                    <span class="font-medium">${item.name}</span> - Quantity: ${item.quantity} - Price: ₹${item.price}
-                                    ${Array.isArray(item.customizations) && item.customizations.length > 0 ? `
-                                        <ul class="ml-4 mt-1 space-y-1">
-                                            ${item.customizations.map(cust => `
-                                                <li class="text-gray-300">
-                                                    ${cust.name || cust.option_name || ''} 
-                                                    ${cust.price ? `(+₹${cust.price})` : ''}
-                                                </li>
-                                            `).join('')}
-                                        </ul>
-                                    ` : ''}
-                                </li>
-                            `).join('') : '<li class="text-gray-300">No items available.</li>'}
-                        </ul>
-                    </div>
-                    <div class="flex justify-between mt-2">
-                        <p class="text-gray-300"><span class="font-medium">Subtotal:</span> ₹${tableOrder.subtotal}</p>
-                        <p class="text-gray-300"><span class="font-medium">GST Amount:</span> ₹${tableOrder.gst_amount}</p>
-                        <p class="text-gray-300"><span class="font-medium">Grand Total:</span> ₹${tableOrder.grand_total}</p>
-                    </div>
-                </div>
-            </div>
-        `;
-    }).join('');
+//         return `
+//             <div class="bg-gray-700 p-4 rounded-lg mb-4">
+//                 <h3 class="text-lg font-semibold text-white">Table Order ID: ${tableOrder.table_order_id}</h3>
+//                 <div class="flex justify-between mt-2">
+//                     <p class="text-gray-300"><span class="font-medium">Status:</span> ${tableOrder.status}</p>
+//                     <p class="text-gray-300"><span class="font-medium">Date:</span> ${formattedSavedDate}</p>
+//                     <p class="text-gray-300"><span class="font-medium">Time:</span> ${formattedSavedTime}</p>
+//                 </div>
+//                 <div class="mt-4">
+//                     <h4 class="font-medium text-white mb-2">Items:</h4>
+//                     <div class="items-section overflow-y-scroll max-h-40 h-32">
+//                         <ul class="space-y-2">
+//                             ${Array.isArray(tableOrder.items) && tableOrder.items.length > 0 ? `
+//                                 <li class="text-gray-300">
+//                                     <span class="font-medium">${tableOrder.items[0].name}</span> - Quantity: ${tableOrder.items[0].quantity} - Price: ₹${tableOrder.items[0].price}
+//                                 </li>
+//                             ` : `<li class="text-gray-300">No items found.</li>`}
+//                         </ul>
+//                     </div>
+//                 </div>
+//             </div>`;
+//     }).join('');
+//     modal.style.display = 'block';
+// } // Added closing brace for the showOrderDetailsModal function
 
-    modal.classList.remove('hidden');
-    modal.style.display = 'flex';
-}
+// ...existing code...
