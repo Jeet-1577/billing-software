@@ -1046,7 +1046,7 @@ function generateThermalBill(orderData) {
                 <tbody>
                     ${orderData.items.map(item => `
                         <tr>
-                            <td>${item.name}${item.customizations.length > 0 ? ` (${item.customizations.map(c => c.name).join(', ')})` : ''}</td>
+                            <td>${item.name}${(item.customizations && item.customizations.length > 0) ? ` (${item.customizations.map(c => c.name).join(', ')})` : ''}</td>
                             <td>${item.quantity}</td>
                             <td>₹${(item.price).toFixed(2)}</td>
                             <td>₹${(item.totalPrice).toFixed(2)}</td>

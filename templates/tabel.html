@@ -404,7 +404,7 @@
 </div>
 
 <!-- Update the modal content structure -->
-<div id="orderDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+<div id="orderDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-60">
     <div class="bg-gray-800 rounded-lg p-6 w-[85%] max-w-[700px] h-[85%] max-h-[600px] shadow-lg flex flex-col mx-auto my-10 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
         <div class="flex justify-between items-center mb-2">
             <div class="flex items-center">
@@ -421,7 +421,7 @@
             <!-- Content will be injected here -->
         </div>
         <div class="flex justify-end mt-4 pt-3 mb-[-5px] border-t border-gray-600">
-            <button id="printOrderButton" class="bg-blue-600 text-white px-4 py-2 rounded mr-2 hover:bg-blue-700">Print</button>
+            <button onclick="printOrderBill()" class="bg-blue-600 text-white px-4 py-2 rounded mr-2 hover:bg-blue-700">Print</button>
             <button onclick="closeModal()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">Close</button>
         </div>
     </div>
@@ -622,20 +622,92 @@
 }
 
 
-        // Function to print the order details
-        function printOrder() {
-            const modalContent = document.getElementById('orderDetailsContent').innerHTML;
-            const printWindow = window.open('', '', 'height=600,width=800');
-            printWindow.document.write('<html><head><title>Print Order</title>');
-            printWindow.document.write('</head><body>');
-            printWindow.document.write(modalContent);
-            printWindow.document.write('</body></html>');
-            printWindow.document.close();
-            printWindow.print();
-        }
+function getOrderDataById(orderId) {
+    // Retrieve the order data from localStorage (or replace this with API fetching)
+    const orders = JSON.parse(localStorage.getItem('orderData')) || [];
+    return orders.find(order => order.table_order_id == orderId);
+}
 
-        // Add event listener to the print button
-        document.getElementById('printOrderButton').addEventListener('click', printOrder);
+        function generateThermalBill(orderData) {
+            const billWindow = window.open('', 'BILL', 'width=400,height=600');
+            if (!billWindow) {
+                console.error('Failed to open bill window');
+                return;
+            }
+
+            const billContent = `
+                <html>
+                <head>
+                    <title>Thermal Bill</title>
+                    <style>
+                        body { 
+                            width: 58mm; 
+                            /* Changed font-family to use system fonts */
+                            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
+                                       "Helvetica Neue", Arial, sans-serif; 
+                            font-size: 12px; 
+                            margin: 0; 
+                            padding: 10px; 
+                        }
+                        @media print {
+                            body { 
+                                width: 58mm;
+                                /* Ensure same fonts are used when printing */
+                                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
+                                           "Helvetica Neue", Arial, sans-serif;
+                            }
+                        }
+                        .header, .footer { text-align: center; }
+                        .details div { display: flex; justify-content: space-between; margin-bottom: 5px; }
+                        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+                        table, th, td { border: 1px dashed #000; }
+                        th, td { padding: 5px; text-align: left; }
+                        .total { margin: 10px 0; display: flex; justify-content: space-between; font-size: 14px; }
+                        .thank-you { margin-top: 20px; text-align: center; font-size: 14px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h2>Your Restaurant</h2>
+                        <p>1234 Street Name, City</p>
+                        <p>Phone: (123) 456-7890</p>
+                    </div>
+                    <div class="details">
+                        <div><span>Order ID:</span> <span>${orderData.orderId}</span></div>
+                        <div><span>Date:</span> <span>${orderData.date}</span></div>
+                        <div><span>Time:</span> <span>${orderData.time}</span></div>
+                        <div><span>Table No.:</span> <span>${orderData.tableNumber}</span></div>
+                        <div><span>Payment:</span> <span>${orderData.paymentType}</span></div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr><th>Item</th><th>Qty</th><th>Price (₹)</th><th>Total (₹)</th></tr>
+                        </thead>
+                        <tbody>
+                            ${orderData.items.map(item => `
+                                <tr>
+                                    <td>${item.name}</td>
+                                    <td>${item.quantity}</td>
+                                    <td>₹${item.price.toFixed(2)}</td>
+                                    <td>₹${item.totalPrice.toFixed(2)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <div class="total"><span>Subtotal:</span> <span>₹${orderData.totalAmount.toFixed(2)}</span></div>
+                    <div class="total"><span>GST (18%):</span> <span>₹${orderData.gstAmount.toFixed(2)}</span></div>
+                    <div class="total"><strong>Grand Total:</strong> <strong>₹${orderData.grandTotal.toFixed(2)}</strong></div>
+                    <div class="thank-you"><p>Thank you for dining with us!</p><p>Please come again.</p></div>
+                </body>
+                </html>
+            `;
+
+            billWindow.document.write(billContent);
+            billWindow.document.close();
+            billWindow.focus();
+            billWindow.print();
+            billWindow.close();
+        }
 
         // Optional: Function to close the modal
         window.closeModal = function() {
@@ -645,8 +717,85 @@
         }
 
         document.getElementById('closeOrderDetailsModal').addEventListener('click', closeModal);
-        // document.getElementById('printOrderButton').addEventListener('click', printOrder);
     });
+    function printOrderBill() {
+    // First, get the selected radio button
+    const selectedRadio = document.querySelector('input[name="selectedOrder"]:checked');
+    if (!selectedRadio) {
+        alert("Please select an order to print.");
+        return;
+    }
+
+    // Get the parent label element and then find the order-item div
+    const orderElement = selectedRadio.parentElement.querySelector('.order-item');
+    if (!orderElement) {
+        console.error("Order element not found");
+        alert("Error retrieving order details.");
+        return;
+    }
+
+    // Debug log
+    console.log("Found order element:", orderElement);
+
+    try {
+        const orderData = {
+            orderId: orderElement.querySelector('h3.text-lg.font-semibold').textContent.split('Table Order ID: ')[1],
+            date: orderElement.querySelector('.flex.justify-between.mt-2 p:nth-child(2) span:last-child').textContent,
+            time: orderElement.querySelector('.flex.justify-between.mt-2 p:nth-child(3) span:last-child').textContent,
+            tableNumber: document.getElementById('tableNumber').textContent.split('Table Number: ')[1],
+            paymentType: 'Cash',
+            items: [],
+            totalAmount: 0,
+            gstAmount: 0,
+            grandTotal: 0
+        };
+
+        // Get all items (including customizations)
+        const itemsList = orderElement.querySelectorAll('.items-section > ul > li.text-gray-300');
+        itemsList.forEach(item => {
+            const itemName = item.querySelector('span.font-medium').textContent;
+            const itemText = item.textContent;
+            // Parse quantity and price from text
+            const matches = itemText.match(/Quantity: (\d+) - Price: ₹(\d+(\.\d{2})?)/);
+            if (matches) {
+                const quantity = parseInt(matches[1]);
+                const price = parseFloat(matches[2]);
+
+                // Extract customizations
+                const customizationElements = item.querySelectorAll('ul li');
+                const customizations = Array.from(customizationElements).map(custEl => {
+                    const custText = custEl.textContent.trim();
+                    const custMatch = custText.match(/^(.*?)(?:\s*\(\+₹(\d+(\.\d{2})?)\))?$/);
+                    return {
+                        name: custMatch[1] || '',
+                        price: custMatch[2] ? parseFloat(custMatch[2]) : 0
+                    };
+                });
+
+                orderData.items.push({
+                    name: itemName,
+                    quantity: quantity,
+                    price: price,
+                    totalPrice: price * quantity,
+                    customizations: customizations
+                });
+            }
+        });
+
+        // Get totals
+        const totalsDiv = orderElement.querySelector('.flex.justify-between.mt-2:last-child');
+        orderData.totalAmount = parseFloat(totalsDiv.children[0].textContent.split('₹')[1]);
+        orderData.gstAmount = parseFloat(totalsDiv.children[1].textContent.split('₹')[1]);
+        orderData.grandTotal = parseFloat(totalsDiv.children[2].textContent.split('₹')[1]);
+
+        console.log("Order data:", orderData);
+        generateThermalBill(orderData);
+    } catch (error) {
+        console.error("Error processing order:", error);
+        alert("Error processing order details.");
+    }
+}
+
 </script>
 
 {% endblock %}
