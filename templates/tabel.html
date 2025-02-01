@@ -460,13 +460,23 @@
 
     function bookTable() {
         const selectedBox = document.querySelector('.table-box.selected');
-        if (selectedBox) {
-            selectedBox.classList.remove('selected');
-            selectedBox.classList.add('booked');
-            saveBookedTable(selectedBox.id);
-            localStorage.setItem('selectedTable', selectedBox.id);
-            window.location.href = '/inventory/';
+        if (!selectedBox) return;  // Exit if no table is selected
+
+        // Get current table status
+        const isAlreadyBooked = selectedBox.classList.contains('booked') || 
+                               JSON.parse(localStorage.getItem('bookedTables') || '[]').includes(selectedBox.id);
+
+        if (isAlreadyBooked) {
+            alert('This table is already booked.');
+            return;
         }
+
+        // Proceed with booking
+        selectedBox.classList.remove('selected');
+        selectedBox.classList.add('booked');
+        saveBookedTable(selectedBox.id);
+        localStorage.setItem('selectedTable', selectedBox.id);
+        window.location.href = '/inventory/';
     }
 
     function releaseTable() {
@@ -780,6 +790,15 @@ function getOrderDataById(orderId) {
             generateThermalBill(orderData);  // Generate the thermal bill after saving the order
             closeModal();  // Close the modal after saving the order
             updateOrderStatus(orderData.order_id, 'completed');  // Update order status to completed
+
+            // Release the table
+            const tableId = `table-${orderData.table_number}`;
+            const tableElement = document.getElementById(tableId);
+            if (tableElement) {
+                tableElement.classList.remove('booked');
+                removeBookedTable(tableId);
+                console.log('Table released successfully:', tableId);
+            }
         } else if (data.status === 'error' && data.message === 'Order already exists.') {
             alert('Order already exists.');
         } else {
