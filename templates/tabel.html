@@ -78,7 +78,7 @@
         height: 70vh;
         margin-bottom: 50px;
     }
-    .book-button, .release-button {
+    .book-button, .release-button, .clear-button {
         position: absolute;
         top: 100px; /* Adjust this value based on the height of your navbar */
         background-color: #2563eb;
@@ -95,7 +95,10 @@
     .release-button {
         left: 100px; /* Position to the right of the book button */
     }
-    .book-button:hover, .release-button:hover {
+    .clear-button{
+        right: 40px;
+    }
+    .book-button:hover, .release-button:hover, .clear-button:hover {
         background-color: #1e40af;
     }
     .eye-icon {
@@ -389,6 +392,7 @@
 <div class="button-container">
     <button class="book-button" onclick="bookTable()">Book</button>
     <button class="release-button" onclick="releaseTable()">Release</button>
+    <button class="clear-button" onclick="clearTable()">Clear</button>
 </div>
 <div class="table-container">
     {% for table in table_numbers %}
@@ -968,6 +972,28 @@ function onPrintButtonClick() {
         return cookieValue;
     }
 
+function clearTable() {
+    if (!confirm("Are you sure you want to clear all orders and release all tables?")) return;
+    fetch("{% url 'clear_all_orders' %}", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCSRFToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            localStorage.removeItem('bookedTables'); // Clear stored booked tables status
+            alert('All orders cleared and tables released successfully.');
+            location.reload();
+        } else {
+            alert('Failed to clear orders: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error clearing orders:', error);
+    });
+}
 </script>
 
 {% endblock %}

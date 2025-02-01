@@ -858,3 +858,18 @@ def check_order_status(request, table_order_id):
     except Exception as e:
         logger.exception("Error in check_order_status for table_order_id: %s", table_order_id)
         return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
+
+@csrf_exempt
+def clear_all_orders(request):
+    if request.method == 'POST':
+        try:
+            for table in Table.objects.all():
+                table.orders.clear()      # Clear orders from the ManyToMany field
+                table.is_booked = False   # Release table
+                table.save()              # Save changes
+            TableOrder.objects.all().delete()  # Delete all TableOrder entries
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            logger.error(f"Error clearing all orders: {str(e)}")
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
+    return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
