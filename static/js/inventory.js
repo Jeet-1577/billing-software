@@ -943,141 +943,82 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function generateThermalBill(orderData) {
-    // Open a new window for the bill
     const billWindow = window.open('', 'BILL', 'width=400,height=600');
     if (!billWindow) {
         console.error('Failed to open bill window');
         return;
     }
+
     const billContent = `
         <html>
         <head>
             <title>Thermal Bill</title>
             <style>
-                body {
-                    width: 58mm; /* Adjust to 80mm if needed */
-                    font-family: monospace;
-                    font-size: 12px;
-                    margin: 0;
-                    padding: 10px;
+                body { 
+                    width: 58mm; 
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
+                               "Helvetica Neue", Arial, sans-serif; 
+                    font-size: 12px; 
+                    margin: 0; 
+                    padding: 10px; 
                 }
-                .header, .footer {
-                    text-align: center;
+                @media print {
+                    body { 
+                        width: 58mm;
+                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
+                                   "Helvetica Neue", Arial, sans-serif;
+                    }
                 }
-                .header img {
-                    max-width: 100px;
-                    margin-bottom: 10px;
-                }
-                .details {
-                    margin: 10px 0;
-                }
-                .details div {
-                    display: flex;
-                    justify-content: space-between;
-                    margin-bottom: 5px;
-                }
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin: 10px 0;
-                }
-                table, th, td {
-                    border: 1px dashed #000;
-                }
-                th, td {
-                    padding: 5px;
-                    text-align: left;
-                }
-                .total {
-                    margin: 10px 0;
-                    display: flex;
-                    justify-content: space-between;
-                    font-size: 14px;
-                }
-                .thank-you {
-                    margin-top: 20px;
-                    text-align: center;
-                    font-size: 14px;
-                }
+                .header, .footer { text-align: center; }
+                .details div { display: flex; justify-content: space-between; margin-bottom: 5px; }
+                table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+                table, th, td { border: 1px dashed #000; }
+                th, td { padding: 5px; text-align: left; }
+                .total { margin: 10px 0; display: flex; justify-content: space-between; font-size: 14px; }
+                .thank-you { margin-top: 20px; text-align: center; font-size: 14px; }
             </style>
         </head>
         <body>
             <div class="header">
-                <img src="https://yourcompany.com/logo.png" alt="Company Logo">
-                <h2>Your Company Name</h2>
-                <p>1234 Street Name, City, State</p>
-                <p>Phone: (123) 456-7890 | Email: info@yourcompany.com</p>
+                <h2>Your Restaurant</h2>
+                <p>1234 Street Name, City</p>
+                <p>Phone: (123) 456-7890</p>
             </div>
-            
             <div class="details">
-                <div>
-                    <span>Order ID:</span>
-                    <span>${orderData.orderId}</span>
-                </div>
-                <div>
-                    <span>Date:</span>
-                    <span>${orderData.date}</span>
-                </div>
-                <div>
-                    <span>Time:</span>
-                    <span>${orderData.time}</span>
-                </div>
-                ${orderData.tableNumber ? `
-                <div>
-                    <span>Table No.:</span>
-                    <span>${orderData.tableNumber}</span>
-                </div>
-                ` : ''}
-                <div>
-                    <span>Payment:</span>
-                    <span>${orderData.paymentType}</span>
-                </div>
+                <div><span>Order ID:</span> <span>${orderData.order_id}</span></div>
+                <div><span>Date:</span> <span>${orderData.date}</span></div>
+                <div><span>Time:</span> <span>${orderData.time}</span></div>
+                <div><span>Table No.:</span> <span>${orderData.table_number}</span></div>
+                <div><span>Payment:</span> <span>${orderData.payment_type}</span></div>
             </div>
-            
             <table>
                 <thead>
-                    <tr>
-                        <th>Item</th>
-                        <th>Qty</th>
-                        <th>Price (₹)</th>
-                        <th>Total (₹)</th>
-                    </tr>
+                    <tr><th>Item</th><th>Qty</th><th>Price (₹)</th><th>Total (₹)</th></tr>
                 </thead>
                 <tbody>
                     ${orderData.items.map(item => `
                         <tr>
-                            <td>${item.name}${(item.customizations && item.customizations.length > 0) ? ` (${item.customizations.map(c => c.name).join(', ')})` : ''}</td>
+                            <td>${item.name}</td>
                             <td>${item.quantity}</td>
-                            <td>₹${(item.price).toFixed(2)}</td>
-                            <td>₹${(item.totalPrice).toFixed(2)}</td>
+                            <td>₹${parseFloat(item.price).toFixed(2)}</td>
+                            <td>₹${parseFloat(item.total_price).toFixed(2)}</td>
                         </tr>
                     `).join('')}
                 </tbody>
             </table>
-            
-            <div class="total">
-                <span>Subtotal:</span>
-                <span>₹${orderData.totalAmount}</span>
-            </div>
-            <div class="total">
-                <span>GST (18%):</span>
-                <span>₹${orderData.gstAmount}</span>
-            </div>
-            <div class="total">
-                <strong>Grand Total:</strong>
-                <strong>₹${orderData.grandTotal}</strong>
-            </div>
-            
-            <div class="thank-you">
-                <p>Thank you for dining with us!</p>
-                <p>Please come again.</p>
-            </div>
+            <div class="total"><span>Subtotal:</span> <span>₹${parseFloat(orderData.subtotal).toFixed(2)}</span></div>
+            <div class="total"><span>GST (18%):</span> <span>₹${parseFloat(orderData.gst_amount).toFixed(2)}</span></div>
+            <div class="total"><strong>Grand Total:</strong> <strong>₹${parseFloat(orderData.grand_total).toFixed(2)}</strong></div>
+            <div class="thank-you"><p>Thank you for dining with us!</p><p>Please come again.</p></div>
         </body>
         </html>
     `;
+
     billWindow.document.write(billContent);
     billWindow.document.close();
     billWindow.focus();
+    billWindow.print();
+    billWindow.close();
 }
 
 document.addEventListener('DOMContentLoaded', function() {
