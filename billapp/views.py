@@ -793,6 +793,10 @@ def save_order(request):
             data = json.loads(request.body)
             print("Parsed JSON data:", data)  # Log the parsed JSON data
 
+            # Check if the order already exists
+            if Order.objects.filter(order_id=data['order_id']).exists():
+                return JsonResponse({'status': 'error', 'message': 'Order already exists.'}, status=400)
+
             # Create a new Order instance
             order = Order.objects.create(
                 order_id=data['order_id'],  # Changed from 'orderId' to 'order_id'

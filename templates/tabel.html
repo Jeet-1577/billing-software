@@ -536,10 +536,10 @@
                             alert('Failed to fetch order details: ' + data.error);
                         }
                     })
-                    .catch(error => {
-                        console.error('Error fetching order details:', error);
-                        alert('An error occurred while fetching order details.');
-                    });
+                    // .catch(error => {
+                    //     console.error('Error fetching order details:', error);
+                    //     alert('An error occurred while fetching order details.');
+                    // });
             });
         });
 
@@ -567,7 +567,7 @@
 
         return `
         <label class="block">
-            <input type="radio" name="selectedOrder" value="${tableOrder.table_order_id}" class="hidden peer">
+            <input type="radio" name="selectedOrder" value="${tableOrder.table_order_id}" class="hidden peer" ${index === 0 ? 'checked' : ''}>
             <div class="order-item bg-gray-700 border border-gray-500 rounded-lg p-4 mb-4 cursor-pointer peer-checked:border-4 peer-checked:border-blue-700">
                 <h3 class="text-lg font-semibold text-white">Table Order ID: ${tableOrder.table_order_id}</h3>
                 <div class="flex justify-between mt-2">
@@ -619,6 +619,13 @@
             this.classList.add('border-blue-500');
         });
     });
+
+    // Automatically select the first order
+    const firstOrder = document.querySelector('input[name="selectedOrder"]:first-of-type');
+    if (firstOrder) {
+        firstOrder.checked = true;
+        firstOrder.closest('.order-item').classList.add('border-blue-500');
+    }
 }
 
 
@@ -745,7 +752,9 @@ function getOrderDataById(orderId) {
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error(`Network response was not ok: ${response.statusText}`);
+            return response.json().then(data => {
+                throw new Error(data.message || 'Network response was not ok');
+            });
         }
         return response.json();
     })
@@ -753,14 +762,20 @@ function getOrderDataById(orderId) {
         if (data.status === 'success') {
             console.log('Order saved successfully.');
             generateThermalBill(orderData);  // Generate the thermal bill after saving the order
+        } else if (data.status === 'error' && data.message === 'Order already exists.') {
+            alert('Order already exists.');
         } else {
             console.error('Failed to save order:', data.message);
             alert('Failed to save order: ' + data.message);
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while saving the order.');
+        if (error.message === 'Order already exists.') {
+            alert('Order already exists.');
+        } else {
+            console.error('Error:', error);
+            alert('An error occurred while saving the order.');
+        }
     });
 }
     // Ensure that orderData is constructed with snake_case field names
