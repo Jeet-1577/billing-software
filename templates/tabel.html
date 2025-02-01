@@ -568,10 +568,10 @@
         return `
         <label class="block">
             <input type="radio" name="selectedOrder" value="${tableOrder.table_order_id}" class="hidden peer" ${index === 0 ? 'checked' : ''}>
-            <div class="order-item bg-gray-700 border border-gray-500 rounded-lg p-4 mb-4 cursor-pointer peer-checked:border-4 peer-checked:border-blue-700">
+            <div class="order-item bg-gray-700 border border-gray-500 rounded-lg p-4 mb-4 cursor-pointer peer-checked:border-4 peer-checked:border-blue-700" data-order-id="${tableOrder.table_order_id}">
                 <h3 class="text-lg font-semibold text-white">Table Order ID: ${tableOrder.table_order_id}</h3>
                 <div class="flex justify-between mt-2">
-                    <p class="text-gray-300"><span class="font-medium">Status:</span> ${tableOrder.status}</p>
+                    <p class="text-gray-300"><span class="font-medium">Status:</span> <span class="order-status">${tableOrder.status}</span></p>
                     <p class="text-gray-300"><span class="font-medium">Date:</span> ${formattedSavedDate}</p>
                     <p class="text-gray-300"><span class="font-medium">Time:</span> ${formattedSavedTime}</p>
                 </div>
@@ -626,6 +626,22 @@
         firstOrder.checked = true;
         firstOrder.closest('.order-item').classList.add('border-blue-500');
     }
+
+    // Check order status and update accordingly
+    tableOrders.forEach(order => {
+        fetch(`/api/check-order-status/${order.table_order_id}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    updateOrderStatus(order.table_order_id, data.order_status);
+                } else {
+                    console.error('Failed to check order status:', data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error checking order status:', error);
+            });
+    });
 }
 
 
@@ -763,6 +779,7 @@ function getOrderDataById(orderId) {
             console.log('Order saved successfully.');
             generateThermalBill(orderData);  // Generate the thermal bill after saving the order
             closeModal();  // Close the modal after saving the order
+            updateOrderStatus(orderData.order_id, 'completed');  // Update order status to completed
         } else if (data.status === 'error' && data.message === 'Order already exists.') {
             alert('Order already exists.');
         } else {
@@ -779,6 +796,17 @@ function getOrderDataById(orderId) {
         }
     });
 }
+
+function updateOrderStatus(orderId, status) {
+    const orderElement = document.querySelector(`.order-item[data-order-id="${orderId}"]`);
+    if (orderElement) {
+        const statusElement = orderElement.querySelector('.order-status');
+        if (statusElement) {
+            statusElement.textContent = status;
+        }
+    }
+}
+
     // Ensure that orderData is constructed with snake_case field names
     function constructOrderData() {
     console.log("Starting to construct order data...");

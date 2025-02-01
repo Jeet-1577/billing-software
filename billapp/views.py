@@ -787,20 +787,17 @@ def get_table_order_details(request, table_id):
 def save_order(request):
     if request.method == 'POST':
         try:
-            print("Received POST request to save_order")
-            print("Request body:", request.body.decode('utf-8'))  # Log the raw request body
-
             data = json.loads(request.body)
-            print("Parsed JSON data:", data)  # Log the parsed JSON data
+            print("Parsed JSON data:", data)
 
             # Check if the order already exists
             if Order.objects.filter(order_id=data['order_id']).exists():
                 return JsonResponse({'status': 'error', 'message': 'Order already exists.'}, status=400)
 
-            # Create a new Order instance
+            # Create the Order
             order = Order.objects.create(
-                order_id=data['order_id'],  # Changed from 'orderId' to 'order_id'
-                order_details=data.get('order_details', {}),  # Changed from 'orderDetails' to 'order_details'
+                order_id=data['order_id'],
+                order_details=data.get('order_details', {}),
                 subtotal=data['subtotal'],
                 gst_amount=data['gst_amount'],
                 grand_total=data['grand_total'],
@@ -808,6 +805,7 @@ def save_order(request):
                 order_type=data['order_type'],
                 date=data['date'],
                 time=data['time'],
+                status='completed'
             )
 
             # Add items to the order
@@ -822,16 +820,41 @@ def save_order(request):
                 )
                 order.items.add(order_item)
 
-            print("Order saved successfully:", order.order_id)  # Log successful save
+            # Update the corresponding TableOrder status
+            try:
+                table_order = TableOrder.objects.get(table_order_id=data['order_id'])
+                table_order.status = 'completed'
+                table_order.save()
+            except TableOrder.DoesNotExist:
+                print(f"No TableOrder found for order_id: {data['order_id']}")
+
+            print("Order saved successfully:", order.order_id)
             return JsonResponse({'status': 'success', 'message': 'Order saved successfully.'})
-        except json.JSONDecodeError as jde:
-            print("JSON decode error:", str(jde))  # Log JSON decoding errors
-            return JsonResponse({'status': 'error', 'message': 'Invalid JSON data.'}, status=400)
-        except KeyError as ke:
-            print("Missing key in data:", str(ke))  # Log missing keys
-            return JsonResponse({'status': 'error', 'message': f'Missing key: {str(ke)}'}, status=400)
         except Exception as e:
-            print("Error in save_order:", str(e))  # Log any other exceptions
+            print("Error in save_order:", str(e))
             return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-    print("Received non-POST request in save_order")  # Log invalid request methods
+
     return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
+
+def check_order_status(request, table_order_id):
+    try:
+        logger.debug("Checking order status for table_order_id: %s", table_order_id)
+        
+        # First check TableOrder status
+        table_order = TableOrder.objects.filter(table_order_id=table_order_id).first()
+        if table_order and table_order.status == 'completed':
+            return JsonResponse({'status': 'success', 'order_status': 'completed'})
+        
+        # Then check Order status
+        order = Order.objects.filter(order_id=table_order_id, status='completed').first()
+        if order:
+            # Update TableOrder status if Order exists and is completed
+            if table_order:
+                table_order.status = 'completed'
+                table_order.save()
+            return JsonResponse({'status': 'success', 'order_status': 'completed'})
+
+        return JsonResponse({'status': 'success', 'order_status': 'active'})
+    except Exception as e:
+        logger.exception("Error in check_order_status for table_order_id: %s", table_order_id)
+        return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)

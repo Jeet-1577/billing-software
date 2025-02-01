@@ -40,6 +40,7 @@ urlpatterns = [
     path('table-order/<str:table_order_id>/delete/', views.delete_table_order, name='delete_table_order'),
     path('save-table-order/', save_table_order, name='save_table_order'),
     path('api/table-order/<int:table_id>/', get_table_order_details, name='get_table_order_details'),
+    path('api/check-order-status/<str:table_order_id>/', views.check_order_status, name='check_order_status'),
 ]
 
 urlpatterns += [
