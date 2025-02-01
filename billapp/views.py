@@ -781,3 +781,53 @@ def get_table_order_details(request, table_id):
     except Exception as e:
         print(f"Error in get_table_order_details: {str(e)}")  # Remove or comment out in production
         return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
+
+@csrf_exempt
+@transaction.atomic
+def save_order(request):
+    if request.method == 'POST':
+        try:
+            print("Received POST request to save_order")
+            print("Request body:", request.body.decode('utf-8'))  # Log the raw request body
+
+            data = json.loads(request.body)
+            print("Parsed JSON data:", data)  # Log the parsed JSON data
+
+            # Create a new Order instance
+            order = Order.objects.create(
+                order_id=data['order_id'],  # Changed from 'orderId' to 'order_id'
+                order_details=data.get('order_details', {}),  # Changed from 'orderDetails' to 'order_details'
+                subtotal=data['subtotal'],
+                gst_amount=data['gst_amount'],
+                grand_total=data['grand_total'],
+                payment_type=data['payment_type'],
+                order_type=data['order_type'],
+                date=data['date'],
+                time=data['time'],
+            )
+
+            # Add items to the order
+            for item in data['items']:
+                order_item = OrderItem.objects.create(
+                    name=item['name'],
+                    price=item['price'],
+                    quantity=item['quantity'],
+                    total_price=item['total_price'],
+                    customizations=item.get('customizations', []),
+                    item_details=item.get('item_details', {})
+                )
+                order.items.add(order_item)
+
+            print("Order saved successfully:", order.order_id)  # Log successful save
+            return JsonResponse({'status': 'success', 'message': 'Order saved successfully.'})
+        except json.JSONDecodeError as jde:
+            print("JSON decode error:", str(jde))  # Log JSON decoding errors
+            return JsonResponse({'status': 'error', 'message': 'Invalid JSON data.'}, status=400)
+        except KeyError as ke:
+            print("Missing key in data:", str(ke))  # Log missing keys
+            return JsonResponse({'status': 'error', 'message': f'Missing key: {str(ke)}'}, status=400)
+        except Exception as e:
+            print("Error in save_order:", str(e))  # Log any other exceptions
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    print("Received non-POST request in save_order")  # Log invalid request methods
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)

@@ -24,7 +24,7 @@ from billapp import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('billapp.urls')),  # Include app URLs
-    path('api/', include('billapp.urls')),  # Include API URLs under 'api/' prefix
+    path('api/', include('billapp.urls')),  # Added this line to include billapp URLs under /api/
     path("__reload__/", include("django_browser_reload.urls")),
     # path('table_order/<int:table_id>/', views.get_table_order_details, name='get_table_order_details'),
 

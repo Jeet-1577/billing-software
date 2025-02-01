@@ -421,7 +421,7 @@
             <!-- Content will be injected here -->
         </div>
         <div class="flex justify-end mt-4 pt-3 mb-[-5px] border-t border-gray-600">
-            <button onclick="printOrderBill()" class="bg-blue-600 text-white px-4 py-2 rounded mr-2 hover:bg-blue-700">Print</button>
+            <button onclick="onPrintButtonClick()" class="bg-blue-600 text-white px-4 py-2 rounded mr-2 hover:bg-blue-700">Print</button>
             <button onclick="closeModal()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">Close</button>
         </div>
     </div>
@@ -718,83 +718,192 @@ function getOrderDataById(orderId) {
 
         document.getElementById('closeOrderDetailsModal').addEventListener('click', closeModal);
     });
-    function printOrderBill() {
-    // First, get the selected radio button
+    function printOrderBill(orderData) {
+    if (!orderData) {
+        console.error('Order data is undefined');
+        alert('Order data is undefined. Please try again.');
+        return;
+    }
+    console.log('Order Data:', orderData); // Debug: Check orderData structure
+
+    // Ensure all required fields are present and correctly named
+    const requiredFields = ['order_id', 'order_details', 'subtotal', 'gst_amount', 'grand_total', 'payment_type', 'order_type', 'date', 'time', 'items'];
+    const missingFields = requiredFields.filter(field => !(field in orderData));
+    if (missingFields.length > 0) {
+        alert('Missing fields: ' + missingFields.join(', '));
+        return;
+    }
+
+    // Send the order data to the server to save it
+    fetch('{% url "save_order" %}', {  // This will map to /api/save-order/ based on urls.py
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify(orderData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Network response was not ok: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.status === 'success') {
+            console.log('Order saved successfully.');
+            generateThermalBill(orderData);  // Generate the thermal bill after saving the order
+        } else {
+            console.error('Failed to save order:', data.message);
+            alert('Failed to save order: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while saving the order.');
+    });
+}
+    // Ensure that orderData is constructed with snake_case field names
+    function constructOrderData() {
+    console.log("Starting to construct order data...");
+
     const selectedRadio = document.querySelector('input[name="selectedOrder"]:checked');
     if (!selectedRadio) {
-        alert("Please select an order to print.");
-        return;
+        console.error("No order selected");
+        return null;
     }
+    console.log("Selected radio button:", selectedRadio);
 
-    // Get the parent label element and then find the order-item div
-    const orderElement = selectedRadio.parentElement.querySelector('.order-item');
+    const orderElement = selectedRadio.closest('label').querySelector('.order-item'); // Ensure correct parent element
     if (!orderElement) {
         console.error("Order element not found");
-        alert("Error retrieving order details.");
+        return null;
+    }
+    console.log("Order element:", orderElement);
+
+    const orderIdText = orderElement.querySelector('h3.text-lg.font-semibold')?.textContent;
+    if (!orderIdText) {
+        console.error("Order ID element not found or empty");
+        return null;
+    }
+    const order_id = orderIdText.split('Table Order ID: ')[1];
+    if (!order_id) {
+        console.error("Order ID not found in text");
+        return null;
+    }
+    console.log("Order ID:", order_id);
+
+    const dateText = orderElement.querySelector('.flex.justify-between.mt-2 p:nth-child(2) span:last-child')?.textContent;
+    const timeText = orderElement.querySelector('.flex.justify-between.mt-2 p:nth-child(3) span:last-child')?.textContent;
+    const tableNumberText = document.getElementById('tableNumber')?.textContent.split('Table Number: ')[1];
+
+    if (!dateText || !timeText || !tableNumberText) {
+        console.error("One or more order details (date, time, table number) are missing");
+        return null;
+    }
+    console.log("Date:", dateText, "Time:", timeText, "Table Number:", tableNumberText);
+
+    const orderData = {
+        order_id: order_id,
+        date: dateText,
+        time: timeText,
+        table_number: tableNumberText,
+        payment_type: 'Cash',
+        order_type: 'DINE_IN',  // Assuming a default order type
+        order_details: {},  // Placeholder for order details
+        items: [],
+        subtotal: 0,
+        gst_amount: 0,
+        grand_total: 0
+    };
+
+    const itemsList = orderElement.querySelectorAll('.items-section > ul > li.text-gray-300');
+    if (!itemsList.length) {
+        console.error("No items found in the selected order");
+        return null;
+    }
+    console.log("Items list:", itemsList);
+
+    itemsList.forEach(item => {
+        const itemName = item.querySelector('span.font-medium')?.textContent;
+        const itemText = item.textContent;
+        const matches = itemText.match(/Quantity: (\d+) - Price: ₹(\d+(\.\d{2})?)/);
+        if (matches) {
+            const quantity = parseInt(matches[1]);
+            const price = parseFloat(matches[2]);
+
+            const customizationElements = item.querySelectorAll('ul li');
+            const customizations = Array.from(customizationElements).map(custEl => {
+                const custText = custEl.textContent.trim();
+                const custMatch = custText.match(/^(.*?)(?:\s*\(\+₹(\d+(\.\d{2})?)\))?$/);
+                return {
+                    name: custMatch[1] || '',
+                    price: custMatch[2] ? parseFloat(custMatch[2]) : 0
+                };
+            });
+
+            orderData.items.push({
+                name: itemName || 'Unnamed Item',
+                quantity: quantity,
+                price: price,
+                total_price: price * quantity,
+                customizations: customizations
+            });
+        } else {
+            console.warn("Item text does not match expected format:", itemText);
+        }
+    });
+
+    const totalsDiv = orderElement.querySelector('.flex.justify-between.mt-2:last-child');
+    if (totalsDiv && totalsDiv.children.length >= 3) {
+        const subtotalText = totalsDiv.children[0].textContent.split('₹')[1];
+        const gstAmountText = totalsDiv.children[1].textContent.split('₹')[1];
+        const grandTotalText = totalsDiv.children[2].textContent.split('₹')[1];
+
+        orderData.subtotal = parseFloat(subtotalText) || 0;
+        orderData.gst_amount = parseFloat(gstAmountText) || 0;
+        orderData.grand_total = parseFloat(grandTotalText) || 0;
+    } else {
+        console.error("Totals div not found or does not have enough children");
+        return null;
+    }
+
+    console.log("Constructed orderData:", orderData); // Debug log
+
+    return orderData;
+}
+
+function onPrintButtonClick() {
+    console.log("Print button clicked. Constructing order data...");
+    const orderData = constructOrderData();
+    if (!orderData) {
+        console.error('No order data to print');
+        alert('No order data to print. Please select an order.');
         return;
     }
-
-    // Debug log
-    console.log("Found order element:", orderElement);
-
-    try {
-        const orderData = {
-            orderId: orderElement.querySelector('h3.text-lg.font-semibold').textContent.split('Table Order ID: ')[1],
-            date: orderElement.querySelector('.flex.justify-between.mt-2 p:nth-child(2) span:last-child').textContent,
-            time: orderElement.querySelector('.flex.justify-between.mt-2 p:nth-child(3) span:last-child').textContent,
-            tableNumber: document.getElementById('tableNumber').textContent.split('Table Number: ')[1],
-            paymentType: 'Cash',
-            items: [],
-            totalAmount: 0,
-            gstAmount: 0,
-            grandTotal: 0
-        };
-
-        // Get all items (including customizations)
-        const itemsList = orderElement.querySelectorAll('.items-section > ul > li.text-gray-300');
-        itemsList.forEach(item => {
-            const itemName = item.querySelector('span.font-medium').textContent;
-            const itemText = item.textContent;
-            // Parse quantity and price from text
-            const matches = itemText.match(/Quantity: (\d+) - Price: ₹(\d+(\.\d{2})?)/);
-            if (matches) {
-                const quantity = parseInt(matches[1]);
-                const price = parseFloat(matches[2]);
-
-                // Extract customizations
-                const customizationElements = item.querySelectorAll('ul li');
-                const customizations = Array.from(customizationElements).map(custEl => {
-                    const custText = custEl.textContent.trim();
-                    const custMatch = custText.match(/^(.*?)(?:\s*\(\+₹(\d+(\.\d{2})?)\))?$/);
-                    return {
-                        name: custMatch[1] || '',
-                        price: custMatch[2] ? parseFloat(custMatch[2]) : 0
-                    };
-                });
-
-                orderData.items.push({
-                    name: itemName,
-                    quantity: quantity,
-                    price: price,
-                    totalPrice: price * quantity,
-                    customizations: customizations
-                });
-            }
-        });
-
-        // Get totals
-        const totalsDiv = orderElement.querySelector('.flex.justify-between.mt-2:last-child');
-        orderData.totalAmount = parseFloat(totalsDiv.children[0].textContent.split('₹')[1]);
-        orderData.gstAmount = parseFloat(totalsDiv.children[1].textContent.split('₹')[1]);
-        orderData.grandTotal = parseFloat(totalsDiv.children[2].textContent.split('₹')[1]);
-
-        console.log("Order data:", orderData);
-        generateThermalBill(orderData);
-    } catch (error) {
-        console.error("Error processing order:", error);
-        alert("Error processing order details.");
-    }
+    console.log("Order data constructed successfully:", orderData);
+    printOrderBill(orderData);
 }
+    // Update the print button to use onPrintButtonClick
+    // Example:
+    // <button onclick="onPrintButtonClick()">Print</button>
+
+    // Utility function to get CSRF token from cookies
+    function getCSRFToken() {
+        let cookieValue = null;
+        const name = 'csrftoken';
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
 
 </script>
 

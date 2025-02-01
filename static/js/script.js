@@ -348,32 +348,32 @@ function getCookie(name) {
 }
 
 // Add event listeners for printer icons to fetch and display order details
-document.querySelectorAll('.eye-icon').forEach(function(icon) {
-    icon.addEventListener('click', function(event) {
-        event.stopPropagation(); // Prevent triggering parent click events
-        var tableId = this.getAttribute('data-table-id');
-        if (!tableId) {
-            alert('Table ID not found.');
-            return;
-        }
-        console.log(`Fetching order details for table_id=${tableId}`);
-        fetch(`/api/table-order/${tableId}/`)  // Updated URL path
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                console.log('Received data:', data);
-                if (data.status === 'success') {
-                    showOrderDetailsModal(data.table_orders); // Pass data.table_orders not data
-                } else {
-                    alert('Failed to fetch order details: ' + data.error);
-                }
-            })
-    });
-});
+// document.querySelectorAll('.eye-icon').forEach(function(icon) {
+//     icon.addEventListener('click', function(event) {
+//         event.stopPropagation(); // Prevent triggering parent click events
+//         var tableId = this.getAttribute('data-table-id');
+//         if (!tableId) {
+//             alert('Table ID not found.');
+//             return;
+//         }
+//         console.log(`Fetching order details for table_id=${tableId}`);
+//         fetch(`/api/table-order/${tableId}/`)  // Updated URL path
+//             .then(response => {
+//                 if (!response.ok) {
+//                     throw new Error('Network response was not ok');
+//                 }
+//                 return response.json();
+//             })
+//             .then(data => {
+//                 console.log('Received data:', data);
+//                 if (data.status === 'success') {
+                    
+//                 } else {
+//                     alert('Failed to fetch order details: ' + data.error);
+//                 }
+//             })
+//     });
+// });
 
 // Function to display order details in a modal
 // function showOrderDetailsModal(tableOrders) {
