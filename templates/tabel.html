@@ -762,6 +762,7 @@ function getOrderDataById(orderId) {
         if (data.status === 'success') {
             console.log('Order saved successfully.');
             generateThermalBill(orderData);  // Generate the thermal bill after saving the order
+            closeModal();  // Close the modal after saving the order
         } else if (data.status === 'error' && data.message === 'Order already exists.') {
             alert('Order already exists.');
         } else {
