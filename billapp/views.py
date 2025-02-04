@@ -247,14 +247,11 @@ def release_table(request):
 def book_table(request, table_id):
     try:
         table = Table.objects.get(id=table_id)
-        if not table.is_booked:
-            table.book_table()
-            # Set timer duration based on table size (e.g., 30 minutes per 4 seats)
-            timer_duration = timedelta(minutes=30 * (table.size // 4))
-            booking_end_time = timezone.now() + timer_duration
-            return JsonResponse({'status': 'success', 'booking_end_time': booking_end_time.isoformat()})
-        else:
-            return JsonResponse({'status': 'error', 'message': 'Table is already booked.'})
+        # Removed booking logic. Table status is now determined solely by active orders.
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Table booking logic removed. Status is now based on active orders.'
+        })
     except Table.DoesNotExist:
         return JsonResponse({'status': 'error', 'message': 'Table does not exist.'})
 
@@ -271,8 +268,17 @@ def release_table(request, table_id):
         return JsonResponse({'status': 'error', 'message': 'Table does not exist.'})
 
 def get_table_status(request):
-    tables = Table.objects.all().values('id', 'size', 'is_booked', 'booking_time')
-    return JsonResponse(list(tables), safe=False)
+    tables_data = []
+    for table in Table.objects.all():
+        # Check if any order in the table is active
+        is_booked = table.orders.filter(status='active').exists()
+        tables_data.append({
+            'id': table.id,
+            'size': table.size,
+            'is_booked': is_booked,  # Booked if any active order exists
+            'booking_time': table.booking_time
+        })
+    return JsonResponse(tables_data, safe=False)
 
 def order_data(request):
     status_filter = request.GET.get('status', '')
