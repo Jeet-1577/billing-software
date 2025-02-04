@@ -919,6 +919,14 @@ def complete_order(request):
                 )
                 order.items.add(order_item)
 
+            # Update the corresponding TableOrder status
+            try:
+                table_order = TableOrder.objects.get(table_order_id=data['order_id'])
+                table_order.status = 'completed'
+                table_order.save()
+            except TableOrder.DoesNotExist:
+                logger.warning(f"No TableOrder found for order_id: {data['order_id']}")
+
             return JsonResponse({'status': 'success'})
         except Exception as e:
             logger.error(f"Error completing order: {str(e)}")

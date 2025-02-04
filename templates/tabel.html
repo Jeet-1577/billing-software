@@ -887,21 +887,24 @@ function updateOrderStatus(orderId, status) {
     }
     console.log("Order ID:", order_id);
 
-    const dateText = orderElement.querySelector('.flex.justify-between.mt-2 p:nth-child(2) span:last-child')?.textContent;
-    const timeText = orderElement.querySelector('.flex.justify-between.mt-2 p:nth-child(3) span:last-child')?.textContent;
-    const tableNumberText = document.getElementById('tableNumber')?.textContent.split('Table Number: ')[1];
+    const dateElement = orderElement.querySelector('.flex.justify-between.mt-2 p:nth-child(2) span:last-child');
+    const timeElement = orderElement.querySelector('.flex.justify-between.mt-2 p:nth-child(3) span:last-child');
+    const currentDate = new Date();
+    const dateText = dateElement ? dateElement.textContent : currentDate.toLocaleDateString();
+    const timeText = timeElement ? timeElement.textContent : currentDate.toLocaleTimeString();
+    const tableNumberElement = document.getElementById('tableNumber')?.textContent.split('Table Number: ')[1];
 
-    if (!dateText || !timeText || !tableNumberText) {
+    if (!dateText || !timeText || !tableNumberElement) {
         console.error("One or more order details (date, time, table number) are missing");
         return null;
     }
-    console.log("Date:", dateText, "Time:", timeText, "Table Number:", tableNumberText);
+    console.log("Date:", dateText, "Time:", timeText, "Table Number:", tableNumberElement);
 
     const orderData = {
         order_id: order_id,
         date: dateText,
         time: timeText,
-        table_number: tableNumberText,
+        table_number: tableNumberElement,
         payment_type: 'Cash',
         order_type: 'DINE_IN',  // Assuming a default order type
         order_details: {},  // Placeholder for order details
@@ -1084,10 +1087,7 @@ function markAsComplete() {
             alert('Failed to complete order: ' + data.error);
         }
     })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while completing the order');
-    });
+    
 }
 </script>
 
