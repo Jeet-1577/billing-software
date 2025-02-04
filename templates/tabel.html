@@ -902,12 +902,20 @@ function updateOrderStatus(orderId, status) {
     }
     console.log("Order ID:", order_id);
 
+<<<<<<< HEAD
     const statusDiv = orderElement.querySelector('.flex.justify-between.mt-2');
     const dateElement = statusDiv?.querySelector('p:nth-child(2)');
     const timeElement = statusDiv?.querySelector('p:nth-child(3)');
     
     const dateText = dateElement?.querySelector('span:last-child')?.textContent || new Date().toLocaleDateString();
     const timeText = timeElement?.querySelector('span:last-child')?.textContent || new Date().toLocaleTimeString();
+=======
+    const dateElement = orderElement.querySelector('.flex.justify-between.mt-2 p:nth-child(2) span:last-child');
+    const timeElement = orderElement.querySelector('.flex.justify-between.mt-2 p:nth-child(3) span:last-child');
+    const currentDate = new Date();
+    const dateText = dateElement ? dateElement.textContent : currentDate.toLocaleDateString();
+    const timeText = timeElement ? timeElement.textContent : currentDate.toLocaleTimeString();
+>>>>>>> a149bb06e037e8b764d72cc65bfccacbee8052a1
     const tableNumberElement = document.getElementById('tableNumber')?.textContent.split('Table Number: ')[1];
 
     if (!dateText || !timeText || !tableNumberElement) {
@@ -1135,10 +1143,7 @@ function markAsComplete() {
             alert(data.error || 'Failed to complete order');
         }
     })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while completing the order');
-    });
+    
 }
 
 </script>
