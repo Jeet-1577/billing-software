@@ -892,10 +892,7 @@ def complete_order(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            
-            # Check if order already exists
-            if Order.objects.filter(order_id=data['order_id']).exists():
-                return JsonResponse({'status': 'exists', 'message': 'Order already completed'})
+            print("Received data:", data)  # Debug print
             
             # Create new order
             order = Order.objects.create(
@@ -919,9 +916,24 @@ def complete_order(request):
                 )
                 order.items.add(order_item)
 
-            return JsonResponse({'status': 'success'})
+            # Update TableOrder status
+            try:
+                table_order = TableOrder.objects.get(table_order_id=data['order_id'])
+                table_order.status = 'completed'
+                table_order.save()
+            except TableOrder.DoesNotExist:
+                print(f"No TableOrder found for order_id: {data['order_id']}")
+
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Order completed successfully'
+            })
+
         except Exception as e:
-            logger.error(f"Error completing order: {str(e)}")
-            return JsonResponse({'status': 'error', 'error': str(e)})
-            
+            print(f"Error in complete_order: {str(e)}")  # Debug print
+            return JsonResponse({
+                'status': 'error',
+                'error': str(e)
+            })
+    
     return JsonResponse({'status': 'error', 'error': 'Invalid request method'})
