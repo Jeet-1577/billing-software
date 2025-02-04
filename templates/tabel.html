@@ -620,14 +620,19 @@
         const savedTime = new Date(tableOrder.saved_time);
         const formattedSavedDate = savedTime.toLocaleDateString();
         const formattedSavedTime = savedTime.toLocaleTimeString();
+        
+        // Add completed classes if status is completed
+        const isCompleted = tableOrder.status === 'completed';
+        const statusClass = isCompleted ? 'text-green-500' : '';
+        const borderClass = isCompleted ? 'border-green-500' : 'border-gray-500';
 
         return `
         <label class="block">
             <input type="radio" name="selectedOrder" value="${tableOrder.table_order_id}" class="hidden peer" ${index === 0 ? 'checked' : ''}>
-            <div class="order-item bg-gray-700 border border-gray-500 rounded-lg p-4 mb-4 cursor-pointer peer-checked:border-4 peer-checked:border-blue-700" data-order-id="${tableOrder.table_order_id}">
+            <div class="order-item bg-gray-700 border ${borderClass} rounded-lg p-4 mb-4 cursor-pointer peer-checked:border-4 peer-checked:border-blue-700" data-order-id="${tableOrder.table_order_id}">
                 <h3 class="text-lg font-semibold text-white">Table Order ID: ${tableOrder.table_order_id}</h3>
                 <div class="flex justify-between mt-2">
-                    <p class="text-gray-300"><span class="font-medium">Status:</span> <span class="order-status">${tableOrder.status}</span></p>
+                    <p class="text-gray-300"><span class="font-medium">Status:</span> <span class="order-status ${statusClass}">${tableOrder.status}</span></p>
                     <p class="text-gray-300"><span class="font-medium">Date:</span> ${formattedSavedDate}</p>
                     <p class="text-gray-300"><span class="font-medium">Time:</span> ${formattedSavedTime}</p>
                 </div>
@@ -902,20 +907,12 @@ function updateOrderStatus(orderId, status) {
     }
     console.log("Order ID:", order_id);
 
-<<<<<<< HEAD
     const statusDiv = orderElement.querySelector('.flex.justify-between.mt-2');
     const dateElement = statusDiv?.querySelector('p:nth-child(2)');
     const timeElement = statusDiv?.querySelector('p:nth-child(3)');
     
     const dateText = dateElement?.querySelector('span:last-child')?.textContent || new Date().toLocaleDateString();
     const timeText = timeElement?.querySelector('span:last-child')?.textContent || new Date().toLocaleTimeString();
-=======
-    const dateElement = orderElement.querySelector('.flex.justify-between.mt-2 p:nth-child(2) span:last-child');
-    const timeElement = orderElement.querySelector('.flex.justify-between.mt-2 p:nth-child(3) span:last-child');
-    const currentDate = new Date();
-    const dateText = dateElement ? dateElement.textContent : currentDate.toLocaleDateString();
-    const timeText = timeElement ? timeElement.textContent : currentDate.toLocaleTimeString();
->>>>>>> a149bb06e037e8b764d72cc65bfccacbee8052a1
     const tableNumberElement = document.getElementById('tableNumber')?.textContent.split('Table Number: ')[1];
 
     if (!dateText || !timeText || !tableNumberElement) {
@@ -1143,7 +1140,10 @@ function markAsComplete() {
             alert(data.error || 'Failed to complete order');
         }
     })
-    
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while completing the order');
+    });
 }
 
 </script>
