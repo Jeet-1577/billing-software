@@ -431,6 +431,32 @@
     </div>
 </div>
 
+<!-- Add this new modal markup below existing modals -->
+<div id="clearConfirmationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-60">
+    <div class="bg-gray-800 rounded-lg p-6 w-[85%] max-w-[400px] h-auto shadow-lg flex flex-col mx-auto my-10 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+        <div class="flex justify-between items-center mb-2">
+            <h3 class="text-xl font-bold text-white">Confirm Clear Orders</h3>
+            <button onclick="closeClearModal()" class="text-gray-400 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="mt-4">
+            <label for="employeeId" class="block text-white mb-1">Employee ID</label>
+            <input type="text" id="employeeId" class="text-black w-full p-2 rounded" placeholder="Enter Employee ID">
+        </div>
+        <div class="mt-4">
+            <label for="employeePassword" class="block text-white mb-1">Password</label>
+            <input type="password" id="employeePassword" class="text-black w-full p-2 rounded" placeholder="Enter Password">
+        </div>
+        <div class="flex justify-end mt-6">
+            <button onclick="confirmClear()" class="bg-red-600 text-white px-4 py-2 rounded mr-2 hover:bg-red-700">Clear Orders</button>
+            <button onclick="closeClearModal()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">Cancel</button>
+        </div>
+    </div>
+</div>
+
 <script>
     document.addEventListener('DOMContentLoaded', (event) => {
         // Load booked tables from localStorage
@@ -961,7 +987,7 @@ function onPrintButtonClick() {
         const name = 'csrftoken';
         if (document.cookie && document.cookie !== '') {
             const cookies = document.cookie.split(';');
-            for (let i = 0; cookies.length; i++) {
+            for (let i = 0; i < cookies.length; i++) {
                 const cookie = cookies[i].trim();
                 if (cookie.substring(0, name.length + 1) === (name + '=')) {
                     cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
@@ -973,17 +999,42 @@ function onPrintButtonClick() {
     }
 
 function clearTable() {
-    if (!confirm("Are you sure you want to clear all orders and release all tables?")) return;
+    showClearModal(); // show the clear modal instead of immediately clearing orders
+}
+
+function showClearModal() {
+    const modal = document.getElementById('clearConfirmationModal');
+    modal.classList.remove('hidden');
+    modal.style.display = 'flex';
+}
+
+function closeClearModal() {
+    const modal = document.getElementById('clearConfirmationModal');
+    modal.classList.add('hidden');
+    modal.style.display = 'none';
+}
+
+// Called when user confirms clear with employee id and password
+function confirmClear() {
+    const empId = document.getElementById('employeeId').value.trim();
+    const empPassword = document.getElementById('employeePassword').value.trim();
+    if (!empId || !empPassword) {
+        alert("Please enter both Employee ID and Password.");
+        return;
+    }
+    // Optionally, validate credentials here before proceeding
     fetch("{% url 'clear_all_orders' %}", {
         method: 'POST',
         headers: {
-            'X-CSRFToken': getCSRFToken()
-        }
+            'X-CSRFToken': getCSRFToken(),
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ employee_id: empId, password: empPassword })
     })
     .then(response => response.json())
     .then(data => {
         if (data.status === 'success') {
-            localStorage.removeItem('bookedTables'); // Clear stored booked tables status
+            localStorage.removeItem('bookedTables');
             alert('All orders cleared and tables released successfully.');
             location.reload();
         } else {
@@ -993,6 +1044,7 @@ function clearTable() {
     .catch(error => {
         console.error('Error clearing orders:', error);
     });
+    closeClearModal();
 }
 </script>
 

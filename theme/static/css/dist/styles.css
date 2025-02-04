@@ -966,6 +966,10 @@ select {
   height: 85%;
 }
 
+.h-auto {
+  height: auto;
+}
+
 .h-full {
   height: 100%;
 }
@@ -1028,6 +1032,10 @@ select {
 
 .min-w-full {
   min-width: 100%;
+}
+
+.max-w-\[400px\] {
+  max-width: 400px;
 }
 
 .max-w-\[700px\] {
@@ -1465,6 +1473,11 @@ select {
 
 .tracking-normal {
   letter-spacing: 0em;
+}
+
+.text-black {
+  --tw-text-opacity: 1;
+  color: rgb(0 0 0 / var(--tw-text-opacity, 1));
 }
 
 .text-blue-400 {

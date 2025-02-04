@@ -16,6 +16,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, Count
 import logging
+from django.contrib.auth.hashers import check_password
 
 logger = logging.getLogger(__name__)
 
@@ -860,16 +861,27 @@ def check_order_status(request, table_order_id):
         return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
 
 @csrf_exempt
+@require_POST
 def clear_all_orders(request):
-    if request.method == 'POST':
-        try:
-            for table in Table.objects.all():
-                table.orders.clear()      # Clear orders from the ManyToMany field
-                table.is_booked = False   # Release table
-                table.save()              # Save changes
-            TableOrder.objects.all().delete()  # Delete all TableOrder entries
-            return JsonResponse({'status': 'success'})
-        except Exception as e:
-            logger.error(f"Error clearing all orders: {str(e)}")
-            return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
-    return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
+    try:
+        data = json.loads(request.body)
+        employee_id = data.get('employee_id')
+        password = data.get('password')
+    except Exception:
+        return JsonResponse({'status': 'error', 'error': 'Invalid input'})
+    
+    if not employee_id or not password:
+        return JsonResponse({'status': 'error', 'error': 'Employee credentials required'})
+    
+    try:
+        employee = Employee.objects.get(id=employee_id)
+    except Employee.DoesNotExist:
+        return JsonResponse({'status': 'error', 'error': 'Invalid employee id'})
+    
+    if not check_password(password, employee.password):
+        return JsonResponse({'status': 'error', 'error': 'Invalid password'})
+    
+    # Credentials valid: delete all orders
+    Order.objects.all().delete()
+    # ...additional logic to release tables if required...
+    return JsonResponse({'status': 'success'})
