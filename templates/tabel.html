@@ -425,6 +425,7 @@
             <!-- Content will be injected here -->
         </div>
         <div class="flex justify-end mt-4 pt-3 mb-[-5px] border-t border-gray-600">
+            <button onclick="markAsComplete()" class="bg-red-600 text-white px-4 py-2 rounded mr-2 hover:bg-red-700">Complete</button>
             <button onclick="onPrintButtonClick()" class="bg-blue-600 text-white px-4 py-2 rounded mr-2 hover:bg-blue-700">Print</button>
             <button onclick="closeModal()" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">Close</button>
         </div>
@@ -1045,6 +1046,48 @@ function confirmClear() {
         console.error('Error clearing orders:', error);
     });
     closeClearModal();
+}
+
+function markAsComplete() {
+    const selectedOrder = document.querySelector('input[name="selectedOrder"]:checked');
+    if (!selectedOrder) {
+        alert('Please select an order to complete');
+        return;
+    }
+    
+    const orderData = constructOrderData();
+    if (!orderData) {
+        alert('Failed to construct order data');
+        return;
+    }
+
+    fetch('{% url "complete_order" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify(orderData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            const orderStatus = selectedOrder.closest('.order-item').querySelector('.order-status');
+            if (orderStatus) {
+                orderStatus.textContent = 'completed';
+                orderStatus.classList.add('text-green-500');
+            }
+            alert('Order completed successfully');
+        } else if (data.status === 'exists') {
+            alert('This order has already been completed');
+        } else {
+            alert('Failed to complete order: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while completing the order');
+    });
 }
 </script>
 

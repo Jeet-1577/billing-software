@@ -885,3 +885,43 @@ def clear_all_orders(request):
     Order.objects.all().delete()
     # ...additional logic to release tables if required...
     return JsonResponse({'status': 'success'})
+
+@csrf_exempt
+@transaction.atomic
+def complete_order(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            
+            # Check if order already exists
+            if Order.objects.filter(order_id=data['order_id']).exists():
+                return JsonResponse({'status': 'exists', 'message': 'Order already completed'})
+            
+            # Create new order
+            order = Order.objects.create(
+                order_id=data['order_id'],
+                subtotal=Decimal(str(data['subtotal'])),
+                gst_amount=Decimal(str(data['gst_amount'])),
+                grand_total=Decimal(str(data['grand_total'])),
+                payment_type=data['payment_type'],
+                order_type=data['order_type'],
+                status='completed'
+            )
+
+            # Add items to order
+            for item_data in data['items']:
+                order_item = OrderItem.objects.create(
+                    name=item_data['name'],
+                    quantity=item_data['quantity'],
+                    price=Decimal(str(item_data['price'])),
+                    total_price=Decimal(str(item_data['total_price'])),
+                    customizations=item_data.get('customizations', [])
+                )
+                order.items.add(order_item)
+
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            logger.error(f"Error completing order: {str(e)}")
+            return JsonResponse({'status': 'error', 'error': str(e)})
+            
+    return JsonResponse({'status': 'error', 'error': 'Invalid request method'})

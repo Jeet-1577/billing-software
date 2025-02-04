@@ -42,6 +42,7 @@ urlpatterns = [
     path('api/table-order/<int:table_id>/', get_table_order_details, name='get_table_order_details'),
     path('api/check-order-status/<str:table_order_id>/', views.check_order_status, name='check_order_status'),
     path('clear-all-orders/', views.clear_all_orders, name='clear_all_orders'),
+    path('complete-order/', views.complete_order, name='complete_order'),
 ]
 
 urlpatterns += [
