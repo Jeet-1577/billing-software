@@ -1040,3 +1040,131 @@ function handleCheckout() {
         alert('An error occurred while completing the order.');
     });
 }
+document.addEventListener('DOMContentLoaded', function() {
+    const printButton = document.querySelector('.print');
+    if (printButton) {
+        printButton.addEventListener('click', function() {
+            const selectedItems = document.getElementsByClassName('item-cube selected');
+            const orderItems = [];
+            let totalAmount = 0;
+
+            for (let i = 0; i < selectedItems.length; i++) {
+                const item = selectedItems[i];
+                const itemId = item.getAttribute('data-item-id');
+                const itemName = item.getAttribute('data-item-name');
+                const basePrice = parseFloat(item.getAttribute('data-item-price'));
+                const uniqueItemId = item.getAttribute('data-unique-id') || `${itemId}-basic`;
+
+                const quantityElement = document.getElementById(`quantity-${uniqueItemId}`);
+                if (quantityElement) {
+                    const quantity = parseInt(quantityElement.innerText);
+                    const customizations = item.hasAttribute('data-selected-customizations') ? JSON.parse(item.getAttribute('data-selected-customizations')) : [];
+                    const customizationPrice = customizations.reduce((sum, opt) => sum + parseFloat(opt.price), 0);
+                    const itemTotalPrice = (basePrice + customizationPrice) * quantity;
+                    totalAmount += itemTotalPrice;
+
+                    orderItems.push({
+                        name: itemName,
+                        price: basePrice + customizationPrice,
+                        quantity: quantity,
+                        customizations: customizations,
+                        total_price: itemTotalPrice
+                    });
+                }
+            }
+
+            const orderData = {
+                order_id: Date.now().toString(),
+                items: orderItems,
+                subtotal: totalAmount.toFixed(2),
+                gst_amount: (totalAmount * 0.18).toFixed(2),
+                grand_total: (totalAmount * 1.18).toFixed(2),
+                payment_type: document.querySelector('input[name="payment_type"]:checked')?.value || 'N/A',
+                order_type: document.querySelector('input[name="order_type"]:checked')?.value || 'N/A',
+                date: new Date().toISOString().split('T')[0],
+                time: new Date().toLocaleTimeString('en-US', { hour12: true })
+            };
+
+            generateThermalBill(orderData);
+        });
+    }
+});
+
+function generateThermalBill(orderData) {
+    const billWindow = window.open('', 'BILL', 'width=400,height=600');
+    if (!billWindow) {
+        console.error('Failed to open bill window');
+        return;
+    }
+
+    const billContent = `
+        <html>
+        <head>
+            <title>Thermal Bill</title>
+            <style>
+                body { 
+                    width: 58mm; 
+                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
+                               "Helvetica Neue", Arial, sans-serif; 
+                    font-size: 12px; 
+                    margin: 0; 
+                    padding: 10px; 
+                }
+                @media print {
+                    body { 
+                        width: 58mm;
+                        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, 
+                                   "Helvetica Neue", Arial, sans-serif;
+                    }
+                }
+                .header, .footer { text-align: center; }
+                .details div { display: flex; justify-content: space-between; margin-bottom: 5px; }
+                table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+                table, th, td { border: 1px dashed #000; }
+                th, td { padding: 5px; text-align: left; }
+                .total { margin: 10px 0; display: flex; justify-content: space-between; font-size: 14px; }
+                .thank-you { margin-top: 20px; text-align: center; font-size: 14px; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h2>Your Restaurant</h2>
+                <p>1234 Street Name, City</p>
+                <p>Phone: (123) 456-7890</p>
+            </div>
+            <div class="details">
+                <div><span>Order ID:</span> <span>${orderData.order_id}</span></div>
+                <div><span>Date:</span> <span>${orderData.date}</span></div>
+                <div><span>Time:</span> <span>${orderData.time}</span></div>
+                <div><span>Table No.:</span> <span>${orderData.table_number}</span></div>
+                <div><span>Payment:</span> <span>${orderData.payment_type}</span></div>
+            </div>
+            <table>
+                <thead>
+                    <tr><th>Item</th><th>Qty</th><th>Price (₹)</th><th>Total (₹)</th></tr>
+                </thead>
+                <tbody>
+                    ${orderData.items.map(item => `
+                        <tr>
+                            <td>${item.name}</td>
+                            <td>${item.quantity}</td>
+                            <td>₹${parseFloat(item.price).toFixed(2)}</td>
+                            <td>₹${parseFloat(item.total_price).toFixed(2)}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+            <div class="total"><span>Subtotal:</span> <span>₹${parseFloat(orderData.subtotal).toFixed(2)}</span></div>
+            <div class="total"><span>GST (18%):</span> <span>₹${parseFloat(orderData.gst_amount).toFixed(2)}</span></div>
+            <div class="total"><strong>Grand Total:</strong> <strong>₹${parseFloat(orderData.grand_total).toFixed(2)}</strong></div>
+            <div class="thank-you"><p>Thank you for dining with us!</p><p>Please come again.</p></div>
+        </body>
+        </html>
+    `;
+
+    billWindow.document.write(billContent);
+    billWindow.document.close();
+    billWindow.focus();
+    billWindow.print();
+    billWindow.close();
+}
