@@ -244,8 +244,21 @@ def release_table(request):
     return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
 
 def get_table_status(request):
-    tables = Table.objects.all().values('id', 'size')  # Remove is_booked and booking_time
-    return JsonResponse(list(tables), safe=False)
+    tables_data = []
+    for table in Table.objects.all():
+        # Check for active orders in this table
+        has_active_orders = TableOrder.objects.filter(
+            table=table,
+            status='active'
+        ).exists()
+        
+        tables_data.append({
+            'id': table.id,
+            'number': table.number,
+            'size': table.size,
+            'is_booked': has_active_orders,  # Set booked status based on active orders
+        })
+    return JsonResponse(tables_data, safe=False)
 
 def order_data(request):
     status_filter = request.GET.get('status', '')

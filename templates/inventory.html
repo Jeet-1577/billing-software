@@ -936,8 +936,11 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const selectedTable = localStorage.getItem('selectedTable');
-        if (selectedTable) {
-            document.getElementById('selectedTable').innerText = `Table: ${selectedTable.replace('table-', '')}`;
+        const selectedTableDiv = document.getElementById('selectedTable');
+        
+        if (selectedTable && selectedTableDiv) {
+            selectedTableDiv.textContent = `Table: ${selectedTable}`;
+            document.querySelector('.selection-sidebar').classList.add('open');
         }
 
         const orderData = localStorage.getItem('orderData');
@@ -999,5 +1002,19 @@
         document.querySelector('.selection-sidebar').classList.add('open');
     }
 </script>
+
+{% comment %} <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get table info from localStorage
+    const tableNumber = localStorage.getItem('selectedTableNumber');
+    if (tableNumber) {
+        const tableInfo = document.getElementById('selectedTableInfo');
+        if (tableInfo) {
+            tableInfo.textContent = `Table: ${tableNumber}`;
+        }
+    }
+    // ...rest of your existing DOMContentLoaded code...
+});
+</script> {% endcomment %}
 
 {% endblock %}

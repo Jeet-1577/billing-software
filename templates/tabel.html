@@ -1085,12 +1085,62 @@ function markAsComplete() {
             alert(data.error || 'Failed to complete order');
         }
     })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while completing the order');
-    });
+
 }
 
+function bookTable() {
+    const selectedBox = document.querySelector('.table-box.selected');
+    if (!selectedBox) {
+        alert('Please select a table first');
+        return;
+    }
+
+    const tableId = selectedBox.id;
+    const tableNumber = selectedBox.textContent.trim();
+    
+    // Store table info in localStorage
+    localStorage.setItem('selectedTable', tableNumber); // Changed from selectedTableId
+    localStorage.setItem('selectedTableId', tableId);
+    
+    // Redirect to inventory page
+    window.location.href = '/inventory/';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Function to update table status
+    function updateTableStatuses() {
+        fetch('/table-status/')
+            .then(response => response.json())
+            .then(tables => {
+                tables.forEach(table => {
+                    const tableElement = document.getElementById(`table-${table.id}`);
+                    if (tableElement) {
+                        if (table.is_booked) {
+                            tableElement.classList.add('booked', 'bg-green-500');
+                            // Add flag icon if it doesn't exist
+                            if (!tableElement.querySelector('.flag-icon')) {
+                                const flagIcon = document.createElement('div');
+                                flagIcon.classList.add('flag-icon');
+                                tableElement.appendChild(flagIcon);
+                            }
+                        } else {
+                            tableElement.classList.remove('booked', 'bg-green-500');
+                            // Remove flag icon if it exists
+                            const flagIcon = tableElement.querySelector('.flag-icon');
+                            if (flagIcon) {
+                                flagIcon.remove();
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => console.error('Error updating table status:', error));
+    }
+
+    // Update table status immediately and every 5 seconds
+    updateTableStatuses();
+    setInterval(updateTableStatuses, 5000);
+});
 </script>
 
 {% endblock %}

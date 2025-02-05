@@ -250,7 +250,7 @@ function placeOrder() {
     document.querySelectorAll('.book-button').forEach(function(button) {
         button.addEventListener('click', function() {
             const tableId = this.getAttribute('data-table-id');
-            bookTable(tableId);
+            // bookTable(tableId);
         });
     });
 
