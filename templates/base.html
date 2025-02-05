@@ -231,7 +231,7 @@
 
     <div class="content-wrapper">
         <!-- Sidebar -->
-        <div id="sidebar" class="sidebar bg-gray-800 p-4 fixed shadow-lg sidebar-open">
+        <div id="sidebar" class="sidebar bg-gray-800 p-4 fixed shadow-lg sidebar-closed">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold">Dashboard</h2>
             </div>
@@ -256,7 +256,26 @@
         </div>
     </div>
 
+    <button id="sidebarToggle" class="hamburger-menu">
+        <!-- Hamburger menu icon -->
+    </button>
+
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var sidebar = document.getElementById('sidebar');
+            var sidebarToggle = document.getElementById('sidebarToggle');
+
+            // Ensure sidebar only opens when the hamburger menu is clicked
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('sidebar-open');
+                });
+            }
+
+            // Ensure sidebar does not open automatically on page load
+            sidebar.classList.remove('sidebar-open');
+        });
+
         const sidebar = document.getElementById('sidebar');
         const menuToggle = document.getElementById('menuToggle');
 
