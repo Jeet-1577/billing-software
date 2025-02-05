@@ -1153,6 +1153,65 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Update the eye icon click handler
 
+function releaseTable() {
+    const selectedBox = document.querySelector('.table-box.selected');
+    if (!selectedBox) {
+        alert('Please select a table first');
+        return;
+    }
+
+    // Check if the selected table is already booked
+    if (!selectedBox.classList.contains('booked')) {
+        alert('there is no active order for this table');
+        return;
+    }
+
+    const tableId = selectedBox.id.replace('table-', '');
+
+    fetch('/release-table-order/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({ table_id: tableId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('Table order completed and table released successfully');
+            selectedBox.classList.remove('booked', 'bg-green-500');
+            const flagIcon = selectedBox.querySelector('.flag-icon');
+            if (flagIcon) {
+                flagIcon.remove();
+            }
+        } else {
+            alert('Failed to release table: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error releasing table:', error);
+        alert('An error occurred while releasing the table.');
+    });
+}
+
+// Utility function to get CSRF token from cookies
+function getCSRFToken() {
+    let cookieValue = null;
+    const name = 'csrftoken';
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 </script>
 
 {% endblock %}

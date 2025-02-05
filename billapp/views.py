@@ -941,3 +941,58 @@ def complete_order(request):
             })
     
     return JsonResponse({'status': 'error', 'error': 'Invalid request method'})
+
+@csrf_exempt
+@transaction.atomic
+def release_table_order(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            table_id = data.get('table_id')
+            if not table_id:
+                return JsonResponse({'status': 'failed', 'error': 'Table ID not provided'}, status=400)
+            
+            table = get_object_or_404(Table, id=table_id)
+            table_order = TableOrder.objects.filter(table=table, status='active').first()
+            if not table_order:
+                return JsonResponse({'status': 'failed', 'error': 'No active order found for this table'}, status=404)
+            
+            # Mark the table order as completed
+            table_order.status = 'completed'
+            table_order.save()
+
+            # Create a new Order from the TableOrder
+            order = Order.objects.create(
+                order_id=table_order.table_order_id,
+                order_details=table_order.items,
+                subtotal=table_order.subtotal,
+                gst_amount=table_order.gst_amount,
+                grand_total=table_order.grand_total,
+                payment_type=table_order.payment_type,
+                order_type=table_order.order_type,
+                status='completed',
+                date=table_order.created_at.date(),
+                time=table_order.created_at.time()
+            )
+
+            # Add items to the Order
+            for item_data in table_order.items:
+                order_item = OrderItem.objects.create(
+                    name=item_data.get('name', ''),
+                    price=Decimal(str(item_data.get('price', '0'))),
+                    quantity=int(item_data.get('quantity', 0)),
+                    customizations=item_data.get('customizations', []),
+                    total_price=Decimal(str(item_data.get('total_price', '0')))
+                )
+                order.items.add(order_item)
+
+            order.save()
+
+            # Release the table
+            table.is_booked = False
+            table.save()
+
+            return JsonResponse({'status': 'success', 'message': 'Table order completed and table released successfully'})
+        except Exception as e:
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
+    return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
