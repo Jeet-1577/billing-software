@@ -139,8 +139,9 @@ admin.site.register(Employee, EmployeeAdmin)
 # Admin registration using decorators
 @admin.register(Table)
 class TableAdmin(admin.ModelAdmin):
-    list_display = ('number',)
-    search_fields = ('number',)
+    list_display = ('number', 'place', 'is_active', 'is_booked', 'size')
+    list_filter = ('is_active', 'is_booked')
+    search_fields = ('number', 'place')
 
 @admin.register(TableOrder)
 class TableOrderAdmin(admin.ModelAdmin):

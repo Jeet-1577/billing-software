@@ -149,6 +149,7 @@ class Table(models.Model):
     orders = models.ManyToManyField(Order, blank=True)
     place = models.CharField(max_length=100, null=True, blank=True)
     is_active = models.BooleanField(default=True)
+    is_booked = models.BooleanField(default=False)  # Add this field with a default value
     created_at = models.DateTimeField(auto_now_add=True)
     size = models.IntegerField(default=4)  # Number of seats
 

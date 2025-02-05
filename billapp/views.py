@@ -637,8 +637,11 @@ def create_table_order(request):
             }
             formatted_items.append(formatted_item)
         
+        # Fetch the table object by number for consistency
+        table = get_object_or_404(Table, number=data['table_number'])
         table_order = TableOrder.objects.create(
-            table_number=data['table_number'],
+            table_number=table.number,  # Use the table's number
+            table=table,                # Set the foreign key
             items=formatted_items,
             customizations=data.get('customizations', []),
             subtotal=Decimal(str(data.get('subtotal', '0'))),
@@ -698,44 +701,61 @@ def save_table_order(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            table_order_id = data.get('table_order_id')
+            
+            # Get or create the table
             table_number = data.get('table_number')
-            items = data.get('items', [])
-            subtotal = data.get('subtotal', 0)
-            gst_amount = data.get('gst_amount', 0)
-            grand_total = data.get('grand_total', 0)
-            payment_type = data.get('payment_type', 'CASH')
-            order_type = data.get('order_type', 'DINE_IN')
-            status = data.get('status', 'active')
-
-            table = Table.objects.get(number=table_number)
-
+            table = Table.objects.get_or_create(
+                number=table_number,
+                defaults={
+                    'is_booked': True,
+                    'is_active': True
+                }
+            )[0]
+            
+            # Create the table order
             table_order = TableOrder.objects.create(
-                table_order_id=table_order_id,
-                table_number=table_number,
-                items=json.dumps(items),
-                subtotal=subtotal,
-                gst_amount=gst_amount,
-                grand_total=grand_total,
-                payment_type=payment_type,
-                order_type=order_type,
-                status=status,
-                table=table,
-                saved_time=timezone.now()  # Save the current time
+                table_order_id=data.get('table_order_id'),
+                table_number=table_number,  # Set table_number
+                table=table,  # Set table relationship
+                items=data.get('items', []),
+                subtotal=data.get('subtotal', 0),
+                gst_amount=data.get('gst_amount', 0),
+                grand_total=data.get('grand_total', 0),
+                payment_type=data.get('payment_type', 'CASH'),
+                order_type=data.get('order_type', 'DINE_IN'),
+                status=data.get('status', 'active'),
+                saved_time=timezone.now()
             )
+            
+            # Update table status
+            table.is_booked = True
+            table.save()
 
-            return JsonResponse({'status': 'success', 'message': 'Order saved successfully.'})
-        except Table.DoesNotExist:
-            return JsonResponse({'status': 'error', 'error': 'Table does not exist.'})
+            print(f"Created table order: {table_order.table_order_id} for table: {table.number}")
+            
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Order saved successfully.',
+                'table_order_id': table_order.table_order_id,
+                'table_number': table.number
+            })
+            
         except Exception as e:
-            return JsonResponse({'status': 'error', 'error': str(e)})
-    else:
-        return JsonResponse({'status': 'error', 'error': 'Invalid request method.'})
+            print(f"Error saving table order: {str(e)}")
+            return JsonResponse({
+                'status': 'error',
+                'error': str(e)
+            })
+    return JsonResponse({
+        'status': 'error',
+        'error': 'Invalid request method.'
+    })
 
 @csrf_exempt
 def get_table_order_details(request, table_id):
     try:
-        table_orders = TableOrder.objects.filter(table_number=table_id).order_by('-created_at')
+        # Filter orders using the Table foreign key for consistency with new tables
+        table_orders = TableOrder.objects.filter(table__number=table_id).order_by('-created_at')
         orders_data = []
         for order in table_orders:
             # Deserialize 'items' if it is a JSON string
@@ -878,7 +898,7 @@ def complete_order(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            print("Received data:", data)  # Debug print
+            print("Received data:", data)
             
             # Create new order
             order = Order.objects.create(

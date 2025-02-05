@@ -515,10 +515,13 @@
         // Event listener for 'eye-icon' (to fetch and display order details)
         document.querySelectorAll('.eye-icon').forEach(function(icon) {
             icon.addEventListener('click', function(event) {
-                event.stopPropagation(); // Prevent triggering other click events
+                event.stopPropagation(); 
+                            // Get table number from the parent table-box element's content
+            const tableNumber = this.closest('.table-box').textContent.trim();
+            console.log('Fetching orders for table:', tableNumber);// Prevent triggering other click events
                 const tableId = this.getAttribute('data-table-id');
-                fetch(`/api/table-order/${tableId}/`)
-                    .then(response => {
+                fetch(`/api/table-order/${tableNumber}/`)
+                .then(response => {
                         if (!response.ok) {
                             throw new Error('Network response was not ok');
                         }
@@ -1141,6 +1144,9 @@ document.addEventListener('DOMContentLoaded', function() {
     updateTableStatuses();
     setInterval(updateTableStatuses, 5000);
 });
+
+// Update the eye icon click handler
+
 </script>
 
 {% endblock %}
