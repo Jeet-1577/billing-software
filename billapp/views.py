@@ -874,17 +874,20 @@ def clear_all_orders(request):
         return JsonResponse({'status': 'error', 'error': 'Employee credentials required'})
     
     try:
-        employee = Employee.objects.get(id=employee_id)
+        # Lookup employee by the custom employee_id field (not the pk)
+        employee = Employee.objects.get(employee_id=employee_id)
     except Employee.DoesNotExist:
         return JsonResponse({'status': 'error', 'error': 'Invalid employee id'})
     
     if not check_password(password, employee.password):
         return JsonResponse({'status': 'error', 'error': 'Invalid password'})
     
-    # Credentials valid: delete all orders
-    Order.objects.all().delete()
-    # ...additional logic to release tables if required...
-    return JsonResponse({'status': 'success'})
+    # Clear only completed orders from the TableOrder model
+    completed_orders = TableOrder.objects.filter(status='completed')
+    count = completed_orders.count()
+    completed_orders.delete()
+    
+    return JsonResponse({'status': 'success', 'message': f'Cleared {count} completed orders.'})
 
 @csrf_exempt
 @transaction.atomic
