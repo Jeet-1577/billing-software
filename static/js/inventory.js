@@ -1031,15 +1031,14 @@ function handleCheckout() {
             // Clear selected items and update the sidebar
             clearSelectedItems();
             updateSidebar();
+            closeSidebar(); // Close the sidebar
         } else {
             alert('Failed to complete order: ' + (data.error || 'Unknown error'));
         }
     })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('An error occurred while completing the order.');
-    });
+  
 }
+
 document.addEventListener('DOMContentLoaded', function() {
     const printButton = document.querySelector('.print');
     if (printButton) {
@@ -1086,9 +1085,11 @@ document.addEventListener('DOMContentLoaded', function() {
             };
 
             generateThermalBill(orderData);
-        });
+        }, { once: true });  // This ensures the event fires only once
     }
 });
+
+
 
 function generateThermalBill(orderData) {
     const billWindow = window.open('', 'BILL', 'width=400,height=600');
@@ -1167,4 +1168,95 @@ function generateThermalBill(orderData) {
     billWindow.focus();
     billWindow.print();
     billWindow.close();
+}
+
+
+document.addEventListener('DOMContentLoaded', function () {
+    const coPrintButton = document.querySelector('.co-print');
+
+    if (coPrintButton) {
+        coPrintButton.addEventListener('click', function () {
+            if (coPrintButton.disabled) return; // Prevent multiple clicks
+            coPrintButton.disabled = true;
+
+            const selectedItems = document.getElementsByClassName('item-cube selected');
+            if (selectedItems.length === 0) {
+                alert("No items selected!");
+                coPrintButton.disabled = false;
+                return;
+            }
+
+            const orderItems = [];
+            let totalAmount = 0;
+
+            for (let i = 0; i < selectedItems.length; i++) {
+                const item = selectedItems[i];
+                const itemId = item.getAttribute('data-item-id');
+                const itemName = item.getAttribute('data-item-name');
+                const basePrice = parseFloat(item.getAttribute('data-item-price'));
+                const uniqueItemId = item.getAttribute('data-unique-id') || `${itemId}-basic`;
+
+                const quantityElement = document.getElementById(`quantity-${uniqueItemId}`);
+                if (quantityElement) {
+                    const quantity = parseInt(quantityElement.innerText);
+                    const customizations = item.hasAttribute('data-selected-customizations') ? JSON.parse(item.getAttribute('data-selected-customizations')) : [];
+                    const customizationPrice = customizations.reduce((sum, opt) => sum + parseFloat(opt.price), 0);
+                    const itemTotalPrice = (basePrice + customizationPrice) * quantity;
+                    totalAmount += itemTotalPrice;
+
+                    orderItems.push({
+                        name: itemName,
+                        price: basePrice + customizationPrice,
+                        quantity: quantity,
+                        customizations: customizations,
+                        total_price: itemTotalPrice
+                    });
+                }
+            }
+
+            const orderId = Date.now().toString();
+            const orderData = {
+                order_id: orderId,
+                items: orderItems,
+                subtotal: totalAmount.toFixed(2),
+                gst_amount: (totalAmount * 0.18).toFixed(2),
+                grand_total: (totalAmount * 1.18).toFixed(2),
+                payment_type: document.querySelector('input[name="payment_type"]:checked')?.value || 'N/A',
+                order_type: document.querySelector('input[name="order_type"]:checked')?.value || 'N/A',
+                date: new Date().toISOString().split('T')[0],
+                time: new Date().toLocaleTimeString('en-US', { hour12: true })
+            };
+
+            fetch('/complete-order/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(orderData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Order completed and printed successfully!');
+                    generateThermalBill(orderData);
+                    clearSelectedItems();
+                    updateSidebar();
+                    closeSidebar(); // Close the sidebar
+                } else {
+                    alert('Failed to complete order: ' + (data.error || 'Unknown error'));
+                }
+            })
+          
+            .finally(() => {
+                setTimeout(() => {
+                    coPrintButton.disabled = false; // Re-enable button
+                }, 1000);
+            });
+        }, { once: true }); // Ensures the event listener runs only once
+    }
+});
+
+function closeSidebar() {
+    selectionSidebar.classList.remove('open');
 }
