@@ -18,7 +18,6 @@ urlpatterns = [
     path('tabel/', views.table_view, name='tabel'),
     path('tables/', views.table_view, name='tables'),
     path('dashboard/', views.dashboard, name='dashboard'),
-    path('place-order/', views.place_order, name='place_order'),
     path('save-order/', views.save_order, name='save_order'),
     path('release-table/', views.release_table, name='release_table'),
     path('table-status/', views.get_table_status, name='table_status'),

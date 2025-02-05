@@ -799,6 +799,99 @@
         scrollbar-width: none;     /* Firefox */
     }
 
+    /* Button styling */
+    .options button {
+        width: 100%;
+        padding: 10px;
+        border: 2px solid;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-weight: bold;
+        margin-bottom: 10px; /* Add margin between buttons */
+    }
+
+    .options button.complate {
+        background-color: transparent;
+        color: red;
+        border-color: red;
+    }
+
+    .options button.complate:hover {
+        background-color: red;
+        color: white;
+    }
+
+    .options button.print {
+        background-color: transparent;
+        color: blue;
+        border-color: blue;
+    }
+
+    .options button.print:hover {
+        background-color: blue;
+        color: white;
+    }
+
+    .options button.co-print {
+        background-color: transparent;
+        color: grey;
+        border-color: grey;
+    }
+
+    .options button.co-print:hover {
+        background-color: grey;
+        color: white;
+    }
+
+    .options .button-group {
+        display: flex;
+        gap: 10px; /* Add space between buttons */
+    }
+
+    .options .button-group button {
+        flex: 1; /* Make buttons take equal space */
+        padding: 10px;
+        border: 2px solid;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-weight: bold;
+    }
+
+    .options .button-group button.complate {
+        background-color: transparent;
+        color: red;
+        border-color: red;
+    }
+
+    .options .button-group button.complate:hover {
+        background-color: red;
+        color: white;
+    }
+
+    .options .button-group button.print {
+        background-color: transparent;
+        color: blue;
+        border-color: blue;
+    }
+
+    .options .button-group button.print:hover {
+        background-color: blue;
+        color: white;
+    }
+
+    .options .button-group button.co-print {
+        background-color: transparent;
+        color: grey;
+        border-color: grey;
+    }
+
+    .options .button-group button.co-print:hover {
+        background-color: grey;
+        color: white;
+    }
+
 </style>
 
 <!-- Update HTML structure -->
@@ -878,7 +971,12 @@
                 <label for="order_take_away">Take Away</label>
             </div>
             <div class="options">
-                <button class="checkout">Checkout</button>
+                <!-- Replace removed checkout button with three new buttons in a row -->
+                <div class="button-group">
+                    <button class="complate">complate</button>
+                    <button class="print">print</button>
+                    <button class="co-print">co & print</button>
+                </div>
             </div>
         </div>
     </div>
