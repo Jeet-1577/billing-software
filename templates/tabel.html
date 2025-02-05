@@ -470,18 +470,6 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', (event) => {
-        // Load booked tables from localStorage
-        const bookedTables = JSON.parse(localStorage.getItem('bookedTables')) || [];
-        bookedTables.forEach(tableId => {
-            const tableElement = document.getElementById(tableId);
-            if (tableElement) {
-                tableElement.classList.add('booked');
-                const flagIcon = document.createElement('div');
-                flagIcon.classList.add('flag-icon');
-                tableElement.appendChild(flagIcon);
-            }
-        });
-
         // Ensure modal is hidden on page load
         const modal = document.getElementById('orderDetailsModal');
         if (modal) {
@@ -497,50 +485,6 @@
 
         // Add the 'selected' class to the clicked table box
         element.classList.add('selected');
-    }
-
-    function bookTable() {
-        const selectedBox = document.querySelector('.table-box.selected');
-        if (!selectedBox) return;  // Exit if no table is selected
-
-        // Get current table status
-        const isAlreadyBooked = selectedBox.classList.contains('booked') || 
-                               JSON.parse(localStorage.getItem('bookedTables') || '[]').includes(selectedBox.id);
-
-        if (isAlreadyBooked) {
-            alert('This table is already booked.');
-            return;
-        }
-
-        // Proceed with booking
-        selectedBox.classList.remove('selected');
-        selectedBox.classList.add('booked');
-        saveBookedTable(selectedBox.id);
-        localStorage.setItem('selectedTable', selectedBox.id);
-        window.location.href = '/inventory/';
-    }
-
-    function releaseTable() {
-        const selectedBox = document.querySelector('.table-box.selected.booked');
-        if (selectedBox) {
-            selectedBox.classList.remove('booked');
-            selectedBox.classList.remove('selected');
-            removeBookedTable(selectedBox.id);
-        }
-    }
-
-    function saveBookedTable(tableId) {
-        let bookedTables = JSON.parse(localStorage.getItem('bookedTables')) || [];
-        if (!bookedTables.includes(tableId)) {
-            bookedTables.push(tableId);
-            localStorage.setItem('bookedTables', JSON.stringify(bookedTables));
-        }
-    }
-
-    function removeBookedTable(tableId) {
-        let bookedTables = JSON.parse(localStorage.getItem('bookedTables')) || [];
-        bookedTables = bookedTables.filter(id => id !== tableId);
-        localStorage.setItem('bookedTables', JSON.stringify(bookedTables));
     }
 
     function viewOrder(event, tableId) {

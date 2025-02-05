@@ -243,35 +243,8 @@ def release_table(request):
             return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
     return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
 
-@require_POST
-def book_table(request, table_id):
-    try:
-        table = Table.objects.get(id=table_id)
-        if not table.is_booked:
-            table.book_table()
-            # Set timer duration based on table size (e.g., 30 minutes per 4 seats)
-            timer_duration = timedelta(minutes=30 * (table.size // 4))
-            booking_end_time = timezone.now() + timer_duration
-            return JsonResponse({'status': 'success', 'booking_end_time': booking_end_time.isoformat()})
-        else:
-            return JsonResponse({'status': 'error', 'message': 'Table is already booked.'})
-    except Table.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Table does not exist.'})
-
-@require_POST
-def release_table(request, table_id):
-    try:
-        table = Table.objects.get(id=table_id)
-        if table.is_booked:
-            table.release_table()
-            return JsonResponse({'status': 'success'})
-        else:
-            return JsonResponse({'status': 'error', 'message': 'Table is not booked.'})
-    except Table.DoesNotExist:
-        return JsonResponse({'status': 'error', 'message': 'Table does not exist.'})
-
 def get_table_status(request):
-    tables = Table.objects.all().values('id', 'size', 'is_booked', 'booking_time')
+    tables = Table.objects.all().values('id', 'size')  # Remove is_booked and booking_time
     return JsonResponse(list(tables), safe=False)
 
 def order_data(request):
