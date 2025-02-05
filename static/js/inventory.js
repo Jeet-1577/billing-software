@@ -965,3 +965,78 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ...existing code...
 });
+document.addEventListener('DOMContentLoaded', function() {
+    const checkoutButton = document.querySelector('.checkout');
+
+    if (checkoutButton) {
+        checkoutButton.removeEventListener('click', handleCheckout); // Remove any existing listener
+        checkoutButton.addEventListener('click', handleCheckout); // Add new listener
+    }
+});
+
+function handleCheckout() {
+    const selectedItems = document.getElementsByClassName('item-cube selected');
+    const orderItems = [];
+    let totalAmount = 0;
+
+    for (let i = 0; i < selectedItems.length; i++) {
+        const item = selectedItems[i];
+        const itemId = item.getAttribute('data-item-id');
+        const itemName = item.getAttribute('data-item-name');
+        const basePrice = parseFloat(item.getAttribute('data-item-price'));
+        const uniqueItemId = item.getAttribute('data-unique-id') || `${itemId}-basic`;
+
+        const quantityElement = document.getElementById(`quantity-${uniqueItemId}`);
+        if (quantityElement) {
+            const quantity = parseInt(quantityElement.innerText);
+            const customizations = item.hasAttribute('data-selected-customizations') ? JSON.parse(item.getAttribute('data-selected-customizations')) : [];
+            const customizationPrice = customizations.reduce((sum, opt) => sum + parseFloat(opt.price), 0);
+            const itemTotalPrice = (basePrice + customizationPrice) * quantity;
+            totalAmount += itemTotalPrice;
+
+            orderItems.push({
+                name: itemName,
+                price: basePrice + customizationPrice,
+                quantity: quantity,
+                customizations: customizations,
+                total_price: itemTotalPrice
+            });
+        }
+    }
+
+    const orderData = {
+        order_id: Date.now().toString(),
+        items: orderItems,
+        subtotal: totalAmount.toFixed(2),
+        gst_amount: (totalAmount * 0.18).toFixed(2),
+        grand_total: (totalAmount * 1.18).toFixed(2),
+        payment_type: document.querySelector('input[name="payment_type"]:checked')?.value || 'N/A',
+        order_type: document.querySelector('input[name="order_type"]:checked')?.value || 'N/A',
+        date: new Date().toISOString().split('T')[0],
+        time: new Date().toLocaleTimeString('en-US', { hour12: true })
+    };
+
+    fetch('/complete-order/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify(orderData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert('Order completed successfully!');
+            // Clear selected items and update the sidebar
+            clearSelectedItems();
+            updateSidebar();
+        } else {
+            alert('Failed to complete order: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while completing the order.');
+    });
+}
