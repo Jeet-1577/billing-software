@@ -1000,7 +1000,8 @@ function onPrintButtonClick() {
         return;
     }
     console.log("Order data constructed successfully:", orderData);
-    printOrderBill(orderData);
+    //printOrderBill(orderData);
+    generateThermalBill(orderData); // Just generate bill without saving
 }
     // Update the print button to use onPrintButtonClick
     // Example:
