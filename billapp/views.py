@@ -138,28 +138,22 @@ def dashboard(request):
 
 def table_view(request):
     try:
-        # Attempt to load the template manually
         template = loader.get_template('tabel.html')
-        print(f"Template loaded successfully.")
+        # Sort tables by number but don't reposition them after they're booked
+        table_numbers = Table.objects.all().order_by('number')
+        return render(request, 'tabel.html', {'table_numbers': table_numbers})
     except Exception as e:
         print(f"Error loading template: {str(e)}")
-        # If there is an error, return an error response
         return render(request, 'error.html', {'error_message': 'Failed to load the template.'})
-
-    # Fetch all tables from the database
-    table_numbers = Table.objects.all()  # Fetches all tables from the database
-
-    # Pass the table numbers to the template
-    return render(request, 'tabel.html', {'table_numbers': table_numbers})
 
 @csrf_exempt
 @transaction.atomic
 def place_order(request):
     if request.method == 'POST':
         try:
-            print("Raw request body:", request.body)  # Debug raw request body
+            print("Raw request body:", request.body)
             data = json.loads(request.body)
-            print("Received order data:", data)  # Debug parsed data
+            print("Received order data:", data)
 
             # Validate required fields
             required_keys = {"orderId", "items", "paymentType", "totalAmount", "gstAmount", "grandTotal", "orderType"}
@@ -177,7 +171,7 @@ def place_order(request):
                         'status': 'failed',
                         'error': f"Each item must be a dictionary, got: {item}"
                     }, status=400)
-                print("Processing item:", item)  # Debug each item
+                print("Processing item:", item)
 
             # Create order
             order = Order.objects.create(
@@ -187,7 +181,7 @@ def place_order(request):
                 grand_total=Decimal(str(data.get('grandTotal', '0'))),
                 payment_type=data.get('paymentType', 'N/A'),
                 order_type=data.get('orderType', 'N/A'),
-                order_details=data.get('items', []),
+                order_details=data.get('items', [])
             )
 
             # Add items to order
@@ -203,7 +197,7 @@ def place_order(request):
                         customization_price=Decimal(str(item_data.get('customizationPrice', '0'))),
                         item_details=item_data
                     )
-                    order.items.add(order_item)  # Add order item to order
+                    order.items.add(order_item)
                 except Exception as e:
                     print(f"Error processing item {item_data}: {e}")
                     raise

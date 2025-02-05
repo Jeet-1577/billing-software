@@ -1110,7 +1110,7 @@ function bookTable() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Function to update table status
+    // Update table status without repositioning
     function updateTableStatuses() {
         fetch('/table-status/')
             .then(response => response.json())
