@@ -1098,6 +1098,12 @@ function bookTable() {
         return;
     }
 
+    // Check if the selected table is already booked
+    if (selectedBox.classList.contains('booked')) {
+        alert('This table is already booked');
+        return;
+    }
+
     const tableId = selectedBox.id;
     const tableNumber = selectedBox.textContent.trim();
     
