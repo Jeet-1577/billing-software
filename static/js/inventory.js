@@ -1260,3 +1260,115 @@ document.addEventListener('DOMContentLoaded', function () {
 function closeSidebar() {
     selectionSidebar.classList.remove('open');
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    // ...existing code...
+
+    // Add event listeners for order type radio buttons
+    const orderTypeRadios = document.querySelectorAll('input[name="order_type"]');
+    const checkoutButton = document.querySelector('.checkout');
+
+    orderTypeRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'dine_in') {
+                checkoutButton.textContent = 'Save Order';
+                // Change the button functionality to handle save order
+                checkoutButton.removeEventListener('click', handleCheckout);
+                checkoutButton.addEventListener('click', handleSaveOrder);
+            } else {
+                checkoutButton.textContent = 'Checkout';
+                // Restore original checkout functionality
+                checkoutButton.removeEventListener('click', handleSaveOrder);
+                checkoutButton.addEventListener('click', handleCheckout);
+            }
+        });
+    });
+
+    function handleSaveOrder() {
+        const selectedItems = document.getElementsByClassName('item-cube selected');
+        if (selectedItems.length === 0) {
+            alert("No items selected!");
+            return;
+        }
+
+        const orderType = document.querySelector('input[name="order_type"]:checked');
+        if (!orderType) {
+            alert("Please select an order type!");
+            return;
+        }
+
+        const orderItems = [];
+        let totalAmount = 0;
+
+        for (let i = 0; i < selectedItems.length; i++) {
+            const item = selectedItems[i];
+            const itemId = item.getAttribute('data-item-id');
+            const itemName = item.getAttribute('data-item-name');
+            const basePrice = parseFloat(item.getAttribute('data-item-price'));
+            const uniqueItemId = item.getAttribute('data-unique-id') || `${itemId}-basic`;
+
+            const quantityElement = document.getElementById(`quantity-${uniqueItemId}`);
+            if (quantityElement) {
+                const quantity = parseInt(quantityElement.innerText);
+                const customizations = item.hasAttribute('data-selected-customizations') ? 
+                    JSON.parse(item.getAttribute('data-selected-customizations')) : [];
+                const customizationPrice = customizations.reduce((sum, opt) => sum + parseFloat(opt.price), 0);
+                const itemTotalPrice = (basePrice + customizationPrice) * quantity;
+                totalAmount += itemTotalPrice;
+
+                orderItems.push({
+                    name: itemName,
+                    price: basePrice + customizationPrice,
+                    quantity: quantity,
+                    customizations: customizations,
+                    total_price: itemTotalPrice
+                });
+            }
+        }
+
+        const selectedTable = localStorage.getItem('selectedTable');
+        if (!selectedTable) {
+            alert("Please select a table first!");
+            return;
+        }
+
+        const tableNumber = selectedTable.replace('table-', '');
+        const orderData = {
+            table_order_id: Date.now().toString(),
+            table_number: parseInt(tableNumber),
+            items: orderItems,
+            subtotal: totalAmount.toFixed(2),
+            gst_amount: (totalAmount * 0.18).toFixed(2),
+            grand_total: (totalAmount * 1.18).toFixed(2),
+            payment_type: document.querySelector('input[name="payment_type"]:checked')?.value || 'N/A',
+            order_type: orderType.value,
+            status: 'active'
+        };
+
+        fetch('/save-table-order/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify(orderData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('Order saved successfully!');
+                clearSelectedItems();
+                updateSidebar();
+                closeSidebar();
+            } else {
+                alert('Failed to save order: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving the order.');
+        });
+    }
+
+    // ...existing code...
+});
