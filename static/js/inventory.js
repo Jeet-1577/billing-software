@@ -1285,15 +1285,31 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     function handleSaveOrder() {
+        // Disable the save order button immediately to prevent multiple clicks
+        const saveOrderButton = document.querySelector('.checkout');
+        if (saveOrderButton.disabled) {
+            return; // If button is already disabled, exit early
+        }
+        saveOrderButton.disabled = true;
+
         const selectedItems = document.getElementsByClassName('item-cube selected');
         if (selectedItems.length === 0) {
             alert("No items selected!");
+            saveOrderButton.disabled = false;
             return;
         }
 
         const orderType = document.querySelector('input[name="order_type"]:checked');
         if (!orderType) {
             alert("Please select an order type!");
+            saveOrderButton.disabled = false;
+            return;
+        }
+
+        const selectedTable = localStorage.getItem('selectedTable');
+        if (!selectedTable) {
+            alert("Please select a table first!");
+            saveOrderButton.disabled = false;
             return;
         }
 
@@ -1326,12 +1342,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        const selectedTable = localStorage.getItem('selectedTable');
-        if (!selectedTable) {
-            alert("Please select a table first!");
-            return;
-        }
-
         const tableNumber = selectedTable.replace('table-', '');
         const orderData = {
             table_order_id: Date.now().toString(),
@@ -1358,8 +1368,17 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.status === 'success') {
                 alert('Order saved successfully!');
                 clearSelectedItems();
+                localStorage.removeItem('selectedTable');
+                const selectedTableElement = document.getElementById('selectedTable');
+                if (selectedTableElement) {
+                    selectedTableElement.innerText = '';
+                }
                 updateSidebar();
                 closeSidebar();
+                const orderTypeRadios = document.querySelectorAll('input[name="order_type"]');
+                const paymentTypeRadios = document.querySelectorAll('input[name="payment_type"]');
+                orderTypeRadios.forEach(radio => radio.checked = false);
+                paymentTypeRadios.forEach(radio => radio.checked = false);
             } else {
                 alert('Failed to save order: ' + (data.error || 'Unknown error'));
             }
@@ -1367,6 +1386,12 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Error:', error);
             alert('An error occurred while saving the order.');
+        })
+        .finally(() => {
+            // Re-enable the button after a short delay
+            setTimeout(() => {
+                saveOrderButton.disabled = false;
+            }, 1000);
         });
     }
 
