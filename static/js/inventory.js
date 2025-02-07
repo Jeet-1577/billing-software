@@ -1,8 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const selectedTable = localStorage.getItem('selectedTable');
+    // Clear selected table from localStorage on page refresh
+    localStorage.removeItem('selectedTable');
     const selectedTableElement = document.getElementById('selectedTable');
-    if (selectedTable && selectedTableElement) {
-        selectedTableElement.innerText = `Table: ${selectedTable.replace('table-', '')}`;
+    if (selectedTableElement) {
+        selectedTableElement.innerText = '';
     }
 
     const orderData = localStorage.getItem('orderData');
@@ -1383,11 +1384,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert('Failed to save order: ' + (data.error || 'Unknown error'));
             }
         })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while saving the order.');
-        })
         .finally(() => {
+            closeSidebar();
             // Re-enable the button after a short delay
             setTimeout(() => {
                 saveOrderButton.disabled = false;
@@ -1468,7 +1466,7 @@ function showTableSelectionPopup() {
 
     // Create container for table list
     const container = document.createElement('div');
-    container.className = 'bg-gray-900 text-white rounded-lg p-6 w-[100%] max-w-[1500px] max-h-[95vh] shadow-lg transform transition-all scale-95 opacity-0';
+    container.className = 'bg-gray-900 text-white rounded-lg p-6 w-[80%] max-w-[800px] h-[70%] max-h-[800px] shadow-lg transform transition-all scale-95 opacity-0';
     container.innerHTML = `
         <div class="flex justify-between items-center border-b border-gray-700 pb-3">
             <h2 class="text-xl font-bold">Select a Table</h2>
@@ -1478,7 +1476,7 @@ function showTableSelectionPopup() {
                 </svg>
             </button>
         </div>
-        <div class="overflow-y-auto custom-scrollbar max-h-[80vh] mt-4 pr-2">
+        <div class="overflow-y-auto custom-scrollbar mt-4 pr-2" style="max-height: calc(80vh - 120px);">
             <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-4" id="tableList">
                 <div class="text-center col-span-full">Loading tables...</div>
             </div>
@@ -1515,11 +1513,11 @@ function showTableSelectionPopup() {
             }
             .table-card:hover:not(:disabled) {
                 transform: translateY(-1px);
-                box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
+                box-shadow: 0 2px 4px -1px rgba(0,0,0,0.1), 0 1px 2px -1px rgba(0,0,0,0.06);
             }
             .table-card.disabled {
                 cursor: not-allowed;
-                background-color: #10B981; /* Green color for booked tables */
+                background-color: #10B981;
                 opacity: 1;
             }
             .table-card .status-badge {
@@ -1540,7 +1538,7 @@ function showTableSelectionPopup() {
                 font-size: 0.625rem;
                 margin-top: 0.25rem;
             }
-        </style>
+                    </style>
     `;
     popup.appendChild(container);
     document.body.appendChild(popup);
@@ -1553,6 +1551,8 @@ function showTableSelectionPopup() {
 
     // Populate table list
     fetchTablesForPopup().then(tables => {
+        // Sort tables by number but keep original table numbers
+        tables.sort((a, b) => parseInt(a.number) - parseInt(b.number));
         const tableList = document.getElementById('tableList');
         tableList.innerHTML = ''; // Clear previous tables
 
@@ -1598,4 +1598,3 @@ document.addEventListener('DOMContentLoaded', () => {
         dineInOption.addEventListener('dblclick', handleDineInOption); // Add double-click event listener
     }
 });
-
