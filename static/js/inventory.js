@@ -1397,3 +1397,205 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ...existing code...
 });
+
+// ...existing code...
+
+// Removed all table popup box related functions and design
+// function createTablePopup() { ... }
+// function closeTablePopup() { ... }
+// function selectTableFromPopup(tableNumber) { ... }
+
+// ...existing code...
+
+
+// Update the order type radio button event listener
+document.addEventListener('DOMContentLoaded', function() {
+    const orderTypeRadios = document.querySelectorAll('input[name="order_type"]');
+    const checkoutButton = document.querySelector('.checkout');
+    
+    if (!checkoutButton) {
+        console.error('Checkout button not found');
+        return;
+    }
+
+    orderTypeRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'dine_in') {
+                const selectedTable = localStorage.getItem('selectedTable');
+                if (!selectedTable) {
+                    handleDineInOption();
+                }
+                checkoutButton.textContent = 'Save Order';
+                checkoutButton.removeEventListener('click', handleCheckout);
+                checkoutButton.addEventListener('click', handleSaveOrder);
+            } else {
+                checkoutButton.textContent = 'Checkout';
+                checkoutButton.removeEventListener('click', handleSaveOrder);
+                checkoutButton.addEventListener('click', handleCheckout);
+            }
+        });
+    });
+});
+
+// New function to handle dine in option click
+function handleDineInOption() {
+    const selectedTable = localStorage.getItem('selectedTable');
+    showTableSelectionPopup();
+}
+
+// New function to fetch table data from the table page
+function fetchTablesForPopup() {
+    return fetch('/table-status/')
+        .then(response => response.json())
+        .catch(error => {
+            console.error("Error fetching tables:", error);
+            return [];
+        });
+}
+
+// New function to show the table selection popup with improved design
+function showTableSelectionPopup() {
+    // Remove existing popup if present
+    const existingPopup = document.getElementById('tableSelectionPopup');
+    if (existingPopup) {
+        existingPopup.remove();
+    }
+
+    // Create popup overlay
+    const popup = document.createElement('div');
+    popup.id = 'tableSelectionPopup';
+    popup.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+
+    // Create container for table list
+    const container = document.createElement('div');
+    container.className = 'bg-gray-900 text-white rounded-lg p-6 w-[100%] max-w-[1500px] max-h-[95vh] shadow-lg transform transition-all scale-95 opacity-0';
+    container.innerHTML = `
+        <div class="flex justify-between items-center border-b border-gray-700 pb-3">
+            <h2 class="text-xl font-bold">Select a Table</h2>
+            <button id="closeTablePopup" class="text-gray-400 hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div class="overflow-y-auto custom-scrollbar max-h-[80vh] mt-4 pr-2">
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-4" id="tableList">
+                <div class="text-center col-span-full">Loading tables...</div>
+            </div>
+        </div>
+        <style>
+            .custom-scrollbar::-webkit-scrollbar {
+                width: 6px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-track {
+                background: #1F2937;
+                border-radius: 3px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+                background: #4B5563;
+                border-radius: 3px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+                background: #6B7280;
+            }
+            .table-card {
+                transition: all 0.2s ease-in-out;
+                width: 100px;
+                height: 100px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                border-radius: 0.5rem;
+                padding: 0.5rem;
+                text-align: center;
+                background-color: #374151;
+                color: white;
+                cursor: pointer;
+            }
+            .table-card:hover:not(:disabled) {
+                transform: translateY(-1px);
+                box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
+            }
+            .table-card.disabled {
+                cursor: not-allowed;
+                background-color: #10B981; /* Green color for booked tables */
+                opacity: 1;
+            }
+            .table-card .status-badge {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                margin-bottom: 0.5rem;
+            }
+            .table-card .table-number {
+                font-size: 1rem;
+                font-weight: bold;
+            }
+            .table-card .table-area {
+                font-size: 0.75rem;
+                color: #9CA3AF;
+            }
+            .table-card .table-status {
+                font-size: 0.625rem;
+                margin-top: 0.25rem;
+            }
+        </style>
+    `;
+    popup.appendChild(container);
+    document.body.appendChild(popup);
+
+    // Add animation
+    setTimeout(() => {
+        container.classList.remove('scale-95', 'opacity-0');
+        container.classList.add('scale-100', 'opacity-100');
+    }, 10);
+
+    // Populate table list
+    fetchTablesForPopup().then(tables => {
+        const tableList = document.getElementById('tableList');
+        tableList.innerHTML = ''; // Clear previous tables
+
+        if (!tables.length) {
+            tableList.innerHTML = '<div class="text-center col-span-full">No tables available.</div>';
+        } else {
+            tables.forEach(table => {
+                const btn = document.createElement('button');
+                btn.className = `table-card ${table.is_booked ? 'disabled' : ''}`;
+                btn.innerHTML = `
+                    <div class="status-badge ${table.is_booked ? 'bg-green-400' : 'bg-green-400'}"></div>
+                    <div class="table-number">Table ${table.number}</div>
+                    <div class="table-area">${table.place || 'Main Area'}</div>
+                    <div class="table-status ${table.is_booked ? 'text-green-200' : 'text-green-200'}">${table.is_booked ? 'Occupied' : 'Available'}</div>
+                `;
+
+                if (!table.is_booked) {
+                    btn.onclick = () => {
+                        localStorage.setItem('selectedTable', `table-${table.number}`);
+                        const tableDisplay = document.getElementById('selectedTable');
+                        if (tableDisplay) {
+                            tableDisplay.textContent = `Table: ${table.number}`;
+                        }
+                        document.body.removeChild(popup);
+                    };
+                }
+                tableList.appendChild(btn);
+            });
+        }
+    });
+
+    // Close button handler to remove popup
+    container.querySelector('#closeTablePopup').addEventListener('click', () => {
+        document.body.removeChild(popup);
+    });
+}
+
+// Example integration: attach dine in option click handler
+document.addEventListener('DOMContentLoaded', () => {
+    const dineInOption = document.getElementById('dineInOption'); // Ensure this element exists
+    if (dineInOption) {
+        dineInOption.addEventListener('click', handleDineInOption);
+        dineInOption.addEventListener('dblclick', handleDineInOption); // Add double-click event listener
+    }
+});
+
