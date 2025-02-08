@@ -31,16 +31,16 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'django_browser_reload',
-    'theme',
-    'tailwind',
-    'billapp.apps.BillappConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'billapp.apps.BillappConfig',
+    'django_browser_reload',
+    'theme',
+    'tailwind',
     'corsheaders',
 ]
 

@@ -1,6 +1,17 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Category, Item, Order, Table, Employee, OrderItem, KoOrder, TableOrder  # Ensure Employee, OrderItem, and KoOrder are imported
-from .forms import CategoryForm, ItemForm, CustomizationCategoryForm, CustomizationOptionForm
+from .models import (
+    Category, 
+    Item, 
+    Order, 
+    Table, 
+    Employee, 
+    OrderItem, 
+    KoOrder, 
+    TableOrder,
+    CustomizationCategory,
+    CustomizationOption
+)
+from .forms import CategoryForm, ItemForm, EmployeeForm  # Update this line to only import existing forms
 from django.http import JsonResponse
 import json
 from datetime import datetime
@@ -924,42 +935,10 @@ def release_table_order(request):
     return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
 
 def manage_items(request):
-    if request.method == 'POST':
-        form_type = request.POST.get('form_type')
-        
-        if form_type == 'category':
-            form = CategoryForm(request.POST)
-            if form.is_valid():
-                form.save()
-                messages.success(request, 'Category added successfully!')
-        
-        elif form_type == 'customization_category':
-            form = CustomizationCategoryForm(request.POST)
-            if form.is_valid():  # Fixed syntax error here
-                form.save()
-                messages.success(request, 'Customization category added successfully!')
-        
-        elif form_type == 'customization_option':
-            form = CustomizationOptionForm(request.POST)
-            if form.is_valid():
-                form.save()
-                messages.success(request, 'Customization option added successfully!')
-        
-        elif form_type == 'item':
-            form = ItemForm(request.POST, request.FILES)
-            if form.is_valid():
-                form.save()
-                messages.success(request, 'Item added successfully!')
-    
     context = {
-        'category_form': CategoryForm(),
-        'customization_category_form': CustomizationCategoryForm(),
-        'customization_option_form': CustomizationOptionForm(),
-        'item_form': ItemForm(),
         'categories': Category.objects.all(),
-        'customization_categories': CustomizationCategory.objects.all(),
-        'customization_options': CustomizationOption.objects.all(),
         'items': Item.objects.all(),
+        'customization_options': CustomizationOption.objects.all(),
+        'customization_categories': CustomizationCategory.objects.all(),
     }
-    
     return render(request, 'manage_items.html', context)

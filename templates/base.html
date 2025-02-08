@@ -240,6 +240,7 @@
                 <li class="mb-2"><a href="{% url 'profile' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Profile</a></li>
                 <li class="mb-2"><a href="{% url 'settings' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Settings</a></li>
                 <li class="mb-2"><a href="{% url 'inventory' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Inventory</a></li>
+                <li class="mb-2"><a href="{% url 'manage_items' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Manage Items</a></li>
                 <li class="mb-2"><a href="{% url 'portfolio' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Portfolio</a></li>
                 <li class="mb-2"><a href="{% url 'order_data' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Order Data</a></li>
                 <li class="mb-2"><a href="{% url 'about_us' %}" class="block py-2 px-4 rounded hover:bg-gray-700">About Us</a></li>
@@ -539,7 +540,7 @@
             });
         }
     </script>
-    <script src="http://localhost:8000/__reload__/reload.js"></script>
+<script src="http://localhost:8000/__reload__/reload.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Updated jQuery CDN -->
     <script src="{% static 'js/inventory.js' %}"></script>
     {% block scripts %}

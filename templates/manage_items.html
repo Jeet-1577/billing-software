@@ -2,119 +2,103 @@
 {% load static %}
 
 {% block title %}Manage Items{% endblock %}
+
 {% block content %}
-<div class="min-h-screen bg-gray-900 text-white p-8">
-    <!-- Success Messages -->
-    {% if messages %}
-    <div class="mb-8">
-        {% for message in messages %}
-        <div class="bg-green-600 text-white p-4 rounded-lg mb-4">
-            {{ message }}
+<div class="min-h-screen bg-gray-900 text-white p-4">
+    <div class="max-w-6xl mx-auto space-y-4">
+        <!-- Title with reduced margin -->
+        
+        <!-- Button Group with reduced spacing -->
+        <div class="flex flex-wrap justify-center gap-2 mb-4">
+            <button type="button" 
+                    class="manage-type-btn bg-gray-800 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-all duration-300 active shadow-md" 
+                    data-type="category">
+                Category
+            </button>
+            <button type="button" 
+                    class="manage-type-btn bg-gray-800 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-md" 
+                    data-type="item_category">
+                Item Categories
+            </button>
+            <button type="button" 
+                    class="manage-type-btn bg-gray-800 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-md" 
+                    data-type="customization">
+                Customization
+            </button>
+            <button type="button" 
+                    class="manage-type-btn bg-gray-800 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-all duration-300 shadow-md" 
+                    data-type="main_items">
+                Main Items
+            </button>
         </div>
-        {% endfor %}
-    </div>
-    {% endif %}
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <!-- Categories Section -->
-        <div class="bg-gray-800 p-6 rounded-lg">
-            <h2 class="text-xl font-bold mb-4">Add Category</h2>
-            <form method="POST" class="space-y-4">
-                {% csrf_token %}
-                <input type="hidden" name="form_type" value="category">
-                {{ category_form.as_p }}
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                    Add Category
-                </button>
-            </form>
+        <!-- Grid Layout with Scrollable Areas -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Form Section - Increased height -->
+            <div class="bg-gray-800 p-4 rounded-lg shadow-lg h-[calc(100vh-180px)]">
+                <h2 class="text-lg font-semibold mb-3">Add New Item</h2>
+                <form method="POST" enctype="multipart/form-data" class="space-y-3" id="manageForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="form_type" id="formTypeInput">
+                    
+                    <div class="overflow-y-auto h-[calc(100%-4rem)] pr-2 custom-scrollbar">
+                        <div class="space-y-3">
+                            <!-- Common fields -->
+                            <div class="field-group">
+                                <label class="block mb-1 text-sm">Name*</label>
+                                <input type="text" name="name" required class="w-full bg-gray-700 text-white rounded p-2 text-sm focus:ring-2 focus:ring-blue-400">
+                            </div>
 
-            <div class="mt-8">
-                <h3 class="text-lg font-semibold mb-4">Existing Categories</h3>
-                <div class="grid grid-cols-2 gap-4">
-                    {% for category in categories %}
-                    <div class="bg-gray-700 p-3 rounded">
-                        {{ category.name }}
+                            <!-- Dynamic fields container -->
+                            <div id="additionalFields" class="space-y-3 hidden"></div>
+
+                            <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-all text-sm">
+                                Save
+                            </button>
+                        </div>
                     </div>
-                    {% endfor %}
-                </div>
+                </form>
             </div>
-        </div>
 
-        <!-- Customization Categories Section -->
-        <div class="bg-gray-800 p-6 rounded-lg">
-            <h2 class="text-xl font-bold mb-4">Add Customization Category</h2>
-            <form method="POST" class="space-y-4">
-                {% csrf_token %}
-                <input type="hidden" name="form_type" value="customization_category">
-                {{ customization_category_form.as_p }}
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                    Add Customization Category
-                </button>
-            </form>
-
-            <div class="mt-8">
-                <h3 class="text-lg font-semibold mb-4">Existing Customization Categories</h3>
-                <div class="grid grid-cols-2 gap-4">
-                    {% for cat in customization_categories %}
-                    <div class="bg-gray-700 p-3 rounded">
-                        {{ cat.name }}
+            <!-- List Section - Match height with form -->
+            <div class="bg-gray-800 p-4 rounded-lg shadow-lg h-[calc(100vh-180px)] overflow-hidden">
+                <h2 class="text-lg font-semibold mb-3">Existing Items</h2>
+                <div class="overflow-y-auto h-[calc(100%-3rem)] pr-2 custom-scrollbar">
+                    <!-- Categories List -->
+                    <div id="categoriesList" class="hidden space-y-2">
+                        {% for category in categories %}
+                        <div class="bg-gray-700 p-2 rounded-lg flex justify-between items-center hover:bg-gray-600 transition-colors">
+                            <span class="text-sm">{{ category.name }}</span>
+                            <button class="text-red-500 hover:text-red-700 px-2">×</button>
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
 
-        <!-- Customization Options Section -->
-        <div class="bg-gray-800 p-6 rounded-lg">
-            <h2 class="text-xl font-bold mb-4">Add Customization Option</h2>
-            <form method="POST" class="space-y-4">
-                {% csrf_token %}
-                <input type="hidden" name="form_type" value="customization_option">
-                {{ customization_option_form.as_p }}
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                    Add Customization Option
-                </button>
-            </form>
-
-            <div class="mt-8">
-                <h3 class="text-lg font-semibold mb-4">Existing Customization Options</h3>
-                <div class="grid grid-cols-2 gap-4">
-                    {% for option in customization_options %}
-                    <div class="bg-gray-700 p-3 rounded">
-                        <p>{{ option.name }}</p>
-                        <p class="text-sm text-gray-400">₹{{ option.price }}</p>
-                        <p class="text-sm text-gray-400">Category: {{ option.category.name }}</p>
+                    <!-- Items List -->
+                    <div id="itemsList" class="hidden space-y-2">
+                        {% for item in items %}
+                        <div class="bg-gray-700 p-2 rounded-lg hover:bg-gray-600 transition-colors">
+                            <div class="flex justify-between items-center text-sm">
+                                <span>{{ item.name }}</span>
+                                <span class="text-blue-400">₹{{ item.price }}</span>
+                            </div>
+                            <div class="text-xs text-gray-400">{{ item.category.name }}</div>
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
 
-        <!-- Items Section -->
-        <div class="bg-gray-800 p-6 rounded-lg">
-            <h2 class="text-xl font-bold mb-4">Add Item</h2>
-            <form method="POST" enctype="multipart/form-data" class="space-y-4">
-                {% csrf_token %}
-                <input type="hidden" name="form_type" value="item">
-                {{ item_form.as_p }}
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                    Add Item
-                </button>
-            </form>
-
-            <div class="mt-8">
-                <h3 class="text-lg font-semibold mb-4">Existing Items</h3>
-                <div class="grid grid-cols-2 gap-4">
-                    {% for item in items %}
-                    <div class="bg-gray-700 p-3 rounded">
-                        <p>{{ item.name }}</p>
-                        <p class="text-sm text-gray-400">₹{{ item.price }}</p>
-                        <p class="text-sm text-gray-400">Category: {{ item.category.name }}</p>
-                        {% if item.image %}
-                        <img src="{{ item.image.url }}" alt="{{ item.name }}" class="w-20 h-20 object-cover mt-2 rounded">
-                        {% endif %}
+                    <!-- Customizations List -->
+                    <div id="customizationsList" class="hidden space-y-2">
+                        {% for option in customization_options %}
+                        <div class="bg-gray-700 p-2 rounded-lg hover:bg-gray-600 transition-colors">
+                            <div class="flex justify-between items-center text-sm">
+                                <span>{{ option.name }}</span>
+                                <span class="text-blue-400">₹{{ option.price }}</span>
+                            </div>
+                            <div class="text-xs text-gray-400">{{ option.category.name }}</div>
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -122,54 +106,211 @@
 </div>
 
 <style>
-    form p {
-        margin-bottom: 1rem;
-    }
-    
-    form label {
-        display: block;
-        margin-bottom: 0.5rem;
-        color: #e5e7eb;
-    }
-    
-    form input[type="text"],
-    form input[type="number"],
-    form select {
-        width: 100%;
-        padding: 0.5rem;
-        border-radius: 0.375rem;
-        background-color: #374151;
-        border: 1px solid #4b5563;
-        color: white;
-        margin-bottom: 1rem;
-    }
+/* Custom Scrollbar Styling */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
 
-    form input[type="file"] {
-        width: 100%;
-        padding: 0.5rem;
-        background-color: #374151;
-        border-radius: 0.375rem;
-        border: 1px solid #4b5563;
-        color: white;
-        margin-bottom: 1rem;
-    }
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #374151;
+    border-radius: 3px;
+}
 
-    form input[type="checkbox"] {
-        margin-right: 0.5rem;
-    }
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #4B5563;
+    border-radius: 3px;
+}
 
-    /* Error styling */
-    .errorlist {
-        color: #ef4444;
-        margin-bottom: 0.5rem;
-        list-style: none;
-        padding: 0;
-    }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #6B7280;
+}
 
-    /* Select multiple styling */
-    select[multiple] {
-        height: auto;
-        min-height: 100px;
-    }
+.manage-type-btn.active {
+    background-color: #2563eb;
+    transform: translateY(1px);
+}
+
+.manage-type-btn {
+    font-size: 0.875rem;
+    min-width: 100px;
+}
+
+/* Smooth Transitions */
+.field-group input, .field-group select, .field-group textarea {
+    transition: all 0.2s ease;
+}
+
+/* Form Field Styles */
+.field-group input:focus, .field-group select:focus, .field-group textarea:focus {
+    outline: none;
+    ring: 2px solid #3B82F6;
+}
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const buttons = document.querySelectorAll('.manage-type-btn');
+    const formTypeInput = document.getElementById('formTypeInput');
+    const additionalFields = document.getElementById('additionalFields');
+    const categoriesList = document.getElementById('categoriesList');
+    const itemsList = document.getElementById('itemsList');
+    const customizationsList = document.getElementById('customizationsList');
+
+    function hideAllLists() {
+        categoriesList.classList.add('hidden');
+        itemsList.classList.add('hidden');
+        customizationsList.classList.add('hidden');
+    }
+
+    // Initialize with first option selected
+    if (buttons.length > 0) {
+        buttons[0].click();
+    }
+
+    buttons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Remove active class from all buttons
+            buttons.forEach(btn => {
+                btn.classList.remove('active', 'bg-blue-600');
+                btn.classList.add('bg-gray-800');
+            });
+
+            // Add active class to clicked button
+            this.classList.remove('bg-gray-800');
+            this.classList.add('active', 'bg-blue-600');
+            
+            const type = this.getAttribute('data-type');
+            formTypeInput.value = type;
+            
+            // Update form fields and show relevant list
+            updateFormFields(type);
+            hideAllLists();
+            
+            // Show relevant list
+            switch(type) {
+                case 'category':
+                    categoriesList.classList.remove('hidden');
+                    break;
+                case 'item_category':
+                    categoriesList.classList.remove('hidden');
+                    break;
+                case 'customization':
+                    customizationsList.classList.remove('hidden');
+                    break;
+                case 'main_items':
+                    itemsList.classList.remove('hidden');
+                    break;
+            }
+        });
+    });
+
+    function updateFormFields(type) {
+        additionalFields.innerHTML = '';
+        additionalFields.classList.remove('hidden');
+
+        switch(type) {
+            case 'category':
+                additionalFields.innerHTML = `
+                    <div class="field-group">
+                        <label class="block mb-1 text-sm">Description</label>
+                        <textarea name="description" class="w-full bg-gray-700 text-white rounded p-2 text-sm h-20"></textarea>
+                    </div>
+                    <div class="field-group">
+                        <label class="block mb-1 text-sm">Sort Order</label>
+                        <input type="number" name="sort_order" class="w-full bg-gray-700 text-white rounded p-2 text-sm">
+                    </div>
+                `;
+                break;
+                
+            case 'customization':
+                additionalFields.innerHTML = `
+                    <div class="field-group">
+                        <label class="block mb-1 text-sm">Category*</label>
+                        <select name="customization_category" required class="w-full bg-gray-700 text-white rounded p-2 text-sm">
+                            <option value="">Select Category</option>
+                            {% for category in customization_categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="field-group">
+                        <label class="block mb-1 text-sm">Price*</label>
+                        <input type="number" name="price" step="0.01" required class="w-full bg-gray-700 text-white rounded p-2 text-sm">
+                    </div>
+                    <div class="field-group">
+                        <label class="block mb-1 text-sm">Sort Order</label>
+                        <input type="number" name="sort_order" class="w-full bg-gray-700 text-white rounded p-2 text-sm">
+                    </div>
+                `;
+                break;
+
+            case 'main_items':
+                additionalFields.innerHTML = `
+                    <div class="space-y-3 max-h-[calc(100vh-400px)] overflow-y-auto pr-2 custom-scrollbar">
+                        <div class="field-group">
+                            <label class="block mb-1 text-sm">Category*</label>
+                            <select name="category" required class="w-full bg-gray-700 text-white rounded p-2 text-sm">
+                                <option value="">Select Category</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label class="block mb-1 text-sm">Price*</label>
+                            <input type="number" name="price" step="0.01" required class="w-full bg-gray-700 text-white rounded p-2 text-sm">
+                        </div>
+                        <div class="field-group">
+                            <label class="block mb-1 text-sm">Short Code</label>
+                            <input type="text" name="short_code" class="w-full bg-gray-700 text-white rounded p-2 text-sm">
+                        </div>
+                        <div class="field-group">
+                            <label class="block mb-1 text-sm">Image</label>
+                            <input type="file" name="image" accept="image/*" class="w-full bg-gray-700 text-white rounded p-2 text-sm">
+                        </div>
+                        <div class="field-group border-t border-gray-700 pt-3">
+                            <label class="flex items-center space-x-2 mb-2">
+                                <input type="checkbox" name="has_customization" class="form-checkbox bg-gray-700 text-blue-600 rounded">
+                                <span class="text-sm font-medium">Enable Customization Options</span>
+                            </label>
+                        </div>
+                        <div class="field-group hidden" id="customizationOptionsContainer">
+                            <label class="block mb-2 text-sm font-medium">Available Customizations</label>
+                            <div class="bg-gray-700 rounded-lg p-3 max-h-[270px] overflow-y-auto custom-scrollbar">
+                                {% for category in customization_categories %}
+                                    <div class="mb-3">
+                                        <h4 class="text-sm font-medium text-blue-400 mb-2">{{ category.name }}</h4>
+                                        <div class="space-y-2">
+                                            {% for option in category.options.all %}
+                                                <label class="flex items-center justify-between p-2 bg-gray-600 rounded hover:bg-gray-500 transition-colors cursor-pointer">
+                                                    <div class="flex items-center">
+                                                        <input type="checkbox" 
+                                                               name="customization_options" 
+                                                               value="{{ option.id }}" 
+                                                               class="form-checkbox bg-gray-700 text-blue-600 rounded mr-2">
+                                                        <span class="text-sm">{{ option.name }}</span>
+                                                    </div>
+                                                    <span class="text-sm text-blue-400">₹{{ option.price }}</span>
+                                                </label>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Add event listener for has_customization checkbox
+                const hasCustomizationCheckbox = additionalFields.querySelector('input[name="has_customization"]');
+                const customizationOptionsContainer = additionalFields.querySelector('#customizationOptionsContainer');
+                
+                hasCustomizationCheckbox.addEventListener('change', function() {
+                    customizationOptionsContainer.classList.toggle('hidden', !this.checked);
+                });
+                break;
+        }
+    }
+});
+</script>
 {% endblock %}
