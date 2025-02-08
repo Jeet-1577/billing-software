@@ -41,6 +41,7 @@ urlpatterns = [
     path('clear-all-orders/', views.clear_all_orders, name='clear_all_orders'),
     path('complete-order/', views.complete_order, name='complete_order'),
     path('release-table-order/', views.release_table_order, name='release_table_order'),
+    path('manage-items/', views.manage_items, name='manage_items'),
 ]
 
 urlpatterns += [
