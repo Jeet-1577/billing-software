@@ -67,7 +67,10 @@
                     <!-- Categories List -->
                     <div id="categoriesList" class="hidden space-y-2">
                         {% for category in categories %}
-                        <div class="bg-gray-700 p-2 rounded-lg flex justify-between items-center hover:bg-gray-600 transition-colors">
+                        <div class="bg-gray-700 p-2 rounded-lg flex justify-between items-center hover:bg-gray-600 transition-colors"
+                             data-id="{{ category.id }}"
+                             data-name="{{ category.name }}"
+                             data-type="category">
                             <span class="text-sm">{{ category.name }}</span>
                             <button class="text-red-500 hover:text-red-700 px-2">×</button>
                         </div>
@@ -77,7 +80,14 @@
                     <!-- Items List -->
                     <div id="itemsList" class="hidden space-y-2">
                         {% for item in items %}
-                        <div class="bg-gray-700 p-2 rounded-lg hover:bg-gray-600 transition-colors">
+                        <div class="bg-gray-700 p-2 rounded-lg hover:bg-gray-600 transition-colors"
+                             data-id="{{ item.id }}"
+                             data-name="{{ item.name }}"
+                             data-price="{{ item.price }}"
+                             data-category-id="{{ item.category.id }}"
+                             data-short-code="{{ item.short_code|default:'' }}"
+                             data-image="{% if item.image %}{{ item.image.url }}{% endif %}"
+                             data-type="main_items">
                             <div class="flex justify-between items-center text-sm">
                                 <span>{{ item.name }}</span>
                                 <span class="text-blue-400">₹{{ item.price }}</span>
@@ -90,7 +100,12 @@
                     <!-- Customizations List -->
                     <div id="customizationsList" class="hidden space-y-2">
                         {% for option in customization_options %}
-                        <div class="bg-gray-700 p-2 rounded-lg hover:bg-gray-600 transition-colors">
+                        <div class="bg-gray-700 p-2 rounded-lg hover:bg-gray-600 transition-colors"
+                             data-id="{{ option.id }}"
+                             data-name="{{ option.name }}"
+                             data-price="{{ option.price }}"
+                             data-category-id="{{ option.category.id }}"
+                             data-type="customization">
                             <div class="flex justify-between items-center text-sm">
                                 <span>{{ option.name }}</span>
                                 <span class="text-blue-400">₹{{ option.price }}</span>
@@ -101,6 +116,105 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Updated Item Edit Modal -->
+<div id="itemEditModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen pt-16">
+        <div class="bg-gray-800 rounded-lg p-4 w-full max-w-xl mx-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-xl font-semibold">Edit Item</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <form id="editItemForm" class="space-y-4 -mt-2">
+                <input type="hidden" id="editItemId" name="id">
+                <input type="hidden" id="editFormType" name="form_type">
+                
+                <div class="space-y-4 max-h-[calc(100vh-250px)] overflow-y-auto custom-scrollbar pr-2 pl-2 -mt-2">
+                    <!-- Base fields -->
+                    <div class="field-group">
+                        <label class="block mb-1 text-sm">Name*</label>
+                        <input type="text" id="editName" name="name" required class="w-full bg-gray-700 text-white rounded p-2 text-sm">
+                    </div>
+                    
+                    <!-- Dynamic fields will be inserted here -->
+                    <div id="editAdditionalFields">
+                        <!-- Example dynamic fields -->
+                        <div class="field-group">
+                            <label class="block mb-1 text-sm">Price*</label>
+                            <input type="number" name="price" value="25.00" step="0.01" required class="w-full bg-gray-700 text-white rounded p-2 text-sm">
+                        </div>
+                        <div class="field-group">
+                            <label class="block mb-1 text-sm">Category*</label>
+                            <select name="category" required class="w-full bg-gray-700 text-white rounded p-2 text-sm">
+                                <option value="1" selected>dcs</option>
+                                <option value="2">pizza</option>
+                                <!-- ...other options... -->
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label class="block mb-1 text-sm">Short Code</label>
+                            <input type="text" name="short_code" value="" class="w-full bg-gray-700 text-white rounded p-2 text-sm">
+                        </div>
+                        <div class="field-group">
+                            <label class="block mb-1 text-sm">Current Image</label>
+                            <img src="/items/bur2_Y7hhvSJ.jpg" class="h-20 w-20 object-cover rounded mb-2">
+                            <input type="file" name="image" accept="image/*" class="w-full bg-gray-700 text-white rounded p-2 text-sm">
+                        </div>
+                        <div class="field-group border-t border-gray-700 pt-3">
+                            <label class="flex items-center space-x-2 mb-2">
+                                <input type="checkbox" name="has_customization" class="form-checkbox bg-gray-700 text-blue-600 rounded">
+                                <span class="text-sm font-medium">Enable Customization Options</span>
+                            </label>
+                        </div>
+                        <div class="field-group" id="editCustomizationOptionsContainer">
+                            <label class="block text-sm font-medium">Available Customizations</label>
+                            <div class="bg-gray-700 rounded-lg p-3 max-h-[300px] overflow-y-auto custom-scrollbar">
+                                <!-- Example customization options -->
+                                <div class="mb-3">
+                                    <h4 class="text-sm font-medium text-blue-400 mb-2">dscs</h4>
+                                    <div class="space-y-2">
+                                        <label class="flex items-center justify-between p-2 bg-gray-600 rounded hover:bg-gray-500 transition-colors cursor-pointer">
+                                            <div class="flex items-center">
+                                                <input type="checkbox" name="customization_options" value="1" class="form-checkbox bg-gray-700 text-blue-600 rounded mr-2" data-option-id="1">
+                                                <span class="text-sm">sdcs</span>
+                                            </div>
+                                            <span class="text-sm text-blue-400">₹20.00</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <!-- ...other customization options... -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between gap-4 mt-6 pt-4 border-t border-gray-700">
+                    <button type="button" 
+                            onclick="deleteItem()" 
+                            class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors w-1/3">
+                        Delete
+                    </button>
+                    <div class="flex gap-2 w-2/3">
+                        <button type="button" 
+                                onclick="closeModal()" 
+                                class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition-colors flex-1">
+                            Cancel
+                        </button>
+                        <button type="submit" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex-1">
+                            Update
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -144,6 +258,39 @@
 .field-group input:focus, .field-group select:focus, .field-group textarea:focus {
     outline: none;
     ring: 2px solid #3B82F6;
+}
+
+/* Add these new styles */
+#itemEditModal .bg-gray-800 {
+    max-height: 84.83vh;  /* Increased from 80vh to 90vh */
+    display: flex;
+    flex-direction: column;
+}
+
+#editItemForm {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+#editItemForm .space-y-4 {
+    flex: 1;
+    overflow-y: auto;
+}
+
+#editCustomizationOptionsContainer .bg-gray-700 {
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+/* Remove these conflicting styles */
+#itemEditModal {
+    overflow-y: hidden;
+}
+
+#itemEditModal .space-y-4 {
+    max-height: none;
 }
 </style>
 
@@ -311,6 +458,245 @@ document.addEventListener('DOMContentLoaded', function() {
                 break;
         }
     }
+
+    // Add this code after the updateFormFields function
+    const form = document.getElementById('manageForm');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+
+        fetch('/manage-items/', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert(data.message);
+                location.reload(); // Reload to show new item
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving.');
+        });
+    });
+
+    // Add click handlers to list items
+    document.querySelectorAll('#categoriesList > div, #itemsList > div, #customizationsList > div').forEach(item => {
+        item.addEventListener('click', function() {
+            const itemData = this.dataset;
+            openEditModal(itemData);
+        });
+    });
+});
+
+function openEditModal(itemData) {
+    const modal = document.getElementById('itemEditModal');
+    const form = document.getElementById('editItemForm');
+    const formType = document.getElementById('formTypeInput').value;
+    
+    // Set form type and item ID
+    document.getElementById('editFormType').value = formType;
+    document.getElementById('editItemId').value = itemData.id;
+    document.getElementById('editName').value = itemData.name;
+    
+    // Populate additional fields based on type
+    const additionalFields = document.getElementById('editAdditionalFields');
+    populateEditFields(formType, itemData);
+    
+    modal.classList.remove('hidden');
+}
+
+function populateEditFields(type, data) {
+    const container = document.getElementById('editAdditionalFields');
+    
+    switch(type) {
+        case 'category':
+            container.innerHTML = `
+                <div class="field-group">
+                    <label class="block mb-1 text-sm">Description</label>
+                    <textarea name="description" class="w-full bg-gray-700 text-white rounded p-2 text-sm h-20">${data.description || ''}</textarea>
+                </div>
+            `;
+            break;
+            
+        case 'customization':
+            container.innerHTML = `
+                <div class="field-group">
+                    <label class="block mb-1 text-sm">Price*</label>
+                    <input type="number" name="price" value="${data.price}" step="0.01" required class="w-full bg-gray-700 text-white rounded p-2 text-sm">
+                </div>
+                <div class="field-group">
+                    <label class="block mb-1 text-sm">Category*</label>
+                    <select name="category" required class="w-full bg-gray-700 text-white rounded p-2 text-sm">
+                        ${generateCategoryOptions(data.categoryId)}
+                    </select>
+                </div>
+            `;
+            break;
+            
+        case 'main_items':
+            container.innerHTML = `
+                <div class="field-group">
+                    <label class="block mb-1 text-sm">Price*</label>
+                    <input type="number" name="price" value="${data.price}" step="0.01" required class="w-full bg-gray-700 text-white rounded p-2 text-sm">
+                </div>
+                <div class="field-group">
+                    <label class="block mb-1 text-sm">Category*</label>
+                    <select name="category" required class="w-full bg-gray-700 text-white rounded p-2 text-sm">
+                        ${generateCategoryOptions(data.categoryId)}
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label class="block mb-1 text-sm">Short Code</label>
+                    <input type="text" name="short_code" value="${data.shortCode || ''}" class="w-full bg-gray-700 text-white rounded p-2 text-sm">
+                </div>
+                <div class="field-group">
+                    <label class="block mb-1 text-sm">Current Image</label>
+                    ${data.image ? `<img src="${data.image}" class="h-20 w-20 object-cover rounded mb-2">` : '<p class="text-sm text-gray-400">No image</p>'}
+                    <input type="file" name="image" accept="image/*" class="w-full bg-gray-700 text-white rounded p-2 text-sm">
+                </div>
+                <div class="field-group border-t border-gray-700 pt-3">
+                    <label class="flex items-center space-x-2 mb-2">
+                        <input type="checkbox" name="has_customization" class="form-checkbox bg-gray-700 text-blue-600 rounded"
+                               ${data.hasCustomization ? 'checked' : ''}>
+                        <span class="text-sm font-medium">Enable Customization Options</span>
+                    </label>
+                </div>
+                <div class="field-group ${!data.hasCustomization ? 'hidden' : ''}" id="editCustomizationOptionsContainer">
+                    <label class="block mb-2 text-sm font-medium">Available Customizations</label>
+                    <div class="bg-gray-700 rounded-lg p-3 max-h-[200px] overflow-y-auto custom-scrollbar">
+                        {% for category in customization_categories %}
+                            <div class="mb-3">
+                                <h4 class="text-sm font-medium text-blue-400 mb-2">{{ category.name }}</h4>
+                                <div class="space-y-2">
+                                    {% for option in category.options.all %}
+                                        <label class="flex items-center justify-between p-2 bg-gray-600 rounded hover:bg-gray-500 transition-colors cursor-pointer">
+                                            <div class="flex items-center">
+                                                <input type="checkbox" 
+                                                       name="customization_options" 
+                                                       value="{{ option.id }}" 
+                                                       class="form-checkbox bg-gray-700 text-blue-600 rounded mr-2"
+                                                       data-option-id="{{ option.id }}">
+                                                <span class="text-sm">{{ option.name }}</span>
+                                            </div>
+                                            <span class="text-sm text-blue-400">₹{{ option.price }}</span>
+                                        </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            `;
+
+            // Add event listener for has_customization checkbox
+            const hasCustomizationCheckbox = container.querySelector('input[name="has_customization"]');
+            const customizationOptionsContainer = container.querySelector('#editCustomizationOptionsContainer');
+            
+            hasCustomizationCheckbox.addEventListener('change', function() {
+                customizationOptionsContainer.classList.toggle('hidden', !this.checked);
+            });
+
+            // Check previously selected options if any
+            if (data.customizationOptions) {
+                const selectedOptions = data.customizationOptions.split(',').map(id => parseInt(id));
+                container.querySelectorAll('input[name="customization_options"]').forEach(checkbox => {
+                    const optionId = parseInt(checkbox.dataset.optionId);
+                    checkbox.checked = selectedOptions.includes(optionId);
+                });
+            }
+            break;
+    }
+}
+
+function closeModal() {
+    const modal = document.getElementById('itemEditModal');
+    modal.classList.add('hidden');
+}
+
+function deleteItem() {
+    if (confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
+        const itemId = document.getElementById('editItemId').value;
+        const formType = document.getElementById('editFormType').value;
+        
+        fetch(`/manage-items/delete/${formType}/${itemId}/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while deleting the item.');
+        });
+    }
+}
+
+// Add form submit handler
+document.getElementById('editItemForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    
+    fetch('/manage-items/update/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while updating the item.');
+    });
+});
+
+function generateCategoryOptions(selectedId) {
+    const categoriesData = JSON.parse('{{ categories_json|safe }}');
+    return categoriesData.map(cat => 
+        `<option value="${cat.id}" ${cat.id == selectedId ? 'selected' : ''}>${cat.name}</option>`
+    ).join('');
+}
+
+function generateCustomizationCategoryOptions(selectedId) {
+    const categoriesData = JSON.parse('{{ customization_categories_json|safe }}');
+    return categoriesData.map(cat => 
+        `<option value="${cat.id}" ${cat.id == selectedId ? 'selected' : ''}>${cat.name}</option>`
+    ).join('');
+}
+
+// Update the click handler to use data attributes
+document.querySelectorAll('#categoriesList > div, #itemsList > div, #customizationsList > div').forEach(item => {
+    item.addEventListener('click', function() {
+        const itemData = {
+            id: this.dataset.id,
+            name: this.dataset.name,
+            type: this.dataset.type,
+            price: this.dataset.price,
+            categoryId: this.dataset.categoryId,
+            shortCode: this.dataset.shortCode,
+            image: this.dataset.image,
+            hasCustomization: this.dataset.hasCustomization === 'true',
+            customizationOptions: this.dataset.customizationOptions
+        };
+        openEditModal(itemData);
+    });
 });
 </script>
 {% endblock %}

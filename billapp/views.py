@@ -934,11 +934,144 @@ def release_table_order(request):
             return JsonResponse({'status': 'failed', 'error': str(e)}, status=500)
     return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
 
+@csrf_exempt
 def manage_items(request):
+    if request.method == 'POST':
+        form_type = request.POST.get('form_type')
+        name = request.POST.get('name')
+
+        if not form_type or not name:
+            messages.error(request, 'Form type and name are required')
+            return JsonResponse({'status': 'error', 'message': 'Form type and name are required'})
+
+        try:
+            if form_type == 'category':
+                # Create a new category
+                category = Category.objects.create(
+                    name=name,
+                )
+                messages.success(request, 'Category added successfully!')
+                return JsonResponse({'status': 'success', 'message': 'Category added successfully'})
+
+            elif form_type == 'customization':
+                # Create a new customization option
+                category_id = request.POST.get('customization_category')
+                price = request.POST.get('price')
+                if not category_id or not price:
+                    return JsonResponse({'status': 'error', 'message': 'Category and price are required for customization'})
+
+                category = CustomizationCategory.objects.get(id=category_id)
+                CustomizationOption.objects.create(
+                    name=name,
+                    price=price,
+                    category=category
+                )
+                messages.success(request, 'Customization option added successfully!')
+                return JsonResponse({'status': 'success', 'message': 'Customization added successfully'})
+
+            elif form_type == 'main_items':
+                # Create a new menu item
+                category_id = request.POST.get('category')
+                price = request.POST.get('price')
+                short_code = request.POST.get('short_code')
+                has_customization = request.POST.get('has_customization') == 'on'
+                image = request.FILES.get('image')
+
+                if not category_id or not price:
+                    return JsonResponse({'status': 'error', 'message': 'Category and price are required for items'})
+
+                category = Category.objects.get(id=category_id)
+                item = Item.objects.create(
+                    name=name,
+                    category=category,
+                    price=price,
+                    short_code=short_code,
+                    has_customization=has_customization,
+                    image=image
+                )
+
+                # Handle customization options if enabled
+                if has_customization:
+                    customization_options = request.POST.getlist('customization_options')
+                    if customization_options:
+                        item.customization_options.set(customization_options)
+
+                messages.success(request, 'Item added successfully!')
+                return JsonResponse({'status': 'success', 'message': 'Item added successfully'})
+
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+            return JsonResponse({'status': 'error', 'message': str(e)})
+
+    # Prepare categories data for JavaScript
+    categories_data = list(Category.objects.values('id', 'name'))
+    customization_categories_data = list(CustomizationCategory.objects.values('id', 'name'))
+    
     context = {
         'categories': Category.objects.all(),
-        'items': Item.objects.all(),
-        'customization_options': CustomizationOption.objects.all(),
+        'items': Item.objects.all().select_related('category'),
+        'customization_options': CustomizationOption.objects.all().select_related('category'),
         'customization_categories': CustomizationCategory.objects.all(),
+        # Add serialized data for JavaScript
+        'categories_json': json.dumps(categories_data),
+        'customization_categories_json': json.dumps(customization_categories_data),
     }
     return render(request, 'manage_items.html', context)
+
+@csrf_exempt
+def update_item(request):
+    if not request.method == 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+        
+    try:
+        form_type = request.POST.get('form_type')
+        item_id = request.POST.get('id')
+        name = request.POST.get('name')
+        
+        if form_type == 'category':
+            category = get_object_or_404(Category, id=item_id)
+            category.name = name
+            category.description = request.POST.get('description', '')
+            category.save()
+            
+        elif form_type == 'customization':
+            option = get_object_or_404(CustomizationOption, id=item_id)
+            option.name = name
+            option.price = request.POST.get('price')
+            option.category_id = request.POST.get('category')
+            option.save()
+            
+        elif form_type == 'main_items':
+            item = get_object_or_404(Item, id=item_id)
+            item.name = name
+            item.price = request.POST.get('price')
+            item.category_id = request.POST.get('category')
+            item.short_code = request.POST.get('short_code')
+            
+            if 'image' in request.FILES:
+                item.image = request.FILES['image']
+            
+            item.save()
+        
+        return JsonResponse({'status': 'success', 'message': 'Item updated successfully'})
+        
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
+
+@csrf_exempt
+def delete_item(request, form_type, item_id):
+    if not request.method == 'DELETE':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+        
+    try:
+        if form_type == 'category':
+            Category.objects.filter(id=item_id).delete()
+        elif form_type == 'customization':
+            CustomizationOption.objects.filter(id=item_id).delete()
+        elif form_type == 'main_items':
+            Item.objects.filter(id=item_id).delete()
+            
+        return JsonResponse({'status': 'success', 'message': 'Item deleted successfully'})
+        
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
