@@ -11,11 +11,18 @@
     <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon"> <!-- Add this line -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{% static 'js/script.js' %}" defer></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/@heroicons/v2/outline/24/outline.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         html, body {
             overflow: hidden; /* Prevent scrolling on the entire page */
             height: 100%; /* Ensure the body takes full height */
-            font-family: 'Inter', sans-serif; /* Use Inter font for a professional look */
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         .sidebar {
             width: 16rem; /* Sidebar full width */
@@ -24,12 +31,44 @@
             top: 4rem; /* Align with navbar */
             height: calc(100vh - 4rem); /* Adjust height to fit below navbar */
             z-index: 20; /* Ensure sidebar is above the category section */
+            overflow: hidden; /* Change from auto to hidden */
+            background: linear-gradient(180deg, #1F2937 0%, #111827 100%);
+            border-right: 1px solid rgba(255,255,255,0.1);
         }
         .sidebar-closed {
             transform: translateX(-100%); /* Fully close the sidebar */
         }
         .sidebar-open {
             transform: translateX(0); /* Open the sidebar fully */
+        }
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: #1F2937;
+            border-radius: 3px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #4B5563;
+            border-radius: 3px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: #6B7280;
+        }
+        .nav-menu {
+            height: calc(100vh - 8rem); /* Adjust height to account for header */
+            overflow-y: scroll;
+            padding-right: 16px; /* Add extra padding to compensate for hidden scrollbar */
+            margin-right: -10px; /* Pull content back to hide scrollbar */
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE/Edge */
+            padding: 0.5rem;
+        }
+        .nav-menu::-webkit-scrollbar {
+            display: none;
         }
         #mainContent {
             margin-top: 0rem; /* Adjust based on navbar height */
@@ -54,7 +93,8 @@
         }
         .navbar .logo {
             font-size: 1.5rem;
-            font-weight: bold;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
         }
         .navbar .menu-toggle {
             display: flex;
@@ -204,6 +244,176 @@
             border: 2px solid green;
             box-shadow: 0 0 10px green, 0 0 20px green;
         }
+
+        /* Enhanced Sidebar Styles */
+        .nav-item {
+            margin-bottom: 0.3rem; /* reduce spacing between items */
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            color: #9CA3AF;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            font-family: 'Inter', sans-serif;
+            font-weight: 400;
+        }
+
+        .nav-link:hover {
+            background: rgba(55, 65, 81, 0.7);
+            color: white;
+            transform: translateX(4px);
+        }
+
+        .nav-link.active {
+            background: #3B82F6;
+            color: white;
+        }
+
+        .nav-link svg {
+            width: 1.25rem;
+            height: 1.25rem;
+            margin-right: 0.75rem;
+        }
+
+        .nav-section {
+            margin-bottom: 1rem; /* reduce from 1.5rem to 1rem */
+        }
+
+        .nav-section-title {
+            font-size: 0.75rem;
+            font-weight: 300; /* lightened from 500 */
+            text-transform: uppercase;
+            color: #6B7280;
+            padding: 0.5rem 1rem;
+            margin-bottom: 0.5rem;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Dropdown animation */
+        .dropdown-content {
+            transform-origin: top;
+            transition: all 0.2s ease-out;
+        }
+
+        .dropdown-enter {
+            opacity: 0;
+            transform: scaleY(0.95);
+        }
+
+        .dropdown-enter-active {
+            opacity: 1;
+            transform: scaleY(1);
+        }
+
+        /* Improved Sidebar Font Styles */
+        .nav-link {
+            color: #E5E7EB; /* Lighter, easier-to-read color */
+            font-weight: 500;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        .nav-link:hover {
+            color: #fff;
+        }
+        .nav-section-title {
+            color: #D1D5DB; /* Lighter gray for better contrast */
+            font-size: 0.85rem;
+        }
+        .sidebar h2 {
+            color: #E5E7EB;
+            font-size: 1.5rem;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        /* Professional Sidebar Styling */
+        .sidebar {
+            background: linear-gradient(135deg, #1a1f37, #111827);
+            box-shadow: 4px 0 15px rgba(0, 0, 0, 0.3);
+            border-right: 1px solid rgba(255, 255, 255, 0.07);
+        }
+
+        .nav-section-title {
+            font-size: 0.7rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            color: #64748b;
+            text-transform: uppercase;
+            padding: 1.25rem 1rem 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .nav-link {
+            color: #e2e8f0;
+            font-size: 0.9rem;
+            padding: 0.6rem 0.75rem;
+            margin: 0.2rem 0.5rem;
+            border-radius: 0.375rem;
+            background: transparent;
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            transform: translateX(3px);
+        }
+
+        .nav-link.active {
+            background: #3b82f6;
+            color: white;
+            font-weight: 500;
+        }
+
+        .nav-link svg {
+            width: 1.1rem;
+            height: 1.1rem;
+            opacity: 0.9;
+            margin-right: 0.75rem;
+        }
+
+        .nav-section {
+            position: relative;
+            padding-bottom: 0.75rem;
+        }
+
+        .nav-section::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 1rem;
+            right: 1rem;
+            height: 1px;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
+        }
+
+        /* Updated spacing between labels and options */
+        .nav-section-title {
+            padding: 0.5rem 1rem 0.25rem; /* Reduced bottom padding */
+            margin-bottom: 0.1rem; /* Reduced margin */
+        }
+
+        .nav-link {
+            padding: 0.5rem 0.75rem; /* Slightly reduced padding */
+            margin: 0.1rem 0.5rem; /* Reduced vertical margin */
+        }
+
+        .nav-section {
+            padding-bottom: 0.5rem; /* Reduced section padding */
+            margin-bottom: 0.5rem; /* Reduced margin between sections */
+        }
+
+        /* Adjust spacing for dropdown items */
+        .dropdown-content {
+            margin-top: 0.1rem; /* Reduced top margin */
+        }
+        .dropdown-content .nav-link {
+            padding: 0.4rem 0.75rem; /* Slightly smaller padding for dropdown items */
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-white">
@@ -232,39 +442,92 @@
     <div class="content-wrapper">
         <!-- Sidebar -->
         <div id="sidebar" class="sidebar bg-gray-800 p-4 fixed shadow-lg sidebar-closed">
-            <div class="flex justify-between items-center mb-4">
+            <div class="flex justify-between items-center">
                 <h2 class="text-2xl font-bold">Dashboard</h2>
             </div>
-            <ul>
-                <li class="mb-2"><a href="/" class="block py-2 px-4 rounded hover:bg-gray-700">Home</a></li>
-                <li class="mb-2"><a href="{% url 'profile' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Profile</a></li>
-                <li class="mb-2"><a href="{% url 'settings' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Settings</a></li>
-                <li class="mb-2"><a href="{% url 'inventory' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Inventory</a></li>
-                <li class="mb-2"><a href="{% url 'manage_items' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Manage Items</a></li>
-                <li class="mb-2"><a href="{% url 'order_data' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Order Data</a></li>
-                <li class="mb-2"><a href="{% url 'about_us' %}" class="block py-2 px-4 rounded hover:bg-gray-700">About Us</a></li>
-                <li class="mb-2"><a href="{% url 'contact_us' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Contact Us</a></li>
-                <li class="mb-2"><a href="{% url 'Privacy_Policy' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Privacy Policy</a></li>
-                <li class="mb-2"><a href="{% url 'Terms_Conditions' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Terms & Conditions</a></li>
-                <li class="mb-2"><a href="{% url 'Refund' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Cancellation/Refund Policies</a></li>
-                <li class="mb-2">
-                    <div x-data="{ open: false }" class="relative">
-                        <button @click="open = !open" class="flex items-center w-full px-4 py-2 text-left hover:bg-gray-700 rounded">
-                            <span>Reports</span>
-                            <svg class="w-4 h-4 ml-2" :class="{'rotate-180': open}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            
+            <nav class="nav-menu">
+                <div class="nav-section">
+                    <h3 class="nav-section-title">Main Menu</h3>
+                    <ul>
+                        <li class="nav-item">
+                            <a href="/" class="nav-link">
+                                <svg class="heroicon"><use href="#home"/></svg>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'inventory' %}" class="nav-link">
+                                <svg class="heroicon"><use href="#cube"/></svg>
+                                <span>Inventory</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'manage_items' %}" class="nav-link">
+                                <svg class="heroicon"><use href="#cog-6-tooth"/></svg>
+                                <span>Manage Items</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="nav-section">
+                    <h3 class="nav-section-title">Analytics</h3>
+                    <div x-data="{ isOpen: false }" class="nav-item">
+                        <button @click="isOpen = !isOpen" 
+                                class="nav-link w-full flex justify-between items-center">
+                            <div class="flex items-center">
+                                <svg class="heroicon"><use href="#chart-bar"/></svg>
+                                <span>Reports</span>
+                            </div>
+                            <svg class="w-4 h-4 transition-transform duration-200" 
+                                :class="{'rotate-180': isOpen}"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                             </svg>
                         </button>
-                        <div x-show="open" @click.away="open = false" class="pl-4 mt-2 space-y-2">
-                            <a href="{% url 'sales_dashboard' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Sales Dashboard</a>
-                            <a href="{% url 'item_analytics' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Item Analytics</a>
-                            <a href="{% url 'customer_insights' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Customer Insights</a>
-                            <a href="{% url 'financial_reports' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Financial Reports</a>
+                        
+                        <div x-show="isOpen" 
+                            x-transition
+                            class="pl-8 mt-2 space-y-2 dropdown-content">
+                            <a href="{% url 'sales_dashboard' %}" class="nav-link">Sales Dashboard</a>
+                            <a href="{% url 'item_analytics' %}" class="nav-link">Item Analytics</a>
+                            <a href="{% url 'customer_insights' %}" class="nav-link">Customer Insights</a>
+                            <a href="{% url 'financial_reports' %}" class="nav-link">Financial Reports</a>
                         </div>
                     </div>
-                </li>
-            </ul>
-            
+                </div>
+
+                <div class="nav-section">
+                    <h3 class="nav-section-title">Account</h3>
+                    <ul>
+                        <li class="nav-item">
+                            <a href="{% url 'profile' %}" class="nav-link">
+                                <svg class="heroicon"><use href="#user-circle"/></svg>
+                                <span>Profile</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'settings' %}" class="nav-link">
+                                <svg class="heroicon"><use href="#cog"/></svg>
+                                <span>Settings</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="nav-section">
+                    <h3 class="nav-section-title">Help & Support</h3>
+                    <ul>
+                        <li class="nav-item"><a href="{% url 'order_data' %}" class="nav-link"><svg class="heroicon"><use href="#question-mark-circle"/></svg>Order Data</a></li>
+                        <li class="nav-item"><a href="{% url 'about_us' %}" class="nav-link"><svg class="heroicon"><use href="#information-circle"/></svg>About Us</a></li>
+                        <li class="nav-item"><a href="{% url 'contact_us' %}" class="nav-link"><svg class="heroicon"><use href="#phone"/></svg>Contact Us</a></li>
+                        <li class="nav-item"><a href="{% url 'Privacy_Policy' %}" class="nav-link"><svg class="heroicon"><use href="#shield-check"/></svg>Privacy Policy</a></li>
+                        <li class="nav-item"><a href="{% url 'Terms_Conditions' %}" class="nav-link"><svg class="heroicon"><use href="#document-text"/></svg>Terms & Conditions</a></li>
+                        <li class="nav-item"><a href="{% url 'Refund' %}" class="nav-link"><svg class="heroicon"><use href="#currency-dollar"/></svg>Cancellation/Refund Policies</a></li>
+                    </ul>
+                </div>
+            </nav>
         </div>
 
         <!-- Main Content -->
@@ -555,6 +818,30 @@
                 alert('An error occurred while saving the order.');
             });
         }
+
+        function closeOtherDropdowns(event) {
+            // Get all dropdown buttons except the clicked one
+            const dropdowns = document.querySelectorAll('.nav-menu button[x-data]');
+            dropdowns.forEach(dropdown => {
+                if (dropdown !== event.currentTarget) {
+                    // Access the Alpine.js data and close the dropdown
+                    const alpineComponent = Alpine.$data(dropdown);
+                    if (alpineComponent) {
+                        alpineComponent.open = false;
+                    }
+                }
+            });
+        }
+
+        // Make sure Alpine.js is initialized
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('sidebarNav', () => ({
+                activeDropdown: null,
+                toggleDropdown(name) {
+                    this.activeDropdown = this.activeDropdown === name ? null : name;
+                }
+            }));
+        });
     </script>
 <script src="http://localhost:8000/__reload__/reload.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- Updated jQuery CDN -->
