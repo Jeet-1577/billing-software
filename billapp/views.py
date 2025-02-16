@@ -1258,8 +1258,8 @@ def financial_reports(request):
 
         # Performance analysis
         daily_performance = period_orders.annotate(
-            date=TruncDate('created_at')
-        ).values('date').annotate(
+            order_date=TruncDate('created_at')  # Changed from 'date' to 'order_date'
+        ).values('order_date').annotate(
             revenue=Sum('grand_total'),
             orders=Count('id')
         ).order_by('-revenue')
@@ -1281,12 +1281,12 @@ def financial_reports(request):
         for hour in peak_hours:
             hour['performance'] = min((hour['orders'] / max_orders_per_hour) * 100, 100)
 
-        # Daily revenue data for chart
+        # Update the daily revenue data calculation
         daily_revenue = period_orders.annotate(
-            day=TruncDate('date')
-        ).values('day').annotate(
+            order_day=TruncDate('date')  # Changed from 'day' to 'order_day'
+        ).values('order_day').annotate(
             total=Sum('grand_total')
-        ).order_by('day')
+        ).order_by('order_day')
 
         # Target calculations (example targets)
         monthly_revenue_target = 100000
@@ -1298,6 +1298,7 @@ def financial_reports(request):
         cgst_amount = total_gst / 2
         sgst_amount = total_gst / 2
 
+        # Update the context to use the new field names
         context = {
             'total_revenue': total_revenue,
             'total_gst': total_gst,
@@ -1310,10 +1311,18 @@ def financial_reports(request):
             'avg_order_growth': avg_order_growth,
             'target_progress': target_progress,
             'order_target_progress': order_target_progress,
-            'top_days': top_days,
-            'bottom_days': bottom_days,
+            'top_days': [{
+                'date': day['order_date'],
+                'revenue': day['revenue'],
+                'orders': day['orders']
+            } for day in top_days],
+            'bottom_days': [{
+                'date': day['order_date'],
+                'revenue': day['revenue'],
+                'orders': day['orders']
+            } for day in bottom_days],
             'peak_hours': peak_hours,
-            'daily_revenue_dates': json.dumps([item['day'].strftime('%Y-%m-%d') for item in daily_revenue]),
+            'daily_revenue_dates': json.dumps([item['order_day'].strftime('%Y-%m-%d') for item in daily_revenue]),
             'daily_revenue_data': json.dumps([float(item['total']) for item in daily_revenue]),
             'selected_period': period,
         }
