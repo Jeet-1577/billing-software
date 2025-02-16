@@ -12,16 +12,51 @@
             <span class="bg-green-500 text-white px-2 py-1 rounded text-sm">Live</span>
         </div>
         <div class="flex items-center space-x-4">
-            <select class="bg-gray-700 text-white rounded-md px-3 py-2 text-sm">
-                <option>All Outlets</option>
-                <option>Outlet 1</option>
-                <option>Outlet 2</option>
-            </select>
-            <div class="flex bg-gray-700 rounded-md p-1">
-                <button class="px-3 py-1 text-sm rounded-md bg-blue-500 text-white">Day</button>
-                <button class="px-3 py-1 text-sm text-gray-300">Week</button>
-                <button class="px-3 py-1 text-sm text-gray-300">Month</button>
-                <button class="px-3 py-1 text-sm text-gray-300">Year</button>
+            <!-- Custom styled radio buttons -->
+            <div class="flex items-center space-x-2 bg-gray-700 rounded-lg px-4 py-2">
+                <div class="flex space-x-4">
+                    <label class="period-option">
+                        <input type="radio" name="date-shortcut" value="day" class="hidden date-shortcut">
+                        <div class="period-btn px-4 py-1.5 rounded-md text-sm cursor-pointer transition-all">
+                            Day
+                        </div>
+                    </label>
+                    <label class="period-option">
+                        <input type="radio" name="date-shortcut" value="week" class="hidden date-shortcut">
+                        <div class="period-btn px-4 py-1.5 rounded-md text-sm cursor-pointer transition-all">
+                            Week
+                        </div>
+                    </label>
+                    <label class="period-option">
+                        <input type="radio" name="date-shortcut" value="month" class="hidden date-shortcut" checked>
+                        <div class="period-btn px-4 py-1.5 rounded-md text-sm cursor-pointer transition-all active">
+                            Month
+                        </div>
+                    </label>
+                    <label class="period-option">
+                        <input type="radio" name="date-shortcut" value="year" class="hidden date-shortcut">
+                        <div class="period-btn px-4 py-1.5 rounded-md text-sm cursor-pointer transition-all">
+                            Year
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <!-- Existing date picker -->
+            <div class="bg-gray-700 rounded-lg px-4 py-2 flex items-center space-x-4" id="timepicker">
+                <div class="flex items-center">
+                    <input type="date" 
+                           id="start-date" 
+                           class="bg-gray-800 text-white px-3 py-1 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           value="{{ start_date|date:'Y-m-d' }}">
+                    <span class="text-gray-400 mx-2">to</span>
+                    <input type="date" 
+                           id="end-date" 
+                           class="bg-gray-800 text-white px-3 py-1 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                           value="{{ end_date|date:'Y-m-d' }}">
+                </div>
+                <button id="apply-dates" class="bg-blue-500 text-white px-4 py-1 rounded-md text-sm hover:bg-blue-600 transition-colors">
+                    Apply
+                </button>
             </div>
         </div>
     </div>
@@ -114,59 +149,52 @@
                 <div id="revenueTrendChart" class="h-72"></div>
             </div>
 
-            <!-- New: Performance Insights -->
+            <!-- New: Period Comparison -->
             <div class="bg-gray-800 rounded-lg p-4">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-semibold text-white">Performance Insights</h2>
-                    <div class="text-sm text-gray-400">Last 30 days</div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <!-- Best Days -->
-                    <div class="space-y-3">
-                        <h3 class="text-sm font-medium text-green-400">Top Performing Days</h3>
-                        {% for day in top_days %}
-                        <div class="bg-gray-700 rounded-lg p-3">
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-300">{{ day.date|date:"M d" }}</span>
-                                <span class="text-green-400 font-medium">₹{{ day.revenue|floatformat:0 }}</span>
-                            </div>
-                            <div class="mt-1 text-xs text-gray-400">{{ day.orders }} orders</div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    <!-- Worst Days -->
-                    <div class="space-y-3">
-                        <h3 class="text-sm font-medium text-red-400">Needs Improvement</h3>
-                        {% for day in bottom_days %}
-                        <div class="bg-gray-700 rounded-lg p-3">
-                            <div class="flex justify-between items-center">
-                                <span class="text-gray-300">{{ day.date|date:"M d" }}</span>
-                                <span class="text-red-400 font-medium">₹{{ day.revenue|floatformat:0 }}</span>
-                            </div>
-                            <div class="mt-1 text-xs text-gray-400">{{ day.orders }} orders</div>
-                        </div>
-                        {% endfor %}
-                    </div>
+                <h2 class="text-lg font-semibold text-white mb-4">Period Comparison</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-gray-700">
+                            <tr>
+                                <th class="text-left p-3 text-gray-300">Metric</th>
+                                <th class="text-right p-3 text-gray-300">Current</th>
+                                <th class="text-right p-3 text-gray-300">Previous</th>
+                                <th class="text-right p-3 text-gray-300">Change</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-700">
+                            <tr>
+                                <td class="p-3 text-gray-300">Revenue</td>
+                                <td class="p-3 text-right text-white">₹{{ total_revenue|floatformat:2 }}</td>
+                                <td class="p-3 text-right text-gray-400">₹{{ prev_period.revenue|floatformat:2 }}</td>
+                                <td class="p-3 text-right {% if revenue_trend > 0 %}text-green-400{% else %}text-red-400{% endif %}">
+                                    {{ revenue_trend|floatformat:1 }}%
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 text-gray-300">Orders</td>
+                                <td class="p-3 text-right text-white">{{ total_orders }}</td>
+                                <td class="p-3 text-right text-gray-400">{{ prev_period.orders }}</td>
+                                <td class="p-3 text-right {% if order_growth > 0 %}text-green-400{% else %}text-red-400{% endif %}">
+                                    {{ order_growth|floatformat:1 }}%
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 text-gray-300">Avg Order Value</td>
+                                <td class="p-3 text-right text-white">₹{{ avg_order_value|floatformat:2 }}</td>
+                                <td class="p-3 text-right text-gray-400">₹{{ prev_period.avg_order|floatformat:2 }}</td>
+                                <td class="p-3 text-right {% if avg_order_growth > 0 %}text-green-400{% else %}text-red-400{% endif %}">
+                                    {{ avg_order_growth|floatformat:1 }}%
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
             <!-- New: Peak Hours Performance -->
             <div class="grid grid-cols-3 gap-4">
-                {% for hour in peak_hours|slice:":3" %}
-                <div class="bg-gray-800 rounded-lg p-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-gray-400 text-sm">{{ hour.hour|time:"H:i" }}</span>
-                        <span class="text-xs px-2 py-1 rounded-full {% if hour.performance > 90 %}bg-green-500{% elif hour.performance > 70 %}bg-yellow-500{% else %}bg-red-500{% endif %} text-white">
-                            {{ hour.performance }}%
-                        </span>
-                    </div>
-                    <p class="text-2xl font-bold text-white mb-1">₹{{ hour.revenue|floatformat:0 }}</p>
-                    <p class="text-sm text-gray-400">{{ hour.orders }} orders</p>
-                    <div class="mt-2 h-1 bg-gray-700 rounded">
-                        <div class="h-full bg-blue-500 rounded" style="width: {{ hour.performance }}%"></div>
-                    </div>
-                </div>
-                {% endfor %}
+                
             </div>
         </div>
 
@@ -221,16 +249,14 @@
                 <h2 class="text-lg font-semibold text-white mb-4">Quick Actions</h2>
                 <div class="grid grid-cols-2 gap-3">
                     <button class="flex items-center justify-center p-3 bg-blue-600 rounded-lg text-white text-sm hover:bg-blue-700">
-                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z"/>
-                            <path fill-rule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd"/>
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
                         </svg>
                         Export Report
                     </button>
                     <button class="flex items-center justify-center p-3 bg-green-600 rounded-lg text-white text-sm hover:bg-green-700">
-                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/>
-                            <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"/>
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
                         </svg>
                         Share Report
                     </button>
@@ -244,29 +270,54 @@
 {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Revenue Trend Chart only
-    const revenueTrendOptions = {
-        series: [{
-            name: 'Revenue',
-            data: {{ daily_revenue_data|safe }}
-        }],
-        chart: {
-            type: 'area',
-            height: 320,
-            toolbar: {
-                show: false
-            },
-            foreColor: '#9CA3AF'
-        },
-        // ...existing revenue chart options...
+    // Initialize data for JavaScript
+    window.financialData = {
+        startDate: '{{ start_date|date:"Y-m-d" }}',
+        endDate: '{{ end_date|date:"Y-m-d" }}',
+        revenueData: {{ daily_revenue_data|safe }},
+        revenueDates: {{ daily_revenue_dates|safe }}
     };
-
-    // Render revenue chart
-    new ApexCharts(document.querySelector("#revenueTrendChart"), revenueTrendOptions).render();
-
-    // Date range selector functionality
-    // ...existing date range code...
-});
 </script>
+<script src="{% static 'js/financial_reports.js' %}"></script>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* Custom radio button styling */
+    .period-option .period-btn {
+        background-color: transparent;
+        color: #9CA3AF;
+        border: 1px solid #4B5563;
+    }
+
+    .period-option input:checked + .period-btn {
+        background-color: #3B82F6;
+        color: white;
+        border-color: #3B82F6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .period-option:hover .period-btn {
+        background-color: #374151;
+        border-color: #6B7280;
+    }
+
+    .period-option {
+        position: relative;
+        display: inline-block;
+    }
+
+    .period-btn {
+        transition: all 0.2s ease-in-out;
+        user-select: none;
+    }
+
+    /* Active state styling */
+    .period-btn.active {
+        background-color: #3B82F6;
+        color: white;
+        border-color: #3B82F6;
+    }
+</style>
 {% endblock %}

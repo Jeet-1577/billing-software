@@ -20,13 +20,13 @@ from decimal import Decimal
 from django.db import transaction
 from django.db import models  # Ensure this import is present
 from django.template import loader
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_GET
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, Avg, Value, F, IntegerField, FloatField, DecimalField, Count  # Add Count here
-from django.db.models.functions import TruncDate, Coalesce, Cast  # Add Cast here
+from django.db.models.functions import TruncDate, Coalesce, Cast, ExtractHour, TruncHour  # Add Cast and ExtractHour here
 import logging
 from django.contrib.auth.hashers import check_password
 from django.contrib import messages
@@ -1203,88 +1203,149 @@ def customer_insights(request):
     }
     return render(request, 'reports/customer_insights.html', context)
 
+def get_period_dates(period):
+    """Helper function to get start and end dates based on period"""
+    end_date = timezone.now().date()
+    
+    if period == 'day':
+        start_date = end_date
+    elif period == 'week':
+        start_date = end_date - timedelta(days=7)
+    elif period == 'month':
+        start_date = end_date - timedelta(days=30)
+    elif period == 'year':
+        start_date = end_date - timedelta(days=365)
+    else:  # Default to month
+        start_date = end_date - timedelta(days=30)
+    
+    return start_date, end_date
+
 def financial_reports(request):
     try:
-        # Get date range from request or use default (30 days)
-        days = int(request.GET.get('days', 30))
+        # Get date range from request or use defaults
         end_date = timezone.now().date()
-        start_date = end_date - timedelta(days=days)
+        start_date = request.GET.get('start_date')
+        end_date_param = request.GET.get('end_date')
 
-        # Get financial stats for the period
-        period_orders = Order.objects.filter(date__range=[start_date, end_date])
+        if start_date and end_date_param:
+            # Convert string dates to date objects
+            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+            end_date = datetime.strptime(end_date_param, '%Y-%m-%d').date()
+        else:
+            # Default to last 30 days if no dates provided
+            start_date = end_date - timedelta(days=30)
+
+        # Get orders for the selected period
+        period_orders = Order.objects.filter(
+            date__range=[start_date, end_date],
+            status='completed'
+        )
+
+        # Calculate previous period
+        prev_start_date = start_date - (end_date - start_date)
+        prev_end_date = start_date - timedelta(days=1)
+        prev_orders = Order.objects.filter(
+            date__range=[prev_start_date, prev_end_date],
+            status='completed'
+        )
+
+        # Basic metrics
         total_revenue = period_orders.aggregate(total=Sum('grand_total'))['total'] or 0
         total_gst = period_orders.aggregate(total=Sum('gst_amount'))['total'] or 0
         total_orders = period_orders.count()
         avg_order_value = total_revenue / total_orders if total_orders > 0 else 0
 
-        # Get previous period stats for comparison
-        prev_start_date = start_date - timedelta(days=days)
-        prev_orders = Order.objects.filter(date__range=[prev_start_date, start_date])
+        # Previous period metrics
         prev_revenue = prev_orders.aggregate(total=Sum('grand_total'))['total'] or 0
-        
-        # Calculate revenue trend percentage
-        revenue_trend = ((total_revenue - prev_revenue) / prev_revenue * 100) if prev_revenue > 0 else 0
+        prev_orders_count = prev_orders.count()
+        prev_avg_order = prev_revenue / prev_orders_count if prev_orders_count > 0 else 0
 
-        # Get daily revenue data
+        # Calculate growth percentages
+        revenue_trend = ((total_revenue - prev_revenue) / prev_revenue * 100) if prev_revenue > 0 else 0
+        order_growth = ((total_orders - prev_orders_count) / prev_orders_count * 100) if prev_orders_count > 0 else 0
+        avg_order_growth = ((avg_order_value - prev_avg_order) / prev_avg_order * 100) if prev_avg_order > 0 else 0
+
+        # Performance analysis - Changed 'date' to 'day_date'
+        daily_performance = period_orders.annotate(
+            day_date=TruncDate('created_at')
+        ).values('day_date').annotate(
+            revenue=Sum('grand_total'),
+            orders=Count('id')
+        ).order_by('-revenue')
+
+        # Get top and bottom performing days
+        top_days = []
+        for day in daily_performance[:3]:
+            top_days.append({
+                'date': day['day_date'],
+                'revenue': day['revenue'],
+                'orders': day['orders']
+            })
+
+        bottom_days = []
+        for day in daily_performance.order_by('revenue')[:3]:
+            bottom_days.append({
+                'date': day['day_date'],
+                'revenue': day['revenue'],
+                'orders': day['orders']
+            })
+
+        # Peak hours analysis
+        peak_hours = period_orders.annotate(
+            hour=TruncHour('created_at')
+        ).values('hour').annotate(
+            revenue=Sum('grand_total'),
+            orders=Count('id')
+        ).order_by('-orders')[:3]
+
+        # Calculate peak hour performance
+        max_orders_per_hour = 20  # Threshold for 100% performance
+        for hour in peak_hours:
+            hour['performance'] = min((hour['orders'] / max_orders_per_hour) * 100, 100)
+
+        # Daily revenue data for chart
         daily_revenue = period_orders.annotate(
             day=TruncDate('date')
         ).values('day').annotate(
             total=Sum('grand_total')
         ).order_by('day')
 
-        # Get payment methods data
-        payment_methods = period_orders.values('payment_type').annotate(
-            total=Sum('grand_total')
-        ).order_by('-total')
+        # Target calculations (example targets)
+        monthly_revenue_target = 100000
+        monthly_order_target = 1000
+        target_progress = (total_revenue / monthly_revenue_target * 100)
+        order_target_progress = (total_orders / monthly_order_target * 100)
 
-        # Get order type distribution
-        order_types = period_orders.values('order_type').annotate(
-            count=Count('id')
-        ).order_by('-count')
-
-        # Get peak hours data
-        peak_hours = period_orders.annotate(
-            hour=ExtractHour('created_at')
-        ).values('hour').annotate(
-            count=Count('id')
-        ).order_by('hour')
-
-        # Calculate CGST and SGST (each is half of total GST)
-        cgst_amount = total_gst / 2 if total_gst else 0
-        sgst_amount = total_gst / 2 if total_gst else 0
-
-        # Get top and bottom performing days
-        daily_performance = period_orders.annotate(
-            date=TruncDate('created_at')
-        ).values('date').annotate(
-            revenue=Sum('grand_total'),
-            orders=Count('id')
-        ).order_by('-revenue')
-
-        top_days = list(daily_performance[:3])
-        bottom_days = list(daily_performance.reverse()[:3])
+        # Calculate CGST and SGST
+        cgst_amount = total_gst / 2
+        sgst_amount = total_gst / 2
 
         context = {
             'total_revenue': total_revenue,
             'total_gst': total_gst,
-            'cgst_amount': cgst_amount,  # Add CGST amount
-            'sgst_amount': sgst_amount,  # Add SGST amount
+            'cgst_amount': cgst_amount,
+            'sgst_amount': sgst_amount,
             'total_orders': total_orders,
             'avg_order_value': avg_order_value,
             'revenue_trend': revenue_trend,
-            'daily_revenue_dates': json.dumps([item['day'].strftime('%Y-%m-%d') for item in daily_revenue]),
-            'daily_revenue_data': json.dumps([float(item['total']) for item in daily_revenue]),
-            'payment_methods_labels': json.dumps([item['payment_type'] for item in payment_methods]),
-            'payment_methods_data': json.dumps([float(item['total']) for item in payment_methods]),
-            'order_types_labels': json.dumps([item['order_type'] for item in order_types]),
-            'order_types_data': json.dumps([item['count'] for item in order_types]),
-            'peak_hours_data': json.dumps([{
-                'hour': item['hour'],
-                'count': item['count']
-            } for item in peak_hours]),
+            'order_growth': order_growth,
+            'avg_order_growth': avg_order_growth,
+            'target_progress': target_progress,
+            'order_target_progress': order_target_progress,
             'top_days': top_days,
             'bottom_days': bottom_days,
+            'peak_hours': peak_hours,
+            'daily_revenue_dates': json.dumps([item['day'].strftime('%Y-%m-%d') for item in daily_revenue]),
+            'daily_revenue_data': json.dumps([float(item['total']) for item in daily_revenue]),
+            'start_date': start_date,
+            'end_date': end_date,
+            'prev_period': {    # Add previous period data for comparison table
+                'revenue': prev_revenue,
+                'orders': prev_orders_count,
+                'avg_order': prev_avg_order
+            }
         }
+        # Remove 'selected_period' since we're using date range now
         
         return render(request, 'reports/financial_reports.html', context)
     
@@ -1294,4 +1355,14 @@ def financial_reports(request):
             'error': 'An error occurred while generating the financial report.',
             'debug_message': str(e) if django_settings.DEBUG else None
         })
+
+@require_GET
+def financial_reports_data(request):
+    try:
+        period = request.GET.get('period', 'month')
+        data = generate_financial_report_data(period)
+        return JsonResponse(data)
+    except Exception as e:
+        logger.error(f"Error in financial_reports_data: {str(e)}", exc_info=True)
+        return JsonResponse({'error': str(e)}, status=500)
 
