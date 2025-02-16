@@ -1119,70 +1119,53 @@ def sales_dashboard(request):
 
 def item_analytics(request):
     try:
-        # Define output fields
-        decimal_output_field = DecimalField(max_digits=10, decimal_places=2)
-        integer_output_field = IntegerField()
-        float_output_field = FloatField()
-        char_output_field = models.CharField(max_length=255)
-
-        # Get items analysis data without rating aggregation
-        items_analysis = OrderItem.objects.values(
-            'name'
-        ).annotate(
-            category=Coalesce(
-                Cast('item_details__category', output_field=char_output_field),
-                Value('Uncategorized', output_field=char_output_field)
-            ),
-            total_sold=Count('id'),
-            revenue=Sum('total_price', output_field=decimal_output_field)
-        ).order_by('-revenue')
-
-        # Convert QuerySet to list and add default rating
-        items_analysis = list(items_analysis)
-        for item in items_analysis:
-            item['avg_rating'] = 0.0  # Set default rating
-
-        # Get top selling items
-        top_items_by_quantity = OrderItem.objects.values('name').annotate(
-            total_quantity=Count('id'),
-            total_revenue=Sum('total_price', output_field=decimal_output_field)
-        ).order_by('-total_quantity')[:5]
-
-        # Get highest revenue item
-        top_items_by_revenue = OrderItem.objects.values('name').annotate(
-            total_quantity=Count('id'),
-            total_revenue=Sum('total_price', output_field=decimal_output_field)
-        ).order_by('-total_revenue')[:1]
-
-        # Get today's stats
-        today = timezone.now().date()
-        today_stats = OrderItem.objects.filter(created_at__date=today).aggregate(
-            total_sold=Count('id'),
-            total_revenue=Sum('total_price', output_field=decimal_output_field)
-        )
+        # Debug prints
+        print("Starting item_analytics view")
         
-        today_items_sold = today_stats['total_sold'] or 0
-        today_items_revenue = today_stats['total_revenue'] or Decimal('0')
-
-        # Calculate average order value
-        avg_order_value = float(today_items_revenue) / float(today_items_sold) if today_items_sold > 0 else 0
-
+        # Get top 5 selling items with their quantities
+        top_items = OrderItem.objects.values('name').annotate(
+            total_quantity=Count('id')
+        ).order_by('-total_quantity')[:5]
+        
+        print("Top Items Query Result:", list(top_items))  # Debug print
+        
+        labels = [str(item['name']) for item in top_items]  # Ensure strings
+        series = [int(item['total_quantity']) for item in top_items]  # Ensure integers
+        
+        print("Prepared Data:")
+        print("Labels:", labels)
+        print("Series:", series)
+        
         context = {
-            'items_analysis': items_analysis,
-            'top_item': top_items_by_quantity.first(),
-            'highest_revenue_item': top_items_by_revenue.first(),
-            'avg_order_value': avg_order_value,
-            'today_items_sold': today_items_sold,
-            'today_items_revenue': today_items_revenue,
-            'top_items_labels': json.dumps([item['name'] for item in top_items_by_quantity]),
-            'top_items_data': json.dumps([float(item['total_quantity']) for item in top_items_by_quantity])
+            # ...existing context...
+            'top_items_labels': json.dumps(labels),
+            'top_items_data': json.dumps(series),
         }
+        
+        print("Final Context Data:")
+        print("top_items_labels:", context['top_items_labels'])
+        print("top_items_data:", context['top_items_data'])
         
         return render(request, 'reports/item_analytics.html', context)
         
     except Exception as e:
+        print(f"Error in item_analytics: {str(e)}")
         logger.error(f"Error in item_analytics: {str(e)}", exc_info=True)
-        return render(request, 'reports/item_analytics.html', {
+        # ...rest of error handling...
+
+def customer_insights(request):
+    # Get table usage stats
+    table_stats = TableOrder.objects.values('table_number').annotate(
+        order_count=Count('id'),
+        total_revenue=Sum('grand_total')
+    ).order_by('-order_count')
+
+    context = {
+        'table_stats': table_stats,
+    }
+    return render(request, 'reports/customer_insights.html', context)
+
+def financial_reports(request):
             'error': 'An error occurred while generating analytics.',
             'debug_message': str(e) if django_settings.DEBUG else None,
             'items_analysis': [],
