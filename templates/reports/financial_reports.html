@@ -12,86 +12,51 @@
             <span class="bg-green-500 text-white px-2 py-1 rounded text-sm">Live</span>
         </div>
         <div class="flex items-center space-x-4">
-            <!-- Custom styled radio buttons -->
-            <div class="flex items-center space-x-2 bg-gray-700 rounded-lg px-4 py-2">
-                <div class="flex space-x-4">
-                    <label class="period-option">
-                        <input type="radio" name="date-shortcut" value="day" class="hidden date-shortcut">
-                        <div class="period-btn px-4 py-1.5 rounded-md text-sm cursor-pointer transition-all">
-                            Day
-                        </div>
-                    </label>
-                    <label class="period-option">
-                        <input type="radio" name="date-shortcut" value="week" class="hidden date-shortcut">
-                        <div class="period-btn px-4 py-1.5 rounded-md text-sm cursor-pointer transition-all">
-                            Week
-                        </div>
-                    </label>
-                    <label class="period-option">
-                        <input type="radio" name="date-shortcut" value="month" class="hidden date-shortcut" checked>
-                        <div class="period-btn px-4 py-1.5 rounded-md text-sm cursor-pointer transition-all active">
-                            Month
-                        </div>
-                    </label>
-                    <label class="period-option">
-                        <input type="radio" name="date-shortcut" value="year" class="hidden date-shortcut">
-                        <div class="period-btn px-4 py-1.5 rounded-md text-sm cursor-pointer transition-all">
-                            Year
-                        </div>
-                    </label>
-                </div>
-            </div>
-            <!-- Existing date picker -->
-            <div class="bg-gray-700 rounded-lg px-4 py-2 flex items-center space-x-4" id="timepicker">
-                <div class="flex items-center">
-                    <input type="date" 
-                           id="start-date" 
-                           class="bg-gray-800 text-white px-3 py-1 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           value="{{ start_date|date:'Y-m-d' }}">
-                    <span class="text-gray-400 mx-2">to</span>
-                    <input type="date" 
-                           id="end-date" 
-                           class="bg-gray-800 text-white px-3 py-1 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                           value="{{ end_date|date:'Y-m-d' }}">
-                </div>
-                <button id="apply-dates" class="bg-blue-500 text-white px-4 py-1 rounded-md text-sm hover:bg-blue-600 transition-colors">
-                    Apply
-                </button>
+            <select class="bg-gray-700 text-white rounded-md px-3 py-2 text-sm">
+                <option>All Outlets</option>
+                <option>Outlet 1</option>
+                <option>Outlet 2</option>
+            </select>
+            <div class="flex bg-gray-700 rounded-md p-1">
+                <button class="px-3 py-1 text-sm rounded-md bg-blue-500 text-white">Day</button>
+                <button class="px-3 py-1 text-sm text-gray-300">Week</button>
+                <button class="px-3 py-1 text-sm text-gray-300">Month</button>
+                <button class="px-3 py-1 text-sm text-gray-300">Year</button>
             </div>
         </div>
     </div>
 
     <!-- Quick Stats Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4"> <!-- Reduced gap-6 to gap-4 and mb-6 to mb-4 -->
         <!-- Revenue Card -->
-        <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg p-4 relative overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg p-3 relative overflow-hidden"> <!-- Reduced p-4 to p-3 -->
             <div class="relative z-10">
-                <p class="text-blue-100 text-sm">Total Revenue</p>
-                <h3 class="text-2xl font-bold text-white mb-2">₹{{ total_revenue|floatformat:2 }}</h3>
+                <p class="text-blue-100 text-xs">Total Revenue</p> <!-- Reduced from text-sm -->
+                <h3 class="text-xl font-bold text-white mb-1">₹{{ total_revenue|floatformat:2 }}</h3> <!-- Reduced from text-2xl and mb-2 -->
                 <div class="flex items-center text-blue-100">
-                    <span class="text-green-400 text-sm">↑ {{ revenue_trend|floatformat:1 }}%</span>
-                    <span class="text-sm ml-2">vs last period</span>
+                    <span class="text-green-400 text-xs">↑ {{ revenue_trend|floatformat:1 }}%</span> <!-- Reduced from text-sm -->
+                    <span class="text-xs ml-2">vs last period</span> <!-- Reduced from text-sm -->
                 </div>
             </div>
             <div class="absolute right-0 bottom-0 text-blue-800">
-                <svg class="w-20 h-20 opacity-50" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="w-16 h-16 opacity-50" fill="currentColor" viewBox="0 0 20 20"> <!-- Reduced from w-20 h-20 -->
                     <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
                 </svg>
             </div>
         </div>
 
         <!-- Profit Card -->
-        <div class="bg-gradient-to-r from-green-600 to-green-800 rounded-lg p-4 relative overflow-hidden">
+        <div class="bg-gradient-to-r from-green-600 to-green-800 rounded-lg p-3 relative overflow-hidden"> <!-- Reduced p-4 to p-3 -->
             <div class="relative z-10">
-                <p class="text-green-100 text-sm">Net Profit</p>
-                <h3 class="text-2xl font-bold text-white mb-2">₹{{ net_profit|floatformat:2 }}</h3>
+                <p class="text-green-100 text-xs">Net Profit</p> <!-- Reduced from text-sm -->
+                <h3 class="text-xl font-bold text-white mb-1">₹{{ net_profit|floatformat:2 }}</h3> <!-- Reduced from text-2xl and mb-2 -->
                 <div class="flex items-center text-green-100">
-                    <span class="text-green-400 text-sm">{{ profit_margin|floatformat:1 }}%</span>
-                    <span class="text-sm ml-2">Profit Margin</span>
+                    <span class="text-green-400 text-xs">{{ profit_margin|floatformat:1 }}%</span> <!-- Reduced from text-sm -->
+                    <span class="text-xs ml-2">Profit Margin</span> <!-- Reduced from text-sm -->
                 </div>
             </div>
             <div class="absolute right-0 bottom-0 text-green-800">
-                <svg class="w-20 h-20 opacity-50" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="w-16 h-16 opacity-50" fill="currentColor" viewBox="0 0 20 20"> <!-- Reduced from w-20 h-20 -->
                     <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/>
                     <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"/>
                 </svg>
@@ -99,34 +64,34 @@
         </div>
 
         <!-- Orders Card -->
-        <div class="bg-gradient-to-r from-purple-600 to-purple-800 rounded-lg p-4 relative overflow-hidden">
+        <div class="bg-gradient-to-r from-purple-600 to-purple-800 rounded-lg p-3 relative overflow-hidden"> <!-- Reduced p-4 to p-3 -->
             <div class="relative z-10">
-                <p class="text-purple-100 text-sm">Total Orders</p>
-                <h3 class="text-2xl font-bold text-white mb-2">{{ total_orders }}</h3>
+                <p class="text-purple-100 text-xs">Total Orders</p> <!-- Reduced from text-sm -->
+                <h3 class="text-xl font-bold text-white mb-1">{{ total_orders }}</h3> <!-- Reduced from text-2xl and mb-2 -->
                 <div class="flex items-center text-purple-100">
-                    <span class="text-green-400 text-sm">↑ {{ order_growth|floatformat:1 }}%</span>
-                    <span class="text-sm ml-2">Growth</span>
+                    <span class="text-green-400 text-xs">↑ {{ order_growth|floatformat:1 }}%</span> <!-- Reduced from text-sm -->
+                    <span class="text-xs ml-2">Growth</span> <!-- Reduced from text-sm -->
                 </div>
             </div>
             <div class="absolute right-0 bottom-0 text-purple-800">
-                <svg class="w-20 h-20 opacity-50" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="w-16 h-16 opacity-50" fill="currentColor" viewBox="0 0 20 20"> <!-- Reduced from w-20 h-20 -->
                     <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zm13 15.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
                 </svg>
             </div>
         </div>
 
         <!-- Average Order Card -->
-        <div class="bg-gradient-to-r from-red-600 to-red-800 rounded-lg p-4 relative overflow-hidden">
+        <div class="bg-gradient-to-r from-red-600 to-red-800 rounded-lg p-3 relative overflow-hidden"> <!-- Reduced p-4 to p-3 -->
             <div class="relative z-10">
-                <p class="text-red-100 text-sm">Avg Order Value</p>
-                <h3 class="text-2xl font-bold text-white mb-2">₹{{ avg_order_value|floatformat:2 }}</h3>
+                <p class="text-red-100 text-xs">Avg Order Value</p> <!-- Reduced from text-sm -->
+                <h3 class="text-xl font-bold text-white mb-1">₹{{ avg_order_value|floatformat:2 }}</h3> <!-- Reduced from text-2xl and mb-2 -->
                 <div class="flex items-center text-red-100">
-                    <span class="text-green-400 text-sm">↑ {{ avg_order_growth|floatformat:1 }}%</span>
-                    <span class="text-sm ml-2">vs last period</span>
+                    <span class="text-green-400 text-xs">↑ {{ avg_order_growth|floatformat:1 }}%</span> <!-- Reduced from text-sm -->
+                    <span class="text-xs ml-2">vs last period</span> <!-- Reduced from text-sm -->
                 </div>
             </div>
             <div class="absolute right-0 bottom-0 text-red-800">
-                <svg class="w-20 h-20 opacity-50" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="w-16 h-16 opacity-50" fill="currentColor" viewBox="0 0 20 20"> <!-- Reduced from w-20 h-20 -->
                     <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zm0 16a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
                 </svg>
             </div>
@@ -134,11 +99,11 @@
     </div>
 
     <!-- Main Content Grid -->
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 h-[420px]"> <!-- Added fixed height and reduced gap -->
         <!-- Left Column -->
-        <div class="xl:col-span-2 space-y-6">
+        <div class="xl:col-span-2 grid grid-rows-2 gap-4"> <!-- Changed to grid-rows-2 and removed fixed height -->
             <!-- Revenue Chart -->
-            <div class="bg-gray-800 rounded-lg p-4">
+            <div class="bg-gray-800 rounded-lg p-4 flex flex-col">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-semibold text-white">Revenue Trends</h2>
                     <div class="flex space-x-2">
@@ -146,64 +111,56 @@
                         <button class="text-sm px-3 py-1 rounded bg-gray-700 text-gray-300">Orders</button>
                     </div>
                 </div>
-                <div id="revenueTrendChart" class="h-72"></div>
+                <div id="revenueTrendChart" class="flex-1 min-h-0"></div>
             </div>
 
-            <!-- New: Period Comparison -->
-            <div class="bg-gray-800 rounded-lg p-4">
-                <h2 class="text-lg font-semibold text-white mb-4">Period Comparison</h2>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm">
-                        <thead class="bg-gray-700">
-                            <tr>
-                                <th class="text-left p-3 text-gray-300">Metric</th>
-                                <th class="text-right p-3 text-gray-300">Current</th>
-                                <th class="text-right p-3 text-gray-300">Previous</th>
-                                <th class="text-right p-3 text-gray-300">Change</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-700">
-                            <tr>
-                                <td class="p-3 text-gray-300">Revenue</td>
-                                <td class="p-3 text-right text-white">₹{{ total_revenue|floatformat:2 }}</td>
-                                <td class="p-3 text-right text-gray-400">₹{{ prev_period.revenue|floatformat:2 }}</td>
-                                <td class="p-3 text-right {% if revenue_trend > 0 %}text-green-400{% else %}text-red-400{% endif %}">
-                                    {{ revenue_trend|floatformat:1 }}%
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="p-3 text-gray-300">Orders</td>
-                                <td class="p-3 text-right text-white">{{ total_orders }}</td>
-                                <td class="p-3 text-right text-gray-400">{{ prev_period.orders }}</td>
-                                <td class="p-3 text-right {% if order_growth > 0 %}text-green-400{% else %}text-red-400{% endif %}">
-                                    {{ order_growth|floatformat:1 }}%
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="p-3 text-gray-300">Avg Order Value</td>
-                                <td class="p-3 text-right text-white">₹{{ avg_order_value|floatformat:2 }}</td>
-                                <td class="p-3 text-right text-gray-400">₹{{ prev_period.avg_order|floatformat:2 }}</td>
-                                <td class="p-3 text-right {% if avg_order_growth > 0 %}text-green-400{% else %}text-red-400{% endif %}">
-                                    {{ avg_order_growth|floatformat:1 }}%
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+            <!-- Performance Insights -->
+            <div class="bg-gray-800 rounded-lg p-4 flex flex-col">
+                <div class="flex justify-between items-center mb-2"> <!-- Reduced margin -->
+                    <h2 class="text-lg font-semibold text-white">Performance Insights</h2>
+                    <div class="text-xs text-gray-400">Last 30 days</div> <!-- Reduced text size -->
                 </div>
-            </div>
-
-            <!-- New: Peak Hours Performance -->
-            <div class="grid grid-cols-3 gap-4">
-                
+                <div class="grid grid-cols-2 gap-3 overflow-auto"> <!-- Changed to overflow-auto and reduced gap -->
+                    <!-- Best Days -->
+                    <div class="flex flex-col space-y-2"> <!-- Reduced spacing -->
+                        <h3 class="text-xs font-medium text-green-400 mb-1">Top Performing Days</h3> <!-- Reduced text and margin -->
+                        <div class="flex flex-col space-y-2"> <!-- Reduced spacing -->
+                            {% for day in top_days %}
+                            <div class="bg-gray-700 rounded-lg p-2"> <!-- Reduced padding -->
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-300 text-xs">{{ day.date|date:"M d" }}</span>
+                                    <span class="text-green-400 font-medium text-xs">₹{{ day.revenue|floatformat:0 }}</span>
+                                </div>
+                                <div class="mt-0.5 text-xs text-gray-400">{{ day.orders }} orders</div> <!-- Reduced margin -->
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <!-- Worst Days -->
+                    <div class="flex flex-col space-y-2"> <!-- Reduced spacing -->
+                        <h3 class="text-xs font-medium text-red-400 mb-1">Needs Improvement</h3> <!-- Reduced text and margin -->
+                        <div class="flex flex-col space-y-2"> <!-- Reduced spacing -->
+                            {% for day in bottom_days %}
+                            <div class="bg-gray-700 rounded-lg p-2"> <!-- Reduced padding -->
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-300 text-xs">{{ day.date|date:"M d" }}</span>
+                                    <span class="text-red-400 font-medium text-xs">₹{{ day.revenue|floatformat:0 }}</span>
+                                </div>
+                                <div class="mt-0.5 text-xs text-gray-400">{{ day.orders }} orders</div> <!-- Reduced margin -->
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Right Column -->
-        <div class="space-y-6">
+        <div class="grid grid-rows-[1fr_1fr_auto] gap-4"> <!-- Reduced gap -->
             <!-- Target Progress -->
-            <div class="bg-gray-800 rounded-lg p-4">
-                <h2 class="text-lg font-semibold text-white mb-4">Monthly Targets</h2>
-                <div class="space-y-4">
+            <div class="bg-gray-800 rounded-lg p-4 flex flex-col">
+                <h2 class="text-base font-semibold text-white mb-3">Monthly Targets</h2> <!-- Reduced text and margin -->
+                <div class="space-y-3 flex-1 flex flex-col justify-center"> <!-- Reduced spacing -->
                     <div>
                         <div class="flex justify-between text-sm text-gray-300 mb-1">
                             <span>Revenue Target</span>
@@ -226,9 +183,9 @@
             </div>
 
             <!-- Tax Summary -->
-            <div class="bg-gray-800 rounded-lg p-4">
-                <h2 class="text-lg font-semibold text-white mb-4">Tax Summary</h2>
-                <div class="space-y-3">
+            <div class="bg-gray-800 rounded-lg p-4 flex flex-col">
+                <h2 class="text-base font-semibold text-white mb-3">Tax Summary</h2> <!-- Reduced text and margin -->
+                <div class="space-y-2 flex-1 flex flex-col justify-center"> <!-- Reduced spacing -->
                     <div class="flex justify-between items-center">
                         <span class="text-gray-300">Total GST</span>
                         <span class="text-white font-semibold">₹{{ total_gst|floatformat:2 }}</span>
@@ -246,19 +203,33 @@
 
             <!-- Quick Actions -->
             <div class="bg-gray-800 rounded-lg p-4">
-                <h2 class="text-lg font-semibold text-white mb-4">Quick Actions</h2>
-                <div class="grid grid-cols-2 gap-3">
+                <h2 class="text-base font-semibold text-white mb-3">Quick Actions</h2> <!-- Reduced text and margin -->
+                <div class="grid grid-cols-2 gap-2"> <!-- Reduced gap -->
                     <button class="flex items-center justify-center p-3 bg-blue-600 rounded-lg text-white text-sm hover:bg-blue-700">
-                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z"/>
+                            <path fill-rule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd"/>
                         </svg>
                         Export Report
                     </button>
                     <button class="flex items-center justify-center p-3 bg-green-600 rounded-lg text-white text-sm hover:bg-green-700">
-                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/>
+                            <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"/>
                         </svg>
                         Share Report
+                    </button>
+                    <button class="flex items-center justify-center p-3 bg-purple-600 rounded-lg text-white text-sm hover:bg-purple-700">
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z"/>
+                        </svg>
+                        Download PDF
+                    </button>
+                    <button class="flex items-center justify-center p-3 bg-orange-600 rounded-lg text-white text-sm hover:bg-orange-700">
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0v3H7V4h6zm-6 8v4h6v-4H7z"/>
+                        </svg>
+                        Print
                     </button>
                 </div>
             </div>
@@ -270,54 +241,74 @@
 {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
-    // Initialize data for JavaScript
-    window.financialData = {
-        startDate: '{{ start_date|date:"Y-m-d" }}',
-        endDate: '{{ end_date|date:"Y-m-d" }}',
-        revenueData: {{ daily_revenue_data|safe }},
-        revenueDates: {{ daily_revenue_dates|safe }}
+document.addEventListener('DOMContentLoaded', function() {
+    // Revenue Trend Chart only
+    const revenueTrendOptions = {
+        series: [{
+            name: 'Revenue',
+            data: {{ daily_revenue_data|safe }}
+        }],
+        chart: {
+            type: 'area',
+            height: 150,  // Reduced from 200
+            toolbar: {
+                show: false
+            },
+            foreColor: '#9CA3AF'
+        },
+        // ...existing revenue chart options...
     };
+
+    // Render revenue chart
+    new ApexCharts(document.querySelector("#revenueTrendChart"), revenueTrendOptions).render();
+
+    // Date range selector functionality
+    // ...existing date range code...
+
+    // Time period selector functionality
+    const periodButtons = document.querySelectorAll('.bg-gray-700 button');
+    periodButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            // Remove active class from all buttons
+            periodButtons.forEach(btn => {
+                btn.classList.remove('bg-blue-500', 'text-white');
+                btn.classList.add('text-gray-300');
+            });
+            
+            // Add active class to clicked button
+            this.classList.remove('text-gray-300');
+            this.classList.add('bg-blue-500', 'text-white');
+            
+            // Update URL and reload data
+            const period = this.textContent.toLowerCase();
+            window.location.href = `?period=${period}`;
+        });
+
+        // Set active state for current period
+        if (button.textContent.toLowerCase() === '{{ selected_period }}') {
+            button.classList.remove('text-gray-300');
+            button.classList.add('bg-blue-500', 'text-white');
+        }
+    });
+
+    // Export functionality
+    document.querySelector('button:contains("Export Report")').addEventListener('click', function() {
+        });
+
+        // Set active state for current period
+        if (button.textContent.toLowerCase() === '{{ selected_period }}') {
+            button.classList.remove('text-gray-300');
+            button.classList.add('bg-blue-500', 'text-white');
+        }
+    });
+
+    // Export functionality
+    document.querySelector('button:contains("Export Report")').addEventListener('click', function() {
+        const period = '{{ selected_period }}';
+        window.location.href = `/reports/financial/export/?period=${period}`;
+    });
+
+    // ... rest of the chart initialization code ...
+});
 </script>
-<script src="{% static 'js/financial_reports.js' %}"></script>
-{% endblock %}
-
-{% block extra_head %}
-<style>
-    /* Custom radio button styling */
-    .period-option .period-btn {
-        background-color: transparent;
-        color: #9CA3AF;
-        border: 1px solid #4B5563;
-    }
-
-    .period-option input:checked + .period-btn {
-        background-color: #3B82F6;
-        color: white;
-        border-color: #3B82F6;
-        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-        transform: translateY(-1px);
-    }
-
-    .period-option:hover .period-btn {
-        background-color: #374151;
-        border-color: #6B7280;
-    }
-
-    .period-option {
-        position: relative;
-        display: inline-block;
-    }
-
-    .period-btn {
-        transition: all 0.2s ease-in-out;
-        user-select: none;
-    }
-
-    /* Active state styling */
-    .period-btn.active {
-        background-color: #3B82F6;
-        color: white;
-        border-color: #3B82F6;
-    }
-</style>
 {% endblock %}

@@ -20,7 +20,7 @@ from decimal import Decimal
 from django.db import transaction
 from django.db import models  # Ensure this import is present
 from django.template import loader
-from django.views.decorators.http import require_POST, require_GET
+from django.views.decorators.http import require_POST
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth import authenticate
@@ -1222,18 +1222,9 @@ def get_period_dates(period):
 
 def financial_reports(request):
     try:
-        # Get date range from request or use defaults
-        end_date = timezone.now().date()
-        start_date = request.GET.get('start_date')
-        end_date_param = request.GET.get('end_date')
-
-        if start_date and end_date_param:
-            # Convert string dates to date objects
-            start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
-            end_date = datetime.strptime(end_date_param, '%Y-%m-%d').date()
-        else:
-            # Default to last 30 days if no dates provided
-            start_date = end_date - timedelta(days=30)
+        # Get time period from request
+        period = request.GET.get('period', 'month')
+        start_date, end_date = get_period_dates(period)
 
         # Get orders for the selected period
         period_orders = Order.objects.filter(
@@ -1265,30 +1256,17 @@ def financial_reports(request):
         order_growth = ((total_orders - prev_orders_count) / prev_orders_count * 100) if prev_orders_count > 0 else 0
         avg_order_growth = ((avg_order_value - prev_avg_order) / prev_avg_order * 100) if prev_avg_order > 0 else 0
 
-        # Performance analysis - Changed 'date' to 'day_date'
+        # Performance analysis
         daily_performance = period_orders.annotate(
-            day_date=TruncDate('created_at')
-        ).values('day_date').annotate(
+            date=TruncDate('created_at')
+        ).values('date').annotate(
             revenue=Sum('grand_total'),
             orders=Count('id')
         ).order_by('-revenue')
 
         # Get top and bottom performing days
-        top_days = []
-        for day in daily_performance[:3]:
-            top_days.append({
-                'date': day['day_date'],
-                'revenue': day['revenue'],
-                'orders': day['orders']
-            })
-
-        bottom_days = []
-        for day in daily_performance.order_by('revenue')[:3]:
-            bottom_days.append({
-                'date': day['day_date'],
-                'revenue': day['revenue'],
-                'orders': day['orders']
-            })
+        top_days = list(daily_performance[:3])
+        bottom_days = list(daily_performance.reverse()[:3])
 
         # Peak hours analysis
         peak_hours = period_orders.annotate(
@@ -1337,15 +1315,8 @@ def financial_reports(request):
             'peak_hours': peak_hours,
             'daily_revenue_dates': json.dumps([item['day'].strftime('%Y-%m-%d') for item in daily_revenue]),
             'daily_revenue_data': json.dumps([float(item['total']) for item in daily_revenue]),
-            'start_date': start_date,
-            'end_date': end_date,
-            'prev_period': {    # Add previous period data for comparison table
-                'revenue': prev_revenue,
-                'orders': prev_orders_count,
-                'avg_order': prev_avg_order
-            }
+            'selected_period': period,
         }
-        # Remove 'selected_period' since we're using date range now
         
         return render(request, 'reports/financial_reports.html', context)
     
@@ -1355,14 +1326,4 @@ def financial_reports(request):
             'error': 'An error occurred while generating the financial report.',
             'debug_message': str(e) if django_settings.DEBUG else None
         })
-
-@require_GET
-def financial_reports_data(request):
-    try:
-        period = request.GET.get('period', 'month')
-        data = generate_financial_report_data(period)
-        return JsonResponse(data)
-    except Exception as e:
-        logger.error(f"Error in financial_reports_data: {str(e)}", exc_info=True)
-        return JsonResponse({'error': str(e)}, status=500)
 
