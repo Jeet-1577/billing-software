@@ -929,8 +929,16 @@ select {
   top: 0.5rem;
 }
 
+.top-0 {
+  top: 0px;
+}
+
 .z-50 {
   z-index: 50;
+}
+
+.z-10 {
+  z-index: 10;
 }
 
 .m-0 {
@@ -1133,6 +1141,10 @@ select {
   max-height: calc(100vh - 400px);
 }
 
+.max-h-\[400px\] {
+  max-height: 400px;
+}
+
 .min-h-screen {
   min-height: 100vh;
 }
@@ -1211,6 +1223,10 @@ select {
 
 .flex-1 {
   flex: 1 1 0%;
+}
+
+.table-auto {
+  table-layout: auto;
 }
 
 .border-collapse {
@@ -1375,6 +1391,17 @@ select {
   margin-bottom: calc(2rem * var(--tw-space-y-reverse));
 }
 
+.divide-y > :not([hidden]) ~ :not([hidden]) {
+  --tw-divide-y-reverse: 0;
+  border-top-width: calc(1px * calc(1 - var(--tw-divide-y-reverse)));
+  border-bottom-width: calc(1px * var(--tw-divide-y-reverse));
+}
+
+.divide-gray-700 > :not([hidden]) ~ :not([hidden]) {
+  --tw-divide-opacity: 1;
+  border-color: rgb(55 65 81 / var(--tw-divide-opacity, 1));
+}
+
 .overflow-hidden {
   overflow: hidden;
 }
@@ -1389,6 +1416,10 @@ select {
 
 .overflow-y-scroll {
   overflow-y: scroll;
+}
+
+.whitespace-nowrap {
+  white-space: nowrap;
 }
 
 .rounded {
@@ -1627,8 +1658,16 @@ select {
   padding-top: 1rem;
 }
 
+.text-left {
+  text-align: left;
+}
+
 .text-center {
   text-align: center;
+}
+
+.text-right {
+  text-align: right;
 }
 
 .font-serif {
