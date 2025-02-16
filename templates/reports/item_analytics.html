@@ -1,34 +1,191 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
+{% load static %}
 
 {% block title %}Item Analytics{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-900 p-6">
-    <h1 class="text-2xl font-bold text-white mb-6">Item Analytics</h1>
-    
-    <!-- Top Selling Items -->
-    <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-8">
-        <h3 class="text-xl font-bold text-white mb-4">Top Selling Items</h3>
-        <div class="overflow-x-auto">
-            <table class="w-full text-left text-gray-300">
-                <thead>
-                    <tr class="border-b border-gray-700">
-                        <th class="py-3 px-6">Item Name</th>
-                        <th class="py-3 px-6">Quantity Sold</th>
-                        <th class="py-3 px-6">Revenue</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in top_items %}
-                    <tr class="border-b border-gray-700">
-                        <td class="py-3 px-6">{{ item.name }}</td>
-                        <td class="py-3 px-6">{{ item.total_quantity }}</td>
-                        <td class="py-3 px-6">₹{{ item.total_revenue|floatformat:2 }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+<div class="p-6 space-y-6">
+    {% if error %}
+    <div class="bg-red-500 text-white p-4 rounded-lg mb-6">
+        {{ error }}
+    </div>
+    {% else %}
+    <!-- Top Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-gray-800 rounded-lg p-4 shadow-lg">
+            <h3 class="text-gray-400 text-sm font-semibold">Top Selling Item</h3>
+            <p class="text-2xl font-bold text-white mt-2">
+                {{ top_item.name|default:"No data" }}
+            </p>
+            <p class="text-blue-400">
+                {% if top_item %}
+                    {{ top_item.total_quantity }} units
+                {% else %}
+                    0 units
+                {% endif %}
+            </p>
+        </div>
+        
+        <div class="bg-gray-800 rounded-lg p-4 shadow-lg">
+            <h3 class="text-gray-400 text-sm font-semibold">Highest Revenue Item</h3>
+            <p class="text-2xl font-bold text-white mt-2">{{ highest_revenue_item.name|default:"No data" }}</p>
+            <p class="text-green-400">
+                {% if highest_revenue_item %}
+                    ₹{{ highest_revenue_item.total_revenue }}
+                {% else %}
+                    ₹0
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="bg-gray-800 rounded-lg p-4 shadow-lg">
+            <h3 class="text-gray-400 text-sm font-semibold">Average Order Value</h3>
+            <p class="text-2xl font-bold text-white mt-2">₹{{ avg_order_value|default:"0" }}</p>
+        </div>
+
+        <div class="bg-gray-800 rounded-lg p-4 shadow-lg">
+            <h3 class="text-gray-400 text-sm font-semibold">Total Items Sold Today</h3>
+            <p class="text-2xl font-bold text-white mt-2">{{ today_items_sold|default:"0" }}</p>
         </div>
     </div>
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Top Selling Items Chart -->
+        <div class="bg-gray-800 rounded-lg p-4 shadow-lg">
+            <h3 class="text-lg font-semibold text-white mb-4">Top Selling Items</h3>
+            <div class="relative" style="height: 300px;">
+                <canvas id="topSellingChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Category Distribution Chart -->
+        <div class="bg-gray-800 rounded-lg p-4 shadow-lg">
+            <h3 class="text-lg font-semibold text-white mb-4">Sales by Category</h3>
+            <div class="relative" style="height: 300px;">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Analysis Table with loading state -->
+    <div class="bg-gray-800 rounded-lg p-4 shadow-lg">
+        <h3 class="text-lg font-semibold text-white mb-4">Item Performance Analysis</h3>
+        <div class="overflow-x-auto">
+            {% if items_analysis %}
+                <table class="min-w-full text-gray-300">
+                    <thead>
+                        <tr class="bg-gray-700">
+                            <th class="px-4 py-2">Item Name</th>
+                            <th class="px-4 py-2">Category</th>
+                            <th class="px-4 py-2">Total Sold</th>
+                            <th class="px-4 py-2">Revenue</th>
+                            <th class="px-4 py-2">Avg. Rating</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items_analysis %}
+                        <tr class="border-b border-gray-700">
+                            <td class="px-4 py-2">{{ item.name }}</td>
+                            <td class="px-4 py-2">{{ item.category }}</td>
+                            <td class="px-4 py-2">{{ item.total_sold }}</td>
+                            <td class="px-4 py-2">₹{{ item.revenue }}</td>
+                            <td class="px-4 py-2">{{ item.avg_rating|floatformat:1 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p class="text-gray-400 text-center py-4">No analysis data available</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 </div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if elements exist before initializing charts
+    const topSellingCtx = document.getElementById('topSellingChart');
+    const categoryCtx = document.getElementById('categoryChart');
+
+    if (topSellingCtx) {
+        // Chart.js configuration
+        Chart.defaults.color = '#E5E7EB';
+        Chart.defaults.borderColor = '#374151';
+
+        new Chart(topSellingCtx.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: {{ top_items_labels|default:"[]"|safe }},
+                datasets: [{
+                    label: 'Units Sold',
+                    data: {{ top_items_data|default:"[]"|safe }},
+                    backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                    borderColor: 'rgb(59, 130, 246)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: '#E5E7EB'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: '#374151'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: '#374151'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    if (categoryCtx) {
+        new Chart(categoryCtx.getContext('2d'), {
+            type: 'pie',
+            data: {
+                labels: {{ category_labels|default:"[]"|safe }},
+                datasets: [{
+                    data: {{ category_data|default:"[]"|safe }},
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(245, 158, 11, 0.8)',
+                        'rgba(239, 68, 68, 0.8)',
+                        'rgba(167, 139, 250, 0.8)'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            color: '#E5E7EB'
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
