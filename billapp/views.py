@@ -25,7 +25,8 @@ from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, Avg
+from django.db.models.functions import TruncDate
 import logging
 from django.contrib.auth.hashers import check_password
 from django.contrib import messages
@@ -1075,3 +1076,78 @@ def delete_item(request, form_type, item_id):
         
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)})
+
+def sales_dashboard(request):
+    # Get date range
+    end_date = timezone.now().date()
+    start_date = end_date - timedelta(days=30)
+    
+    # Calculate today's stats
+    today_orders = Order.objects.filter(date=end_date)
+    today_sales = today_orders.aggregate(Sum('grand_total'))['grand_total__sum'] or 0
+    today_order_count = today_orders.count()
+    avg_order_value = today_sales / today_order_count if today_order_count > 0 else 0
+
+    # Get daily sales data
+    daily_sales = Order.objects.filter(
+        date__range=[start_date, end_date]
+    ).annotate(
+        day=TruncDate('created_at')
+    ).values('day').annotate(
+        total=Sum('grand_total')
+    ).order_by('day')
+
+    # Get payment methods data
+    payment_data = Order.objects.filter(
+        date__range=[start_date, end_date]
+    ).values('payment_type').annotate(
+        total=Sum('grand_total')
+    ).order_by('-total')
+
+    context = {
+        'today_sales': today_sales,
+        'today_orders': today_order_count,
+        'avg_order_value': avg_order_value,
+        'dates': [item['day'].strftime('%Y-%m-%d') for item in daily_sales],
+        'daily_sales': [float(item['total']) for item in daily_sales],
+        'payment_methods': [item['payment_type'] for item in payment_data],
+        'payment_amounts': [float(item['total']) for item in payment_data],
+    }
+    
+    return render(request, 'reports/sales_dashboard.html', context)
+
+def item_analytics(request):
+    # Get top selling items
+    top_items = OrderItem.objects.values('name').annotate(
+        total_quantity=Sum('quantity'),
+        total_revenue=Sum('total_price')
+    ).order_by('-total_quantity')[:10]
+
+    context = {
+        'top_items': top_items,
+    }
+    return render(request, 'reports/item_analytics.html', context)
+
+def customer_insights(request):
+    # Get table usage stats
+    table_stats = TableOrder.objects.values('table_number').annotate(
+        order_count=Count('id'),
+        total_revenue=Sum('grand_total')
+    ).order_by('-order_count')
+
+    context = {
+        'table_stats': table_stats,
+    }
+    return render(request, 'reports/customer_insights.html', context)
+
+def financial_reports(request):
+    # Get overall financial stats
+    total_revenue = Order.objects.aggregate(total=Sum('grand_total'))['total'] or 0
+    total_gst = Order.objects.aggregate(total=Sum('gst_amount'))['total'] or 0
+    
+    context = {
+        'total_revenue': total_revenue,
+        'total_gst': total_gst,
+    }
+    return render(request, 'reports/financial_reports.html', context)
+

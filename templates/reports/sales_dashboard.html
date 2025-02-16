@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Sales Dashboard{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-900 p-6">
+    <h1 class="text-2xl font-bold text-white mb-6">Sales Dashboard</h1>
+    
+    <!-- Today's Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+            <h3 class="text-gray-400 mb-2">Today's Sales</h3>
+            <p class="text-3xl font-bold text-white">₹{{ today_sales|floatformat:2 }}</p>
+        </div>
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+            <h3 class="text-gray-400 mb-2">Orders Today</h3>
+            <p class="text-3xl font-bold text-white">{{ today_orders }}</p>
+        </div>
+        <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+            <h3 class="text-gray-400 mb-2">Average Order Value</h3>
+            <p class="text-3xl font-bold text-white">₹{{ avg_order_value|floatformat:2 }}</p>
+        </div>
+    </div>
+
+    <!-- Sales Chart -->
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-8">
+        <h3 class="text-xl font-bold text-white mb-4">Sales Trend</h3>
+        <canvas id="salesChart" height="300"></canvas>
+    </div>
+
+    <!-- Payment Methods -->
+    <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+        <h3 class="text-xl font-bold text-white mb-4">Payment Methods</h3>
+        <canvas id="paymentChart" height="200"></canvas>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Sales Chart
+    const salesCtx = document.getElementById('salesChart').getContext('2d');
+    new Chart(salesCtx, {
+        type: 'line',
+        data: {
+            labels: {{ dates|safe }},
+            datasets: [{
+                label: 'Daily Sales',
+                data: {{ daily_sales|safe }},
+                borderColor: '#3B82F6',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#9CA3AF'
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        color: '#9CA3AF'
+                    }
+                },
+                x: {
+                    ticks: {
+                        color: '#9CA3AF'
+                    }
+                }
+            }
+        }
+    });
+
+    // Payment Methods Chart
+    const paymentCtx = document.getElementById('paymentChart').getContext('2d');
+    new Chart(paymentCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ payment_methods|safe }},
+            datasets: [{
+                data: {{ payment_amounts|safe }},
+                backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: '#9CA3AF'
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

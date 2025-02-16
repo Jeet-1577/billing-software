@@ -47,5 +47,10 @@ urlpatterns = [
 ]
 
 urlpatterns += [
-    # ...existing additional URL patterns...
+    path('reports/', include([
+        path('sales/', views.sales_dashboard, name='sales_dashboard'),
+        path('items/', views.item_analytics, name='item_analytics'),
+        path('customers/', views.customer_insights, name='customer_insights'),
+        path('financial/', views.financial_reports, name='financial_reports'),
+    ])),
 ]

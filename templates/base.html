@@ -241,14 +241,30 @@
                 <li class="mb-2"><a href="{% url 'settings' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Settings</a></li>
                 <li class="mb-2"><a href="{% url 'inventory' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Inventory</a></li>
                 <li class="mb-2"><a href="{% url 'manage_items' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Manage Items</a></li>
-                <li class="mb-2"><a href="{% url 'portfolio' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Portfolio</a></li>
                 <li class="mb-2"><a href="{% url 'order_data' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Order Data</a></li>
                 <li class="mb-2"><a href="{% url 'about_us' %}" class="block py-2 px-4 rounded hover:bg-gray-700">About Us</a></li>
                 <li class="mb-2"><a href="{% url 'contact_us' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Contact Us</a></li>
                 <li class="mb-2"><a href="{% url 'Privacy_Policy' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Privacy Policy</a></li>
                 <li class="mb-2"><a href="{% url 'Terms_Conditions' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Terms & Conditions</a></li>
                 <li class="mb-2"><a href="{% url 'Refund' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Cancellation/Refund Policies</a></li>
+                <li class="mb-2">
+                    <div x-data="{ open: false }" class="relative">
+                        <button @click="open = !open" class="flex items-center w-full px-4 py-2 text-left hover:bg-gray-700 rounded">
+                            <span>Reports</span>
+                            <svg class="w-4 h-4 ml-2" :class="{'rotate-180': open}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <div x-show="open" @click.away="open = false" class="pl-4 mt-2 space-y-2">
+                            <a href="{% url 'sales_dashboard' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Sales Dashboard</a>
+                            <a href="{% url 'item_analytics' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Item Analytics</a>
+                            <a href="{% url 'customer_insights' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Customer Insights</a>
+                            <a href="{% url 'financial_reports' %}" class="block py-2 px-4 rounded hover:bg-gray-700">Financial Reports</a>
+                        </div>
+                    </div>
+                </li>
             </ul>
+            
         </div>
 
         <!-- Main Content -->

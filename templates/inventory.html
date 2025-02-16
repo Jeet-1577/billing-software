@@ -539,13 +539,11 @@
     #customizationPopup {
         -webkit-backdrop-filter: blur(4px); /* Safari support */
         backdrop-filter: blur(4px);
-        overflow: hidden !important;
     }
 
     #popupContent {
         box-shadow: 0 0 20px rgba(37, 99, 235, 0.3);
         border: 1px solid rgba(37, 99, 235, 0.2);
-        overflow: hidden;
     }
 
     .customization-option {
@@ -569,15 +567,14 @@
     .customization-category {
         background: rgba(55, 65, 81, 0.5);
         border-radius: 0.5rem;
-        padding: 0.7rem;
-        margin-bottom: 1rem;
+        padding: 1rem;
     }
 
     .customization-category h4 {
         color: #fff;
         font-size: 1.1rem;
         font-weight: 600;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.75rem;
         display: flex;
         align-items: center;
     }
@@ -632,29 +629,6 @@
     #popupContent {
         box-shadow: 0 0 25px rgba(59, 130, 246, 0.2);
         border: 1px solid rgba(59, 130, 246, 0.1);
-    }
-
-    #customizationCategories {
-        scrollbar-width: thin;
-        scrollbar-color: #4B5563 #1F2937;
-    }
-
-    #customizationCategories::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    #customizationCategories::-webkit-scrollbar-track {
-        background: #1F2937;
-        border-radius: 3px;
-    }
-
-    #customizationCategories::-webkit-scrollbar-thumb {
-        background: #4B5563;
-        border-radius: 3px;
-    }
-
-    #customizationCategories::-webkit-scrollbar-thumb:hover {
-        background: #6B7280;
     }
 
     /* Alternative styling for browsers that don't support scrollbar-color */
@@ -1010,8 +984,8 @@
 
 <!-- Ensure this customization popup is correctly defined -->
 <div id="customizationPopup" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-gray-800 rounded-lg p-6 mt-8 w-[600px] h-[80vh] transform transition-all scale-95 opacity-0 flex flex-col" id="popupContent">
-        <div class="flex justify-between items-center mb-3 flex-shrink-0">
+    <div class="bg-gray-800 rounded-lg p-6 w-[600px] max-h-[80vh] transform transition-all scale-95 opacity-0 overflow-y-auto" id="popupContent">
+        <div class="flex justify-between items-center mb-4">
             <h3 class="text-xl font-bold text-white" id="customizationTitle">Customize Item</h3>
             <button onclick="closeCustomizationPopup()" class="text-gray-400 hover:text-white" aria-label="Close customization popup">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1020,11 +994,11 @@
             </button>
         </div>
         
-        <div id="customizationCategories" class="flex-grow overflow-y-auto pr-2">
+        <div id="customizationCategories" class="space-y-6 mb-6">
             <!-- Categories will be dynamically added here -->
         </div>
 
-        <div class="flex justify-between items-center mt-3 pt-3 border-t border-gray-700 flex-shrink-0">
+        <div class="flex justify-between items-center mt-6 border-t border-gray-700 pt-4">
             <div class="text-white space-y-1">
                 <div class="text-sm flex justify-between">
                     <span>Base Price:</span>
