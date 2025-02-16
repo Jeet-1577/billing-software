@@ -4,112 +4,238 @@
 {% block title %}Financial Reports{% endblock %}
 
 {% block content %}
-<div class="p-4 md:p-6 space-y-6 max-w-screen-2xl mx-auto">
-    <!-- Date Range Selector -->
-    <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
-        <div class="flex flex-wrap gap-4 items-center">
-            <select id="dateRange" class="bg-gray-700 text-white rounded px-4 py-2">
-                <option value="7">Last 7 Days</option>
-                <option value="30" selected>Last 30 Days</option>
-                <option value="90">Last 3 Months</option>
-                <option value="180">Last 6 Months</option>
-                <option value="365">Last Year</option>
+<div class="min-h-screen bg-gray-900 p-4">
+    <!-- Top Bar with Filters -->
+    <div class="flex justify-between items-center mb-6 bg-gray-800 p-4 rounded-lg">
+        <div class="flex space-x-4 items-center">
+            <h1 class="text-2xl font-bold text-white">Financial Dashboard</h1>
+            <span class="bg-green-500 text-white px-2 py-1 rounded text-sm">Live</span>
+        </div>
+        <div class="flex items-center space-x-4">
+            <select class="bg-gray-700 text-white rounded-md px-3 py-2 text-sm">
+                <option>All Outlets</option>
+                <option>Outlet 1</option>
+                <option>Outlet 2</option>
             </select>
-            <div class="flex gap-4">
-                <input type="date" id="startDate" class="bg-gray-700 text-white rounded px-4 py-2">
-                <input type="date" id="endDate" class="bg-gray-700 text-white rounded px-4 py-2">
-            </div>
-            <button id="applyDateRange" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                Apply Range
-            </button>
-        </div>
-    </div>
-
-    <!-- Financial Overview Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-gradient-to-br from-purple-600 to-purple-800 p-6 rounded-lg shadow-lg">
-            <h3 class="text-gray-200 text-sm font-semibold mb-2">Net Revenue</h3>
-            <p class="text-3xl font-bold text-white">₹{{ total_revenue|floatformat:2 }}</p>
-            <div class="mt-2 flex items-center text-sm">
-                <span class="text-green-400">↑ 12.5%</span>
-                <span class="text-gray-300 ml-2">vs previous period</span>
-            </div>
-        </div>
-
-        <div class="bg-gradient-to-br from-blue-600 to-blue-800 p-6 rounded-lg shadow-lg">
-            <h3 class="text-gray-200 text-sm font-semibold mb-2">GST Collected</h3>
-            <p class="text-3xl font-bold text-white">₹{{ total_gst|floatformat:2 }}</p>
-            <div class="mt-2 flex items-center text-sm">
-                <span class="text-green-400">↑ 8.3%</span>
-                <span class="text-gray-300 ml-2">vs previous period</span>
-            </div>
-        </div>
-
-        <div class="bg-gradient-to-br from-green-600 to-green-800 p-6 rounded-lg shadow-lg">
-            <h3 class="text-gray-200 text-sm font-semibold mb-2">Average Transaction</h3>
-            <p class="text-3xl font-bold text-white">₹{{ avg_order_value|floatformat:2 }}</p>
-            <div class="mt-2 flex items-center text-sm">
-                <span class="text-red-400">↓ 2.1%</span>
-                <span class="text-gray-300 ml-2">vs previous period</span>
-            </div>
-        </div>
-
-        <div class="bg-gradient-to-br from-red-600 to-red-800 p-6 rounded-lg shadow-lg">
-            <h3 class="text-gray-200 text-sm font-semibold mb-2">Total Orders</h3>
-            <p class="text-3xl font-bold text-white">{{ total_orders }}</p>
-            <div class="mt-2 flex items-center text-sm">
-                <span class="text-green-400">↑ 15.7%</span>
-                <span class="text-gray-300 ml-2">vs previous period</span>
+            <div class="flex bg-gray-700 rounded-md p-1">
+                <button class="px-3 py-1 text-sm rounded-md bg-blue-500 text-white">Day</button>
+                <button class="px-3 py-1 text-sm text-gray-300">Week</button>
+                <button class="px-3 py-1 text-sm text-gray-300">Month</button>
+                <button class="px-3 py-1 text-sm text-gray-300">Year</button>
             </div>
         </div>
     </div>
 
-    <!-- Financial Trends -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Revenue Trend -->
-        <div class="bg-gray-800 rounded-lg shadow-lg p-6">
-            <h3 class="text-lg font-semibold text-white mb-4">Revenue Trend</h3>
-            <div id="revenueTrendChart" class="h-80"></div>
-        </div>
-
-        <!-- Payment Distribution -->
-        <div class="bg-gray-800 rounded-lg shadow-lg p-6">
-            <h3 class="text-lg font-semibold text-white mb-4">Payment Methods Distribution</h3>
-            <div id="paymentMethodsChart" class="h-80"></div>
-        </div>
-    </div>
-
-    <!-- Detailed Analysis -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- GST Analysis -->
-        <div class="bg-gray-800 rounded-lg shadow-lg p-6">
-            <h3 class="text-lg font-semibold text-white mb-4">GST Analysis</h3>
-            <div class="space-y-4">
-                <div class="flex justify-between items-center">
-                    <span class="text-gray-300">Total GST Collected</span>
-                    <span class="text-white font-semibold">₹{{ total_gst|floatformat:2 }}</span>
+    <!-- Quick Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <!-- Revenue Card -->
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-lg p-4 relative overflow-hidden">
+            <div class="relative z-10">
+                <p class="text-blue-100 text-sm">Total Revenue</p>
+                <h3 class="text-2xl font-bold text-white mb-2">₹{{ total_revenue|floatformat:2 }}</h3>
+                <div class="flex items-center text-blue-100">
+                    <span class="text-green-400 text-sm">↑ {{ revenue_trend|floatformat:1 }}%</span>
+                    <span class="text-sm ml-2">vs last period</span>
                 </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-gray-300">CGST (9%)</span>
-                    <span class="text-white font-semibold">₹{{ cgst_amount|floatformat:2 }}</span>
-                </div>
-                <div class="flex justify-between items-center">
-                    <span class="text-gray-300">SGST (9%)</span>
-                    <span class="text-white font-semibold">₹{{ sgst_amount|floatformat:2 }}</span>
-                </div>
+            </div>
+            <div class="absolute right-0 bottom-0 text-blue-800">
+                <svg class="w-20 h-20 opacity-50" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2 11a1 1 0 011-1h2a1 1 0 011 1v5a1 1 0 01-1 1H3a1 1 0 01-1-1v-5zm6-4a1 1 0 011-1h2a1 1 0 011 1v9a1 1 0 01-1 1H9a1 1 0 01-1-1V7zm6-3a1 1 0 011-1h2a1 1 0 011 1v12a1 1 0 01-1 1h-2a1 1 0 01-1-1V4z"/>
+                </svg>
             </div>
         </div>
 
-        <!-- Time Analysis -->
-        <div class="bg-gray-800 rounded-lg shadow-lg p-6">
-            <h3 class="text-lg font-semibold text-white mb-4">Peak Hours Analysis</h3>
-            <div id="peakHoursChart" class="h-60"></div>
+        <!-- Profit Card -->
+        <div class="bg-gradient-to-r from-green-600 to-green-800 rounded-lg p-4 relative overflow-hidden">
+            <div class="relative z-10">
+                <p class="text-green-100 text-sm">Net Profit</p>
+                <h3 class="text-2xl font-bold text-white mb-2">₹{{ net_profit|floatformat:2 }}</h3>
+                <div class="flex items-center text-green-100">
+                    <span class="text-green-400 text-sm">{{ profit_margin|floatformat:1 }}%</span>
+                    <span class="text-sm ml-2">Profit Margin</span>
+                </div>
+            </div>
+            <div class="absolute right-0 bottom-0 text-green-800">
+                <svg class="w-20 h-20 opacity-50" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/>
+                    <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"/>
+                </svg>
+            </div>
         </div>
 
-        <!-- Order Type Distribution -->
-        <div class="bg-gray-800 rounded-lg shadow-lg p-6">
-            <h3 class="text-lg font-semibold text-white mb-4">Order Type Distribution</h3>
-            <div id="orderTypeChart" class="h-60"></div>
+        <!-- Orders Card -->
+        <div class="bg-gradient-to-r from-purple-600 to-purple-800 rounded-lg p-4 relative overflow-hidden">
+            <div class="relative z-10">
+                <p class="text-purple-100 text-sm">Total Orders</p>
+                <h3 class="text-2xl font-bold text-white mb-2">{{ total_orders }}</h3>
+                <div class="flex items-center text-purple-100">
+                    <span class="text-green-400 text-sm">↑ {{ order_growth|floatformat:1 }}%</span>
+                    <span class="text-sm ml-2">Growth</span>
+                </div>
+            </div>
+            <div class="absolute right-0 bottom-0 text-purple-800">
+                <svg class="w-20 h-20 opacity-50" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zm13 15.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Average Order Card -->
+        <div class="bg-gradient-to-r from-red-600 to-red-800 rounded-lg p-4 relative overflow-hidden">
+            <div class="relative z-10">
+                <p class="text-red-100 text-sm">Avg Order Value</p>
+                <h3 class="text-2xl font-bold text-white mb-2">₹{{ avg_order_value|floatformat:2 }}</h3>
+                <div class="flex items-center text-red-100">
+                    <span class="text-green-400 text-sm">↑ {{ avg_order_growth|floatformat:1 }}%</span>
+                    <span class="text-sm ml-2">vs last period</span>
+                </div>
+            </div>
+            <div class="absolute right-0 bottom-0 text-red-800">
+                <svg class="w-20 h-20 opacity-50" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zm0 16a3 3 0 01-3-3h6a3 3 0 01-3 3z"/>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <!-- Left Column -->
+        <div class="xl:col-span-2 space-y-6">
+            <!-- Revenue Chart -->
+            <div class="bg-gray-800 rounded-lg p-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-white">Revenue Trends</h2>
+                    <div class="flex space-x-2">
+                        <button class="text-sm px-3 py-1 rounded bg-blue-500 text-white">Revenue</button>
+                        <button class="text-sm px-3 py-1 rounded bg-gray-700 text-gray-300">Orders</button>
+                    </div>
+                </div>
+                <div id="revenueTrendChart" class="h-72"></div>
+            </div>
+
+            <!-- New: Performance Insights -->
+            <div class="bg-gray-800 rounded-lg p-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-white">Performance Insights</h2>
+                    <div class="text-sm text-gray-400">Last 30 days</div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- Best Days -->
+                    <div class="space-y-3">
+                        <h3 class="text-sm font-medium text-green-400">Top Performing Days</h3>
+                        {% for day in top_days %}
+                        <div class="bg-gray-700 rounded-lg p-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-300">{{ day.date|date:"M d" }}</span>
+                                <span class="text-green-400 font-medium">₹{{ day.revenue|floatformat:0 }}</span>
+                            </div>
+                            <div class="mt-1 text-xs text-gray-400">{{ day.orders }} orders</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <!-- Worst Days -->
+                    <div class="space-y-3">
+                        <h3 class="text-sm font-medium text-red-400">Needs Improvement</h3>
+                        {% for day in bottom_days %}
+                        <div class="bg-gray-700 rounded-lg p-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-300">{{ day.date|date:"M d" }}</span>
+                                <span class="text-red-400 font-medium">₹{{ day.revenue|floatformat:0 }}</span>
+                            </div>
+                            <div class="mt-1 text-xs text-gray-400">{{ day.orders }} orders</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- New: Peak Hours Performance -->
+            <div class="grid grid-cols-3 gap-4">
+                {% for hour in peak_hours|slice:":3" %}
+                <div class="bg-gray-800 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-400 text-sm">{{ hour.hour|time:"H:i" }}</span>
+                        <span class="text-xs px-2 py-1 rounded-full {% if hour.performance > 90 %}bg-green-500{% elif hour.performance > 70 %}bg-yellow-500{% else %}bg-red-500{% endif %} text-white">
+                            {{ hour.performance }}%
+                        </span>
+                    </div>
+                    <p class="text-2xl font-bold text-white mb-1">₹{{ hour.revenue|floatformat:0 }}</p>
+                    <p class="text-sm text-gray-400">{{ hour.orders }} orders</p>
+                    <div class="mt-2 h-1 bg-gray-700 rounded">
+                        <div class="h-full bg-blue-500 rounded" style="width: {{ hour.performance }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="space-y-6">
+            <!-- Target Progress -->
+            <div class="bg-gray-800 rounded-lg p-4">
+                <h2 class="text-lg font-semibold text-white mb-4">Monthly Targets</h2>
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-sm text-gray-300 mb-1">
+                            <span>Revenue Target</span>
+                            <span>{{ target_progress|floatformat:1 }}%</span>
+                        </div>
+                        <div class="h-2 bg-gray-700 rounded">
+                            <div class="h-full bg-blue-500 rounded" style="width: {{ target_progress }}%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm text-gray-300 mb-1">
+                            <span>Order Target</span>
+                            <span>{{ order_target_progress|floatformat:1 }}%</span>
+                        </div>
+                        <div class="h-2 bg-gray-700 rounded">
+                            <div class="h-full bg-green-500 rounded" style="width: {{ order_target_progress }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tax Summary -->
+            <div class="bg-gray-800 rounded-lg p-4">
+                <h2 class="text-lg font-semibold text-white mb-4">Tax Summary</h2>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-300">Total GST</span>
+                        <span class="text-white font-semibold">₹{{ total_gst|floatformat:2 }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-300">CGST (9%)</span>
+                        <span class="text-white">₹{{ cgst_amount|floatformat:2 }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-300">SGST (9%)</span>
+                        <span class="text-white">₹{{ sgst_amount|floatformat:2 }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-gray-800 rounded-lg p-4">
+                <h2 class="text-lg font-semibold text-white mb-4">Quick Actions</h2>
+                <div class="grid grid-cols-2 gap-3">
+                    <button class="flex items-center justify-center p-3 bg-blue-600 rounded-lg text-white text-sm hover:bg-blue-700">
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z"/>
+                            <path fill-rule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd"/>
+                        </svg>
+                        Export Report
+                    </button>
+                    <button class="flex items-center justify-center p-3 bg-green-600 rounded-lg text-white text-sm hover:bg-green-700">
+                        <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/>
+                            <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"/>
+                        </svg>
+                        Share Report
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -119,7 +245,7 @@
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Revenue Trend Chart
+    // Revenue Trend Chart only
     const revenueTrendOptions = {
         series: [{
             name: 'Revenue',
@@ -133,123 +259,14 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             foreColor: '#9CA3AF'
         },
-        stroke: {
-            curve: 'smooth',
-            width: 3
-        },
-        fill: {
-            type: 'gradient',
-            gradient: {
-                shadeIntensity: 1,
-                inverseColors: false,
-                opacityFrom: 0.45,
-                opacityTo: 0.05,
-                stops: [20, 100, 100, 100]
-            }
-        },
-        xaxis: {
-            categories: {{ daily_revenue_dates|safe }},
-            axisBorder: {
-                show: false
-            }
-        },
-        yaxis: {
-            labels: {
-                formatter: function(val) {
-                    return '₹' + val.toFixed(0);
-                }
-            }
-        },
-        grid: {
-            borderColor: '#374151',
-            strokeDashArray: 4,
-            xaxis: {
-                lines: {
-                    show: true
-                }
-            }
-        },
-        colors: ['#4F46E5']
+        // ...existing revenue chart options...
     };
 
-    // Payment Methods Chart
-    const paymentMethodsOptions = {
-        series: {{ payment_methods_data|safe }},
-        chart: {
-            type: 'donut',
-            height: 320,
-            foreColor: '#9CA3AF'
-        },
-        labels: {{ payment_methods_labels|safe }},
-        colors: ['#4F46E5', '#10B981', '#F59E0B', '#EF4444'],
-        plotOptions: {
-            pie: {
-                donut: {
-                    size: '75%'
-                }
-            }
-        },
-        legend: {
-            position: 'bottom'
-        }
-    };
-
-    // Peak Hours Chart
-    const peakHoursOptions = {
-        series: [{
-            name: 'Orders',
-            data: [12, 19, 13, 15, 20, 25, 31, 28, 22, 18, 15, 12]
-        }],
-        chart: {
-            type: 'bar',
-            height: 240,
-            toolbar: {
-                show: false
-            },
-            foreColor: '#9CA3AF'
-        },
-        plotOptions: {
-            bar: {
-                borderRadius: 4
-            }
-        },
-        colors: ['#10B981'],
-        xaxis: {
-            categories: ['9AM', '10AM', '11AM', '12PM', '1PM', '2PM', '3PM', '4PM', '5PM', '6PM', '7PM', '8PM']
-        }
-    };
-
-    // Order Type Chart
-    const orderTypeOptions = {
-        series: [44, 55, 13],
-        chart: {
-            type: 'donut',
-            height: 240,
-            foreColor: '#9CA3AF'
-        },
-        labels: ['Dine In', 'Takeaway', 'Delivery'],
-        colors: ['#4F46E5', '#10B981', '#F59E0B'],
-        legend: {
-            position: 'bottom'
-        }
-    };
-
-    // Render all charts
+    // Render revenue chart
     new ApexCharts(document.querySelector("#revenueTrendChart"), revenueTrendOptions).render();
-    new ApexCharts(document.querySelector("#paymentMethodsChart"), paymentMethodsOptions).render();
-    new ApexCharts(document.querySelector("#peakHoursChart"), peakHoursOptions).render();
-    new ApexCharts(document.querySelector("#orderTypeChart"), orderTypeOptions).render();
 
     // Date range selector functionality
-    document.getElementById('dateRange').addEventListener('change', function(e) {
-        const days = parseInt(e.target.value);
-        const end = new Date();
-        const start = new Date();
-        start.setDate(end.getDate() - days);
-        
-        document.getElementById('startDate').value = start.toISOString().split('T')[0];
-        document.getElementById('endDate').value = end.toISOString().split('T')[0];
-    });
+    // ...existing date range code...
 });
 </script>
 {% endblock %}

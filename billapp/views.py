@@ -1253,6 +1253,17 @@ def financial_reports(request):
         cgst_amount = total_gst / 2 if total_gst else 0
         sgst_amount = total_gst / 2 if total_gst else 0
 
+        # Get top and bottom performing days
+        daily_performance = period_orders.annotate(
+            date=TruncDate('created_at')
+        ).values('date').annotate(
+            revenue=Sum('grand_total'),
+            orders=Count('id')
+        ).order_by('-revenue')
+
+        top_days = list(daily_performance[:3])
+        bottom_days = list(daily_performance.reverse()[:3])
+
         context = {
             'total_revenue': total_revenue,
             'total_gst': total_gst,
@@ -1270,7 +1281,9 @@ def financial_reports(request):
             'peak_hours_data': json.dumps([{
                 'hour': item['hour'],
                 'count': item['count']
-            } for item in peak_hours])
+            } for item in peak_hours]),
+            'top_days': top_days,
+            'bottom_days': bottom_days,
         }
         
         return render(request, 'reports/financial_reports.html', context)

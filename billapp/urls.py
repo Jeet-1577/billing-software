@@ -53,4 +53,5 @@ urlpatterns += [
         path('customers/', views.customer_insights, name='customer_insights'),
         path('financial/', views.financial_reports, name='financial_reports'),
     ])),
+    # path('api/reports/financial/export/', views.export_financial_report, name='export_financial_report'),
 ]
