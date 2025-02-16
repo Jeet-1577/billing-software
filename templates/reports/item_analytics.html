@@ -91,7 +91,7 @@
         <div class="w-full xl:w-1/3 bg-gray-800 rounded-lg p-3 md:p-4 shadow-lg">
             <h3 class="text-lg font-semibold text-white mb-2 md:mb-4">Top Selling Items</h3>
             <div class="relative h-[calc(100%-3.5rem)]">
-                <div id="topItemsChart"></div>
+                <div id="topItemsChart" class="w-full h-full"></div>
             </div>
         </div>
     </div>
@@ -100,94 +100,76 @@
 {% endblock %}
 
 {% block extra_scripts %}
-<!-- Load ApexCharts -->
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    console.log("Script running...");
-    
-    // Get the data
-    const chartData = {
-        labels: {{ top_items_labels|safe }},
-        series: {{ top_items_data|safe }}
-    };
-    
-    console.log("Chart Data:", chartData);
+    console.log("DOM Content Loaded");
 
-    var options = {
-        series: chartData.series,
-        chart: {
-            width: '100%',
-            type: 'donut',
-            background: 'transparent'
-        },
-        labels: chartData.labels,
-        theme: {
-            mode: 'dark',
-            palette: 'palette1'
-        },
-        plotOptions: {
-            pie: {
-                donut: {
-                    size: '65%',
-                    background: 'transparent',
-                    labels: {
-                        show: true,
-                        total: {
-                            show: true,
-                            label: 'Total Items',
-                            formatter: function(w) {
-                                return chartData.series.reduce((a, b) => a + b, 0);
-                            }
-                        }
+    let labels = [];
+    let series = [];
+
+    try {
+        labels = JSON.parse('{{ top_items_labels|escapejs }}');
+        series = JSON.parse('{{ top_items_data|escapejs }}');
+    } catch (error) {
+        console.error("Error parsing chart data:", error);
+    }
+
+    console.log("Parsed Labels:", labels);
+    console.log("Parsed Series:", series);
+
+    if (labels.length > 0 && series.length > 0) {
+        var options = {
+            series: series,
+            chart: {
+                height: 350,
+                type: 'donut',
+            },
+            labels: labels,
+            colors: ['#4F46E5', '#3B82F6', '#10B981', '#F59E0B', '#EF4444'],
+            plotOptions: {
+                pie: {
+                    donut: {
+                        size: '65%'
+                    }
+                }
+            },
+            legend: {
+                position: 'right',
+                labels: {
+                    colors: '#fff'
+                },
+                formatter: function(val, opts) {
+                    return `${val} - ${opts.w.globals.series[opts.seriesIndex]} units`;
+                }
+            },
+            tooltip: {
+                y: {
+                    formatter: function(value) {
+                        return `${value} units`;
                     }
                 }
             }
-        },
-        dataLabels: {
-            enabled: true,
-            formatter: function(val, opts) {
-                return opts.w.config.series[opts.seriesIndex];
-            }
-        },
-        legend: {
-            show: true,
-            position: 'right',
-            fontSize: '14px',
-            labels: {
-                colors: '#fff'
-            },
-            formatter: function(seriesName, opts) {
-                return [seriesName, " - ", opts.w.globals.series[opts.seriesIndex]];
-            }
-        },
-        responsive: [{
-            breakpoint: 480,
-            options: {
-                legend: {
-                    position: 'bottom'
-                }
-            }
-        }]
-    };
+        };
 
-    const chartElement = document.querySelector("#topItemsChart");
-    if (chartElement) {
-        console.log("Found chart element, creating chart...");
-        try {
+        const chartElement = document.querySelector("#topItemsChart");
+        if (chartElement) {
+            console.log("Creating chart...");
             const chart = new ApexCharts(chartElement, options);
-            chart.render();
-            console.log("Chart rendered successfully");
-        } catch (error) {
-            console.error("Error creating chart:", error);
+            chart.render().then(() => {
+                console.log("Chart rendered successfully");
+            }).catch((error) => {
+                console.error("Error rendering chart:", error);
+            });
+        } else {
+            console.error("Chart container not found.");
         }
     } else {
-        console.error("Chart element not found!");
+        console.warn("No data available for chart.");
+        document.querySelector("#topItemsChart").innerHTML = '<p class="text-center text-gray-400 mt-4">No data available</p>';
     }
 });
 </script>
-{% endblock %}
 
 <style>
 /* Custom scrollbar for webkit browsers */
@@ -251,3 +233,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 }
 </style>
+{% endblock %}

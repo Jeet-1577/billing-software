@@ -1125,6 +1125,10 @@ select {
   height: calc(100% - 3.5rem);
 }
 
+.h-\[400px\] {
+  height: 400px;
+}
+
 .max-h-40 {
   max-height: 10rem;
 }

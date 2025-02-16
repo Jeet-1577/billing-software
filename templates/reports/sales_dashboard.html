@@ -36,68 +36,6 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Sales Chart
-    const salesCtx = document.getElementById('salesChart').getContext('2d');
-    new Chart(salesCtx, {
-        type: 'line',
-        data: {
-            labels: {{ dates|safe }},
-            datasets: [{
-                label: 'Daily Sales',
-                data: {{ daily_sales|safe }},
-                borderColor: '#3B82F6',
-                tension: 0.4
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    labels: {
-                        color: '#9CA3AF'
-                    }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        color: '#9CA3AF'
-                    }
-                },
-                x: {
-                    ticks: {
-                        color: '#9CA3AF'
-                    }
-                }
-            }
-        }
-    });
 
-    // Payment Methods Chart
-    const paymentCtx = document.getElementById('paymentChart').getContext('2d');
-    new Chart(paymentCtx, {
-        type: 'doughnut',
-        data: {
-            labels: {{ payment_methods|safe }},
-            datasets: [{
-                data: {{ payment_amounts|safe }},
-                backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444']
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'right',
-                    labels: {
-                        color: '#9CA3AF'
-                    }
-                }
-            }
-        }
-    });
-});
 </script>
 {% endblock %}
