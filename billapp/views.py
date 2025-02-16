@@ -25,11 +25,12 @@ from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
-from django.db.models import Sum, Count, Avg
-from django.db.models.functions import TruncDate
+from django.db.models import Sum, Avg, Value, F, IntegerField, FloatField, DecimalField
+from django.db.models.functions import TruncDate, Coalesce, Cast  # Add Cast here
 import logging
 from django.contrib.auth.hashers import check_password
 from django.contrib import messages
+from django.conf import settings as django_settings  # Add this import
 
 logger = logging.getLogger(__name__)
 
@@ -1117,16 +1118,84 @@ def sales_dashboard(request):
     return render(request, 'reports/sales_dashboard.html', context)
 
 def item_analytics(request):
-    # Get top selling items
-    top_items = OrderItem.objects.values('name').annotate(
-        total_quantity=Sum('quantity'),
-        total_revenue=Sum('total_price')
-    ).order_by('-total_quantity')[:10]
+    try:
+        end_date = timezone.now()
+        start_date = end_date - timedelta(days=30)
 
-    context = {
-        'top_items': top_items,
-    }
-    return render(request, 'reports/item_analytics.html', context)
+        # Define output fields
+        decimal_output_field = DecimalField(max_digits=10, decimal_places=2)
+        integer_output_field = IntegerField()
+        float_output_field = FloatField()
+        char_output_field = models.CharField(max_length=255)
+
+        # Today's items - Fix this aggregation
+        today_items_sold = OrderItem.objects.filter(
+            created_at__date=timezone.now().date()
+        ).aggregate(
+            total_sold=Coalesce(Sum(F('quantity'), output_field=integer_output_field), Value(0, output_field=integer_output_field))
+        )['total_sold']
+
+        today_items_revenue = OrderItem.objects.filter(
+            created_at__date=timezone.now().date()
+        ).aggregate(
+            total_revenue=Coalesce(Sum(F('total_price'), output_field=decimal_output_field), Value(0, output_field=decimal_output_field))
+        )['total_revenue']
+
+        # Rest of your code remains the same...
+        # Get top items by quantity
+        top_items_by_quantity = OrderItem.objects.values('name').annotate(
+            total_quantity=Coalesce(Sum('quantity', output_field=integer_output_field), Value(0, output_field=integer_output_field)),
+            total_revenue=Coalesce(Sum('total_price', output_field=decimal_output_field), Value(0, output_field=decimal_output_field))
+        ).order_by('-total_quantity')[:5]
+
+        # Get top items by revenue (separate query)
+        top_items_by_revenue = OrderItem.objects.values('name').annotate(
+            total_quantity=Coalesce(Sum('quantity', output_field=integer_output_field), Value(0, output_field=integer_output_field)),
+            total_revenue=Coalesce(Sum('total_price', output_field=decimal_output_field), Value(0, output_field=decimal_output_field))
+        ).order_by('-total_revenue')[:1]
+
+        # Category distribution
+        category_sales = OrderItem.objects.filter(
+            item_details__has_key='category'
+        ).annotate(
+            category=Coalesce(
+                Cast('item_details__category', output_field=char_output_field),
+                Value('Uncategorized', output_field=char_output_field)
+            )
+        ).values('category').annotate(
+            total_sales=Coalesce(Sum('total_price', output_field=decimal_output_field), Value(0, output_field=decimal_output_field))
+        ).exclude(
+            category__exact=''
+        ).order_by('-total_sales')
+
+        # Calculate average order value
+        avg_order_value = float(today_items_revenue) / float(today_items_sold) if today_items_sold > 0 else 0
+
+        context = {
+            'top_item': top_items_by_quantity.first() if top_items_by_quantity else None,
+            'highest_revenue_item': top_items_by_revenue.first() if top_items_by_revenue else None,
+            'avg_order_value': avg_order_value,
+            'today_items_sold': today_items_sold,
+            'today_items_revenue': today_items_revenue,
+            'top_items_labels': json.dumps([item['name'] for item in top_items_by_quantity]),
+            'top_items_data': json.dumps([float(item['total_quantity']) for item in top_items_by_quantity]),
+            'category_labels': json.dumps([item['category'] for item in category_sales]),
+            'category_data': json.dumps([float(item['total_sales']) for item in category_sales]),
+        }
+        
+        return render(request, 'reports/item_analytics.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error in item_analytics: {str(e)}", exc_info=True)
+        context = {
+            'error': 'An error occurred while generating analytics.',
+            'debug_message': str(e) if django_settings.DEBUG else None,
+            'top_items_labels': '[]',
+            'top_items_data': '[]',
+            'category_labels': '[]',
+            'category_data': '[]',
+        }
+        return render(request, 'reports/item_analytics.html', context)
 
 def customer_insights(request):
     # Get table usage stats

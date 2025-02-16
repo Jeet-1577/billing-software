@@ -1410,11 +1410,7 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function() {
     const orderTypeRadios = document.querySelectorAll('input[name="order_type"]');
     const checkoutButton = document.querySelector('.checkout');
-    
-    if (!checkoutButton) {
-        console.error('Checkout button not found');
-        return;
-    }
+     
 
     orderTypeRadios.forEach(radio => {
         radio.addEventListener('change', function() {

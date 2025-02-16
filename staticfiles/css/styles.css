@@ -39,6 +39,7 @@ button:hover {
 .inventory-categories {
     max-height: 24rem; /* Adjust the height as needed */
     overflow-y: auto;
+
 }
 
 #sidebar {
@@ -60,4 +61,18 @@ button:hover {
     transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
     opacity: 0;
     transform: scale(0.95);
+}
+
+.flex-1 {
+    flex: 1 1 100%; /* Adjusted to take full width for vertical alignment */
+}
+
+.min-w-full {
+    min-width: 100%; /* Ensures elements take full width and stack vertically */
+}
+
+.temporary-marker {
+    color: green;
+    font-size: 1.2em;
+    margin-left: 10px;
 }

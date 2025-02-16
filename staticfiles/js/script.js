@@ -46,6 +46,89 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    const someElement = document.getElementById('someId'); 
+    if (someElement) {
+        someElement.addEventListener('click', () => {
+            // ...existing code...
+        });
+    }
+
+// Utility Functions
+function prepareOrderData() {
+    const selectedItems = document.querySelectorAll('.item-cube.selected');
+    const orderItems = [];
+    let totalAmount = 0;
+
+    selectedItems.forEach(item => {
+        const itemId = item.dataset.itemId;
+        const itemName = item.dataset.itemName;
+        const itemPrice = parseFloat(item.dataset.itemPrice);
+        const quantity = parseInt(document.getElementById(`quantity-${itemId}`).innerText);
+
+        if (quantity > 0) {
+            totalAmount += itemPrice * quantity;
+            orderItems.push({
+                id: itemId,
+                name: itemName,
+                price: itemPrice,
+                quantity: quantity
+            });
+        }
+    });
+
+    const gstAmount = totalAmount * 0.18;
+    const grandTotal = totalAmount + gstAmount;
+    const paymentType = document.querySelector('input[name="payment_type"]:checked').value;
+    const orderType = document.querySelector('input[name="order_type"]:checked').value;
+
+    return {
+        orderId: Date.now().toString(),
+        items: orderItems,
+        totalAmount: totalAmount.toFixed(2),
+        gstAmount: gstAmount.toFixed(2),
+        grandTotal: grandTotal.toFixed(2),
+        paymentType: paymentType,
+        orderType: orderType,
+        time: new Date().toLocaleTimeString('en-US', { hour12: true }),
+        date: new Date().toISOString().split('T')[0]
+    };
+}
+
+// Main Functions
+function placeOrder() {
+    const orderData = prepareOrderData(); // Use the reusable function
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    fetch('/place-order/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify(orderData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.status === 'success') {
+            alert('Order placed successfully!');
+            console.log(orderData);
+            generateThermalBill(orderData); // Call the function to show the bill
+            clearSelectedItems();
+        } else {
+            alert('Failed to place order: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while placing the order.');
+    });
+}
+
     // Ensure the checkout button exists before adding the event listener
     // var checkoutButton = document.querySelector('.checkout');
     // if (checkoutButton) {
@@ -95,19 +178,19 @@ document.addEventListener('DOMContentLoaded', function() {
     //         .then(response => response.json())
     //         .then(data => {
     //             if (data.status === 'success') {
-    //                 alert('Order placed successfully!');
-    //                 console.log(orderData);
-    //                 clearSelectedItems();
-    //             } else {
-    //                 alert('Failed to place order: ' + data.error);
-    //             }
-    //         })
-    //         .catch(error => {
-    //             console.error('Error:', error);
-    //             alert('An error occurred while placing the order.');
-    //         });
-    //     });
-    // }
+//                 alert('Order placed successfully!');
+//                 console.log(orderData);
+//                 clearSelectedItems();
+//             } else {
+//                 alert('Failed to place order: ' + data.error);
+//             }
+//         })
+//         .catch(error => {
+//             console.error('Error:', error);
+//             alert('An error occurred while placing the order.');
+//         });
+//     });
+// }
 
     function updateTotalAmount() {
         var selectedItems = document.getElementsByClassName('item-cube selected');
@@ -167,7 +250,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.book-button').forEach(function(button) {
         button.addEventListener('click', function() {
             const tableId = this.getAttribute('data-table-id');
-            bookTable(tableId);
+            // bookTable(tableId);
         });
     });
 
@@ -183,6 +266,12 @@ function promptForPassword(orderId) {
 }
 
 function verifyPassword(password, orderId) {
+    // Remove any try/catch or fallback logic
+    // Force the user to provide a valid password before proceeding
+    if (!password) {
+        alert("Password is required!");
+        return;
+    }
     fetch(`/verify-password/`, {
         method: 'POST',
         headers: {
@@ -241,29 +330,6 @@ function getCSRFToken() {
     return document.querySelector('[name=csrfmiddlewaretoken]').value;
 }
 
-// Example of how to call the save_note endpoint
-function saveNote(itemId, note) {
-    fetch('/save-note/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')  // Ensure CSRF token is included
-        },
-        body: JSON.stringify({ itemId: itemId, note: note })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if(data.status === 'success'){
-            alert('Note saved successfully!');
-        } else {
-            alert('Error saving note: ' + data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-}
-
 // Helper function to get CSRF token
 function getCookie(name) {
     let cookieValue = null;
@@ -280,3 +346,82 @@ function getCookie(name) {
     }
     return cookieValue;
 }
+
+// Add event listeners for printer icons to fetch and display order details
+// document.querySelectorAll('.eye-icon').forEach(function(icon) {
+//     icon.addEventListener('click', function(event) {
+//         event.stopPropagation(); // Prevent triggering parent click events
+//         var tableId = this.getAttribute('data-table-id');
+//         if (!tableId) {
+//             alert('Table ID not found.');
+//             return;
+//         }
+//         console.log(`Fetching order details for table_id=${tableId}`);
+//         fetch(`/api/table-order/${tableId}/`)  // Updated URL path
+//             .then(response => {
+//                 if (!response.ok) {
+//                     throw new Error('Network response was not ok');
+//                 }
+//                 return response.json();
+//             })
+//             .then(data => {
+//                 console.log('Received data:', data);
+//                 if (data.status === 'success') {
+                    
+//                 } else {
+//                     alert('Failed to fetch order details: ' + data.error);
+//                 }
+//             })
+//     });
+// });
+
+// Function to display order details in a modal
+// function showOrderDetailsModal(tableOrders) {
+//     if (!tableOrders || !Array.isArray(tableOrders)) {
+//         console.error("tableOrders is undefined or not an array");
+//         return;
+//     }
+
+//     const modal = document.getElementById('orderDetailsModal');
+//     const modalContent = document.getElementById('orderDetailsContent');
+//     const tableNumberElement = document.getElementById('tableNumber');
+
+//     // Set the table number (assuming all orders are for the same table)
+//     if (tableOrders.length > 0) {
+//         tableNumberElement.innerText = `Table Number: ${tableOrders[0].table_number}`;
+//     }
+
+//     // Debug log to verify the received data
+//     console.log("Received tableOrders:", tableOrders); // Remove or comment out in production
+
+//     modalContent.innerHTML = tableOrders.map(tableOrder => {
+//         const savedTime = new Date(tableOrder.saved_time);
+//         const formattedSavedDate = savedTime.toLocaleDateString();
+//         const formattedSavedTime = savedTime.toLocaleTimeString();
+
+//         return `
+//             <div class="bg-gray-700 p-4 rounded-lg mb-4">
+//                 <h3 class="text-lg font-semibold text-white">Table Order ID: ${tableOrder.table_order_id}</h3>
+//                 <div class="flex justify-between mt-2">
+//                     <p class="text-gray-300"><span class="font-medium">Status:</span> ${tableOrder.status}</p>
+//                     <p class="text-gray-300"><span class="font-medium">Date:</span> ${formattedSavedDate}</p>
+//                     <p class="text-gray-300"><span class="font-medium">Time:</span> ${formattedSavedTime}</p>
+//                 </div>
+//                 <div class="mt-4">
+//                     <h4 class="font-medium text-white mb-2">Items:</h4>
+//                     <div class="items-section overflow-y-scroll max-h-40 h-32">
+//                         <ul class="space-y-2">
+//                             ${Array.isArray(tableOrder.items) && tableOrder.items.length > 0 ? `
+//                                 <li class="text-gray-300">
+//                                     <span class="font-medium">${tableOrder.items[0].name}</span> - Quantity: ${tableOrder.items[0].quantity} - Price: ₹${tableOrder.items[0].price}
+//                                 </li>
+//                             ` : `<li class="text-gray-300">No items found.</li>`}
+//                         </ul>
+//                     </div>
+//                 </div>
+//             </div>`;
+//     }).join('');
+//     modal.style.display = 'block';
+// } // Added closing brace for the showOrderDetailsModal function
+
+// ...existing code...
