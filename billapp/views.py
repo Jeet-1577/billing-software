@@ -1204,13 +1204,81 @@ def customer_insights(request):
     return render(request, 'reports/customer_insights.html', context)
 
 def financial_reports(request):
-    # Get overall financial stats
-    total_revenue = Order.objects.aggregate(total=Sum('grand_total'))['total'] or 0
-    total_gst = Order.objects.aggregate(total=Sum('gst_amount'))['total'] or 0
+    try:
+        # Get date range from request or use default (30 days)
+        days = int(request.GET.get('days', 30))
+        end_date = timezone.now().date()
+        start_date = end_date - timedelta(days=days)
+
+        # Get financial stats for the period
+        period_orders = Order.objects.filter(date__range=[start_date, end_date])
+        total_revenue = period_orders.aggregate(total=Sum('grand_total'))['total'] or 0
+        total_gst = period_orders.aggregate(total=Sum('gst_amount'))['total'] or 0
+        total_orders = period_orders.count()
+        avg_order_value = total_revenue / total_orders if total_orders > 0 else 0
+
+        # Get previous period stats for comparison
+        prev_start_date = start_date - timedelta(days=days)
+        prev_orders = Order.objects.filter(date__range=[prev_start_date, start_date])
+        prev_revenue = prev_orders.aggregate(total=Sum('grand_total'))['total'] or 0
+        
+        # Calculate revenue trend percentage
+        revenue_trend = ((total_revenue - prev_revenue) / prev_revenue * 100) if prev_revenue > 0 else 0
+
+        # Get daily revenue data
+        daily_revenue = period_orders.annotate(
+            day=TruncDate('date')
+        ).values('day').annotate(
+            total=Sum('grand_total')
+        ).order_by('day')
+
+        # Get payment methods data
+        payment_methods = period_orders.values('payment_type').annotate(
+            total=Sum('grand_total')
+        ).order_by('-total')
+
+        # Get order type distribution
+        order_types = period_orders.values('order_type').annotate(
+            count=Count('id')
+        ).order_by('-count')
+
+        # Get peak hours data
+        peak_hours = period_orders.annotate(
+            hour=ExtractHour('created_at')
+        ).values('hour').annotate(
+            count=Count('id')
+        ).order_by('hour')
+
+        # Calculate CGST and SGST (each is half of total GST)
+        cgst_amount = total_gst / 2 if total_gst else 0
+        sgst_amount = total_gst / 2 if total_gst else 0
+
+        context = {
+            'total_revenue': total_revenue,
+            'total_gst': total_gst,
+            'cgst_amount': cgst_amount,  # Add CGST amount
+            'sgst_amount': sgst_amount,  # Add SGST amount
+            'total_orders': total_orders,
+            'avg_order_value': avg_order_value,
+            'revenue_trend': revenue_trend,
+            'daily_revenue_dates': json.dumps([item['day'].strftime('%Y-%m-%d') for item in daily_revenue]),
+            'daily_revenue_data': json.dumps([float(item['total']) for item in daily_revenue]),
+            'payment_methods_labels': json.dumps([item['payment_type'] for item in payment_methods]),
+            'payment_methods_data': json.dumps([float(item['total']) for item in payment_methods]),
+            'order_types_labels': json.dumps([item['order_type'] for item in order_types]),
+            'order_types_data': json.dumps([item['count'] for item in order_types]),
+            'peak_hours_data': json.dumps([{
+                'hour': item['hour'],
+                'count': item['count']
+            } for item in peak_hours])
+        }
+        
+        return render(request, 'reports/financial_reports.html', context)
     
-    context = {
-        'total_revenue': total_revenue, 
-        'total_gst': total_gst,
-    }
-    return render(request, 'reports/financial_reports.html', context)
+    except Exception as e:
+        logger.error(f"Error in financial_reports: {str(e)}", exc_info=True)
+        return render(request, 'reports/financial_reports.html', {
+            'error': 'An error occurred while generating the financial report.',
+            'debug_message': str(e) if django_settings.DEBUG else None
+        })
 

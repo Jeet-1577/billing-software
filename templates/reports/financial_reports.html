@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Financial Reports{% endblock %}
+
+{% block content %}
+<div class="p-4 md:p-6 space-y-6 max-w-screen-2xl mx-auto">
+    <!-- Date Range Selector -->
+    <div class="bg-gray-800 p-4 rounded-lg shadow-lg">
+        <div class="flex flex-wrap gap-4 items-center">
+            <select id="dateRange" class="bg-gray-700 text-white rounded px-4 py-2">
+                <option value="7">Last 7 Days</option>
+                <option value="30" selected>Last 30 Days</option>
+                <option value="90">Last 3 Months</option>
+                <option value="180">Last 6 Months</option>
+                <option value="365">Last Year</option>
+            </select>
+            <div class="flex gap-4">
+                <input type="date" id="startDate" class="bg-gray-700 text-white rounded px-4 py-2">
+                <input type="date" id="endDate" class="bg-gray-700 text-white rounded px-4 py-2">
+            </div>
+            <button id="applyDateRange" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                Apply Range
+            </button>
+        </div>
+    </div>
+
+    <!-- Financial Overview Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-gradient-to-br from-purple-600 to-purple-800 p-6 rounded-lg shadow-lg">
+            <h3 class="text-gray-200 text-sm font-semibold mb-2">Net Revenue</h3>
+            <p class="text-3xl font-bold text-white">₹{{ total_revenue|floatformat:2 }}</p>
+            <div class="mt-2 flex items-center text-sm">
+                <span class="text-green-400">↑ 12.5%</span>
+                <span class="text-gray-300 ml-2">vs previous period</span>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-blue-600 to-blue-800 p-6 rounded-lg shadow-lg">
+            <h3 class="text-gray-200 text-sm font-semibold mb-2">GST Collected</h3>
+            <p class="text-3xl font-bold text-white">₹{{ total_gst|floatformat:2 }}</p>
+            <div class="mt-2 flex items-center text-sm">
+                <span class="text-green-400">↑ 8.3%</span>
+                <span class="text-gray-300 ml-2">vs previous period</span>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-green-600 to-green-800 p-6 rounded-lg shadow-lg">
+            <h3 class="text-gray-200 text-sm font-semibold mb-2">Average Transaction</h3>
+            <p class="text-3xl font-bold text-white">₹{{ avg_order_value|floatformat:2 }}</p>
+            <div class="mt-2 flex items-center text-sm">
+                <span class="text-red-400">↓ 2.1%</span>
+                <span class="text-gray-300 ml-2">vs previous period</span>
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-red-600 to-red-800 p-6 rounded-lg shadow-lg">
+            <h3 class="text-gray-200 text-sm font-semibold mb-2">Total Orders</h3>
+            <p class="text-3xl font-bold text-white">{{ total_orders }}</p>
+            <div class="mt-2 flex items-center text-sm">
+                <span class="text-green-400">↑ 15.7%</span>
+                <span class="text-gray-300 ml-2">vs previous period</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Financial Trends -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Revenue Trend -->
+        <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-white mb-4">Revenue Trend</h3>
+            <div id="revenueTrendChart" class="h-80"></div>
+        </div>
+
+        <!-- Payment Distribution -->
+        <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-white mb-4">Payment Methods Distribution</h3>
+            <div id="paymentMethodsChart" class="h-80"></div>
+        </div>
+    </div>
+
+    <!-- Detailed Analysis -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- GST Analysis -->
+        <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-white mb-4">GST Analysis</h3>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-300">Total GST Collected</span>
+                    <span class="text-white font-semibold">₹{{ total_gst|floatformat:2 }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-300">CGST (9%)</span>
+                    <span class="text-white font-semibold">₹{{ cgst_amount|floatformat:2 }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-300">SGST (9%)</span>
+                    <span class="text-white font-semibold">₹{{ sgst_amount|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Time Analysis -->
+        <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-white mb-4">Peak Hours Analysis</h3>
+            <div id="peakHoursChart" class="h-60"></div>
+        </div>
+
+        <!-- Order Type Distribution -->
+        <div class="bg-gray-800 rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-semibold text-white mb-4">Order Type Distribution</h3>
+            <div id="orderTypeChart" class="h-60"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Revenue Trend Chart
+    const revenueTrendOptions = {
+        series: [{
+            name: 'Revenue',
+            data: {{ daily_revenue_data|safe }}
+        }],
+        chart: {
+            type: 'area',
+            height: 320,
+            toolbar: {
+                show: false
+            },
+            foreColor: '#9CA3AF'
+        },
+        stroke: {
+            curve: 'smooth',
+            width: 3
+        },
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shadeIntensity: 1,
+                inverseColors: false,
+                opacityFrom: 0.45,
+                opacityTo: 0.05,
+                stops: [20, 100, 100, 100]
+            }
+        },
+        xaxis: {
+            categories: {{ daily_revenue_dates|safe }},
+            axisBorder: {
+                show: false
+            }
+        },
+        yaxis: {
+            labels: {
+                formatter: function(val) {
+                    return '₹' + val.toFixed(0);
+                }
+            }
+        },
+        grid: {
+            borderColor: '#374151',
+            strokeDashArray: 4,
+            xaxis: {
+                lines: {
+                    show: true
+                }
+            }
+        },
+        colors: ['#4F46E5']
+    };
+
+    // Payment Methods Chart
+    const paymentMethodsOptions = {
+        series: {{ payment_methods_data|safe }},
+        chart: {
+            type: 'donut',
+            height: 320,
+            foreColor: '#9CA3AF'
+        },
+        labels: {{ payment_methods_labels|safe }},
+        colors: ['#4F46E5', '#10B981', '#F59E0B', '#EF4444'],
+        plotOptions: {
+            pie: {
+                donut: {
+                    size: '75%'
+                }
+            }
+        },
+        legend: {
+            position: 'bottom'
+        }
+    };
+
+    // Peak Hours Chart
+    const peakHoursOptions = {
+        series: [{
+            name: 'Orders',
+            data: [12, 19, 13, 15, 20, 25, 31, 28, 22, 18, 15, 12]
+        }],
+        chart: {
+            type: 'bar',
+            height: 240,
+            toolbar: {
+                show: false
+            },
+            foreColor: '#9CA3AF'
+        },
+        plotOptions: {
+            bar: {
+                borderRadius: 4
+            }
+        },
+        colors: ['#10B981'],
+        xaxis: {
+            categories: ['9AM', '10AM', '11AM', '12PM', '1PM', '2PM', '3PM', '4PM', '5PM', '6PM', '7PM', '8PM']
+        }
+    };
+
+    // Order Type Chart
+    const orderTypeOptions = {
+        series: [44, 55, 13],
+        chart: {
+            type: 'donut',
+            height: 240,
+            foreColor: '#9CA3AF'
+        },
+        labels: ['Dine In', 'Takeaway', 'Delivery'],
+        colors: ['#4F46E5', '#10B981', '#F59E0B'],
+        legend: {
+            position: 'bottom'
+        }
+    };
+
+    // Render all charts
+    new ApexCharts(document.querySelector("#revenueTrendChart"), revenueTrendOptions).render();
+    new ApexCharts(document.querySelector("#paymentMethodsChart"), paymentMethodsOptions).render();
+    new ApexCharts(document.querySelector("#peakHoursChart"), peakHoursOptions).render();
+    new ApexCharts(document.querySelector("#orderTypeChart"), orderTypeOptions).render();
+
+    // Date range selector functionality
+    document.getElementById('dateRange').addEventListener('change', function(e) {
+        const days = parseInt(e.target.value);
+        const end = new Date();
+        const start = new Date();
+        start.setDate(end.getDate() - days);
+        
+        document.getElementById('startDate').value = start.toISOString().split('T')[0];
+        document.getElementById('endDate').value = end.toISOString().split('T')[0];
+    });
+});
+</script>
+{% endblock %}
