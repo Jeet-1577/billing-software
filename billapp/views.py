@@ -31,13 +31,17 @@ import logging
 from django.contrib.auth.hashers import check_password
 from django.contrib import messages
 from django.conf import settings as django_settings  # Correct the import
+from django.http import HttpResponse
+import csv
+from django.template.loader import render_to_string
+import tempfile
+from django.core.mail import EmailMessage
+import pdfkit  # You'll need to pip install pdfkit and install wkhtmltopdf
 
 logger = logging.getLogger(__name__)
 
 def index(request):
     today = timezone.now().date()
-    today_revenue = Order.objects.filter(date=today).aggregate(Sum('grand_total'))['grand_total__sum'] or 0
-    today_orders_count = Order.objects.filter(date=today).count()
     today_orders = Order.objects.filter(date=today)
 
     context = {
@@ -1323,4 +1327,168 @@ def financial_reports(request):
             'error': 'An error occurred while generating the report.',
             'debug_message': str(e) if django_settings.DEBUG else None  # Now using correct settings import
         })
+
+def export_financial_report(request):
+    """Export financial data to CSV"""
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="financial_report.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(['Date', 'Revenue', 'Orders', 'Average Order Value'])
+    
+    # Get the same date range as in financial_reports view
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+    period = request.GET.get('period', 'day')
+    
+    # Use the same query logic as financial_reports
+    orders = Order.objects.filter(status='completed')
+    if start_date and end_date:
+        orders = orders.filter(created_at__date__range=[start_date, end_date])
+    
+    daily_data = orders.annotate(
+        order_date=TruncDate('created_at')
+    ).values('order_date').annotate(
+        revenue=Sum('grand_total'),
+        orders=Count('id')
+    ).order_by('order_date')
+    
+    for day in daily_data:
+        avg_order = day['revenue'] / day['orders'] if day['orders'] > 0 else 0
+        writer.writerow([
+            day['order_date'].strftime('%Y-%m-%d'),
+            f"₹{day['revenue']:.2f}",
+            day['orders'],
+            f"₹{avg_order:.2f}"
+        ])
+    
+    return response
+
+def generate_pdf_report(request):
+    """Generate PDF version of the financial report"""
+    try:
+        # Add debug logging
+        import os
+        wkhtmltopdf_path = os.path.abspath(django_settings.WKHTMLTOPDF_CMD)
+        print(f"WKHTMLTOPDF Path: {wkhtmltopdf_path}")
+        print(f"Path exists: {os.path.exists(wkhtmltopdf_path)}")
+        
+        # Get period and other parameters
+        period = request.GET.get('period', 'day')
+        today = timezone.now().date()
+        
+        # Calculate date range
+        if period == 'day':
+            start_date = today
+        elif period == 'week':
+            start_date = today - timedelta(days=7)
+        elif period == 'month':
+            start_date = today - timedelta(days=30)
+        else:  # year
+            start_date = today - timedelta(days=365)
+        
+        # Get completed orders
+        current_orders = Order.objects.filter(
+            date__range=[start_date, today],
+            status='completed'
+        )
+
+        # Calculate metrics
+        total_revenue = current_orders.aggregate(
+            total=Coalesce(Sum('grand_total'), Decimal('0.00'))
+        )['total']
+        
+        total_orders = current_orders.count()
+        avg_order_value = (total_revenue / total_orders) if total_orders > 0 else 0
+        total_gst = current_orders.aggregate(
+            total=Coalesce(Sum('gst_amount'), Decimal('0.00'))
+        )['total']
+
+        # Calculate GST breakup
+        cgst_amount = total_gst / 2
+        sgst_amount = total_gst / 2
+
+        # Get daily performance data
+        daily_performance = current_orders.annotate(
+            order_date=TruncDate('created_at')
+        ).values('order_date').annotate(
+            revenue=Sum('grand_total'),
+            orders=Count('id')
+        ).order_by('-revenue')
+
+        # Get top performing days
+        top_days = list(daily_performance[:3])
+
+        # Create context for template
+        context = {
+            'total_revenue': total_revenue,
+            'total_orders': total_orders,
+            'avg_order_value': avg_order_value,
+            'total_gst': total_gst,
+            'cgst_amount': cgst_amount,
+            'sgst_amount': sgst_amount,
+            'top_days': top_days,
+            'selected_period': period,
+            'now': timezone.now(),
+        }
+        
+        # Render the template to string
+        html_string = render_to_string('reports/financial_reports_pdf.html', context)
+        
+        # Create configuration with explicit path
+        config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
+        
+        # Generate PDF with explicit options and configuration
+        pdf_file = pdfkit.from_string(
+            html_string,
+            False,
+            options={
+                'page-size': 'A4',
+                'encoding': 'UTF-8',
+                'enable-local-file-access': True,
+                'quiet': ''
+            },
+            configuration=config
+        )
+        
+        # Create response
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="financial_report.pdf"'
+        return response
+        
+    except Exception as e:
+        print(f"PDF Generation Error: {str(e)}")  # Debug print
+        logger.error(f"Error generating PDF: {str(e)}")
+        return HttpResponse(f"Error generating PDF: {str(e)}", status=500)
+
+def share_report(request):
+    """Share report via email"""
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        if not email:
+            return JsonResponse({'status': 'error', 'message': 'Email is required'})
+            
+        try:
+            # Generate PDF
+            context = {}  # Add the same context data as financial_reports view
+            html_string = render_to_string('reports/financial_reports_pdf.html', context)
+            pdf_file = pdfkit.from_string(html_string, False)
+            
+            # Create email
+            email_message = EmailMessage(
+                'Financial Report',
+                'Please find attached the financial report.',
+                'from@example.com',
+                [email]
+            )
+            
+            # Attach PDF
+            email_message.attach('financial_report.pdf', pdf_file, 'application/pdf')
+            email_message.send()
+            
+            return JsonResponse({'status': 'success', 'message': 'Report sent successfully'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+            
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
 

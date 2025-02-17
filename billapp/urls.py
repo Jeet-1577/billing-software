@@ -54,5 +54,7 @@ urlpatterns += [
         path('financial/', views.financial_reports, name='financial_reports'),
         path('financial/filter/', views.financial_reports, name='financial_reports_filter'),
     ])),
-    # path('api/reports/financial/export/', views.export_financial_report, name='export_financial_report'),
+    path('reports/financial/export/', views.export_financial_report, name='export_financial_report'),
+    path('reports/financial/pdf/', views.generate_pdf_report, name='generate_pdf_report'),
+    path('reports/financial/share/', views.share_report, name='share_report'),
 ]

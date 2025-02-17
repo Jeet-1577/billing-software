@@ -239,29 +239,38 @@
 
             <!-- Quick Actions -->
             <div class="bg-gray-800 rounded-lg p-4">
-                <h2 class="text-base font-semibold text-white mb-3">Quick Actions</h2> <!-- Reduced text and margin -->
-                <div class="grid grid-cols-2 gap-2"> <!-- Reduced gap -->
-                    <button class="flex items-center justify-center p-3 bg-blue-600 rounded-lg text-white text-sm hover:bg-blue-700">
+                <h2 class="text-base font-semibold text-white mb-3">Quick Actions</h2>
+                <div class="grid grid-cols-2 gap-2">
+                    <!-- Export Button -->
+                    <a href="{% url 'export_financial_report' %}?period={{ selected_period }}&start_date={{ start_date }}&end_date={{ end_date }}" 
+                       class="flex items-center justify-center p-3 bg-blue-600 rounded-lg text-white text-sm hover:bg-blue-700">
                         <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z"/>
                             <path fill-rule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd"/>
                         </svg>
-                        Export Report
-                    </button>
-                    <button class="flex items-center justify-center p-3 bg-green-600 rounded-lg text-white text-sm hover:bg-green-700">
+                        Export CSV
+                    </a>
+
+                    <!-- Share Button -->
+                    <button onclick="shareReport()" 
+                            class="flex items-center justify-center p-3 bg-green-600 rounded-lg text-white text-sm hover:bg-green-700">
                         <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"/>
                             <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z"/>
                         </svg>
                         Share Report
                     </button>
-                    <button class="flex items-center justify-center p-3 bg-purple-600 rounded-lg text-white text-sm hover:bg-purple-700">
+                    <!-- Download PDF -->
+                    <a href="{% url 'generate_pdf_report' %}?period={{ selected_period }}&start_date={{ start_date }}&end_date={{ end_date }}" 
+                       class="flex items-center justify-center p-3 bg-purple-600 rounded-lg text-white text-sm hover:bg-purple-700">
                         <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v3.586L7.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 10.586V7z"/>
                         </svg>
                         Download PDF
-                    </button>
-                    <button class="flex items-center justify-center p-3 bg-orange-600 rounded-lg text-white text-sm hover:bg-orange-700">
+                    </a>
+                    <!-- Print Button -->
+                    <button onclick="window.print()" 
+                            class="flex items-center justify-center p-3 bg-orange-600 rounded-lg text-white text-sm hover:bg-orange-700">
                         <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0v3H7V4h6zm-6 8v4h6v-4H7z"/>
                         </svg>
@@ -272,6 +281,36 @@
         </div>
     </div>
 </div>
+
+<!-- Share Report Modal -->
+<div id="shareModal" class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center">
+    <div class="bg-gray-800 p-6 rounded-lg w-96 shadow-xl">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-white">Share Report</h3>
+            <button onclick="closeShareModal()" class="text-gray-400 hover:text-white">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/>
+                </svg>
+            </button>
+        </div>
+        <input type="email" 
+               id="shareEmail" 
+               placeholder="Enter email address" 
+               class="w-full bg-gray-700 text-white rounded-md px-3 py-2 mb-4 focus:ring-2 focus:ring-blue-500">
+        <div class="flex justify-end space-x-2">
+            <button onclick="closeShareModal()" 
+                    class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+                Cancel
+            </button>
+            <button onclick="sendReport()" 
+                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                    id="sendReportBtn">
+                Send
+            </button>
+        </div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block extra_scripts %}
@@ -279,7 +318,6 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     console.clear(); // Clear previous console messages
-
     // Initialize revenue chart
     const revenueTrendOptions = {
         series: [{
@@ -337,32 +375,25 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     };
-
     new ApexCharts(document.querySelector("#revenueTrendChart"), revenueTrendOptions).render();
-
     // Simple Period Switcher
     function initializePeriodSwitcher() {
         console.log('Initializing period switcher');
-        
         const buttons = document.querySelectorAll('[data-period]');
         console.log(`Found ${buttons.length} period buttons`);
-        
         if (buttons.length === 0) {
             console.error('No period buttons found! Check the selectors.');
             return;
         }
-
         buttons.forEach(button => {
             button.addEventListener('click', function() {
                 const period = this.getAttribute('data-period');
                 console.log(`Period button clicked: ${period}`);
-                
                 try {
                     // Update URL with the new period
                     const baseUrl = window.location.pathname;
                     const newUrl = `${baseUrl}?period=${period}`;
                     console.log(`Navigating to: ${newUrl}`);
-                    
                     // Force page reload with new period
                     window.location.href = newUrl;
                 } catch (err) {
@@ -371,36 +402,30 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         });
-
         // Log current period
         const currentPeriod = '{{ selected_period|default:"day" }}';
         console.log('Current selected period:', currentPeriod);
     }
-
     // Initialize the period switcher
     try {
         initializePeriodSwitcher();
     } catch (err) {
         console.error('Failed to initialize period switcher:', err);
     }
-
     // Handle date range form submission
     const dateRangeForm = document.getElementById('dateRangeForm');
     dateRangeForm.addEventListener('submit', function(e) {
         e.preventDefault();
         const startDate = document.getElementById('start_date').value;
         const endDate = document.getElementById('end_date').value;
-
         if (!startDate || !endDate) {
             alert('Please select both start and end dates');
             return;
         }
-
         if (new Date(endDate) < new Date(startDate)) {
             alert('End date cannot be before start date');
             return;
         }
-
         // Clear any existing period selection
         const periodButtons = document.querySelectorAll('[data-period]');
         periodButtons.forEach(button => {
@@ -408,30 +433,99 @@ document.addEventListener('DOMContentLoaded', function() {
             const bg = button.querySelector('div');
             if (bg) bg.remove();
         });
-
         // Update URL and reload page
         window.location.href = `?start_date=${startDate}&end_date=${endDate}`;
     });
-
     // Period Button Handler
     function initializePeriodSwitcher() {
         const buttons = document.querySelectorAll('[data-period]');
-        
         buttons.forEach(button => {
             button.addEventListener('click', function() {
                 const period = this.getAttribute('data-period');
-                
                 // Clear date inputs when switching to period view
                 document.getElementById('start_date').value = '';
                 document.getElementById('end_date').value = '';
-                
                 // Update URL with period
                 window.location.href = `?period=${period}`;
             });
         });
     }
-
     initializePeriodSwitcher();
+    // Share Report Functions
+    window.shareReport = function() {
+        document.getElementById('shareModal').classList.remove('hidden');
+    }
+    window.closeShareModal = function() {
+        document.getElementById('shareModal').classList.add('hidden');
+        document.getElementById('shareEmail').value = '';
+    }
+    window.sendReport = function() {
+        const email = document.getElementById('shareEmail').value;
+        if (!email) {
+            alert('Please enter an email address');
+            return;
+        }
+        // Show loading state
+        const sendButton = document.getElementById('sendReportBtn');
+        const originalText = sendButton.textContent;
+        sendButton.textContent = 'Sending...';
+        sendButton.disabled = true;
+        fetch('{% url "share_report" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({
+                email: email,
+                period: '{{ selected_period }}',
+                start_date: '{{ start_date }}',
+                end_date: '{{ end_date }}',
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('Report sent successfully!');
+                closeShareModal();
+            } else {
+                alert(data.message || 'Error sending report');
+            }
+        })
+        .catch(error => {
+            alert('Error sharing report: ' + error);
+        })
+        .finally(() => {
+            // Reset button state
+            sendButton.textContent = originalText;
+            sendButton.disabled = false;
+        });
+    }
+    // Add keyboard event listener for Enter key
+    document.getElementById('shareEmail').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendReport();
+        }
+    });
+    // Close modal when clicking outside
+    document.getElementById('shareModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeShareModal();
+        }
+    });
 });
 </script>
+
+<!-- Add print styles -->
+<style>
+@media print {
+    .no-print {
+        display: none;
+    }
+    body {
+        background: white;
+        color: black;
+    }
+}
+</style>
 {% endblock %}

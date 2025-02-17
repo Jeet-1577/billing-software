@@ -156,3 +156,20 @@ STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesSto
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Email Settings
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'jeet_22022@ldrp.ac.in'  # Replace with your Gmail
+EMAIL_HOST_PASSWORD = 'odvl whnt gvrk pmna'  # Replace with app password from step 1
+
+# PDF Kit Settings
+WKHTMLTOPDF_PATH = r'C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe'  # Verify this path after installation
+WKHTMLTOPDF_CMD = r'C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe'  # Update this path
+
+# Report Settings
+EXPORT_REPORT_PATH = BASE_DIR / 'reports' / 'exports'
+MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_URL = '/media/'
+
