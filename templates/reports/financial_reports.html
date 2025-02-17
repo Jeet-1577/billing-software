@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Financial Reports{% endblock %}
+{% block title %}Financial Reports{% endblock title %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-900 p-4">
@@ -269,12 +269,12 @@
                         Download PDF
                     </a>
                     <!-- Print Button -->
-                    <button onclick="window.print()" 
-                            class="flex items-center justify-center p-3 bg-orange-600 rounded-lg text-white text-sm hover:bg-orange-700">
+                    <button id="printButton" 
+                            class="flex items-center justify-center p-3 bg-orange-600 rounded-lg text-white text-sm hover:bg-orange-700 no-print">
                         <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0v3H7V4h6zm-6 8v4h6v-4H7z"/>
                         </svg>
-                        Print
+                        Print Report
                     </button>
                 </div>
             </div>
@@ -311,10 +311,11 @@
     </div>
 </div>
 
-{% endblock %}
+{% endblock content %}
 
 {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script src="{% static 'js/reports.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     console.clear(); // Clear previous console messages
@@ -516,16 +517,28 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<!-- Add print styles -->
+<!-- Print Styles -->
 <style>
 @media print {
     .no-print {
-        display: none;
+        display: none !important;
     }
     body {
-        background: white;
-        color: black;
+        background: white !important;
+        color: black !important;
+        font-family: Arial, sans-serif !important;
+        padding: 20px !important;
+    }
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin: 1em 0;
+        page-break-inside: avoid;
+    }
+    .section {
+        page-break-inside: avoid;
     }
 }
 </style>
-{% endblock %}
+{% endblock extra_scripts %}

@@ -1367,29 +1367,25 @@ def export_financial_report(request):
 def generate_pdf_report(request):
     """Generate PDF version of the financial report"""
     try:
-        # Add debug logging
         import os
         wkhtmltopdf_path = os.path.abspath(django_settings.WKHTMLTOPDF_CMD)
-        print(f"WKHTMLTOPDF Path: {wkhtmltopdf_path}")
-        print(f"Path exists: {os.path.exists(wkhtmltopdf_path)}")
         
-        # Get period and other parameters
+        # Get period and date range
         period = request.GET.get('period', 'day')
-        today = timezone.now().date()
+        end_date = timezone.now().date()
         
-        # Calculate date range
         if period == 'day':
-            start_date = today
+            start_date = end_date
         elif period == 'week':
-            start_date = today - timedelta(days=7)
+            start_date = end_date - timedelta(days=7)
         elif period == 'month':
-            start_date = today - timedelta(days=30)
+            start_date = end_date - timedelta(days=30)
         else:  # year
-            start_date = today - timedelta(days=365)
+            start_date = end_date - timedelta(days=365)
         
         # Get completed orders
         current_orders = Order.objects.filter(
-            date__range=[start_date, today],
+            date__range=[start_date, end_date],
             status='completed'
         )
 
@@ -1398,66 +1394,102 @@ def generate_pdf_report(request):
             total=Coalesce(Sum('grand_total'), Decimal('0.00'))
         )['total']
         
-        total_orders = current_orders.count()
-        avg_order_value = (total_revenue / total_orders) if total_orders > 0 else 0
-        total_gst = current_orders.aggregate(
-            total=Coalesce(Sum('gst_amount'), Decimal('0.00'))
+        # Get daily revenue breakdown - Changed annotation name from 'date' to 'report_date'
+        daily_revenue = current_orders.annotate(
+            report_date=TruncDate('created_at')  # Changed from 'date' to 'report_date'
+        ).values('report_date').annotate(
+            revenue=Sum('grand_total'),
+            orders=Count('id'),
+            gst=Sum('gst_amount')
+        ).order_by('report_date')
+
+        # Get previous period for comparison
+        prev_start_date = start_date - (end_date - start_date)
+        previous_orders = Order.objects.filter(
+            date__range=[prev_start_date, start_date - timedelta(days=1)],
+            status='completed'
+        )
+        
+        # Calculate trends
+        prev_total = previous_orders.aggregate(
+            total=Coalesce(Sum('grand_total'), Decimal('0.00'))
         )['total']
-
-        # Calculate GST breakup
-        cgst_amount = total_gst / 2
-        sgst_amount = total_gst / 2
-
-        # Get daily performance data
+        revenue_trend = ((total_revenue - prev_total) / prev_total * 100) if prev_total > 0 else 0
+        
+        # Get daily performance for top days
         daily_performance = current_orders.annotate(
-            order_date=TruncDate('created_at')
-        ).values('order_date').annotate(
+            report_date=TruncDate('created_at')
+        ).values('report_date').annotate(
             revenue=Sum('grand_total'),
             orders=Count('id')
         ).order_by('-revenue')
 
-        # Get top performing days
-        top_days = list(daily_performance[:3])
-
-        # Create context for template
+        # Create context with all the data
         context = {
-            'total_revenue': total_revenue,
-            'total_orders': total_orders,
-            'avg_order_value': avg_order_value,
-            'total_gst': total_gst,
-            'cgst_amount': cgst_amount,
-            'sgst_amount': sgst_amount,
-            'top_days': top_days,
+            'start_date': start_date,
+            'end_date': end_date,
             'selected_period': period,
+            'total_revenue': total_revenue,
+            'total_orders': current_orders.count(),
+            'avg_order_value': total_revenue / current_orders.count() if current_orders.count() > 0 else 0,
+            'total_gst': current_orders.aggregate(Sum('gst_amount'))['gst_amount__sum'] or 0,
+            'cgst_amount': (current_orders.aggregate(Sum('gst_amount'))['gst_amount__sum'] or 0) / 2,
+            'sgst_amount': (current_orders.aggregate(Sum('gst_amount'))['gst_amount__sum'] or 0) / 2,
+            'revenue_trend': revenue_trend,
+            'top_days': list(daily_performance[:3]),
+            'daily_revenue': [
+                {
+                    'date': item['report_date'],  # Use the new field name
+                    'revenue': item['revenue'],
+                    'orders': item['orders'],
+                    'gst': item['gst']
+                }
+                for item in daily_revenue
+            ],
             'now': timezone.now(),
         }
         
-        # Render the template to string
-        html_string = render_to_string('reports/financial_reports_pdf.html', context)
+        # Add hotel information to context
+        context.update({
+            'hotel_name': 'Your Hotel Name',  # Replace with actual hotel name
+            'hotel_logo_url': 'path/to/logo.png',  # Replace with actual logo path
+            'hotel_address': '123 Main Street, City, State - PIN',
+            'hotel_phone': '+91 1234567890',
+            'hotel_email': 'contact@hotel.com',
+            'hotel_gstin': 'XXXXXXXXXXXX',
+            # ...rest of your existing context...
+        })
         
-        # Create configuration with explicit path
+        # Render template and generate PDF
+        html_string = render_to_string('reports/financial_reports_pdf.html', context)
         config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
         
-        # Generate PDF with explicit options and configuration
+        # Generate PDF with improved margins and options
         pdf_file = pdfkit.from_string(
             html_string,
             False,
             options={
                 'page-size': 'A4',
+                'margin-top': '15mm',
+                'margin-right': '15mm',
+                'margin-bottom': '15mm',
+                'margin-left': '15mm',
                 'encoding': 'UTF-8',
                 'enable-local-file-access': True,
-                'quiet': ''
+                'quiet': '',
+                'print-media-type': True,
+                'footer-right': '[page] of [topage]'
             },
             configuration=config
         )
         
         # Create response
         response = HttpResponse(pdf_file, content_type='application/pdf')
-        response['Content-Disposition'] = 'attachment; filename="financial_report.pdf"'
+        filename = f"financial_report_{start_date.strftime('%Y%m%d')}_{end_date.strftime('%Y%m%d')}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
         return response
         
     except Exception as e:
-        print(f"PDF Generation Error: {str(e)}")  # Debug print
         logger.error(f"Error generating PDF: {str(e)}")
         return HttpResponse(f"Error generating PDF: {str(e)}", status=500)
 

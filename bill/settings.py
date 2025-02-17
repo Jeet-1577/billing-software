@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'billapp.apps.BillappConfig',
+    'billapp.templatetags',  # Add this line
     'django_browser_reload',
     'theme',
     'tailwind',
