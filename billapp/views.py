@@ -30,7 +30,7 @@ from django.db.models.functions import TruncDate, Coalesce, Cast, ExtractHour, T
 import logging
 from django.contrib.auth.hashers import check_password
 from django.contrib import messages
-from django.conf import settings as django_settings  # Add this import
+from django.conf import settings  # Change this import
 
 logger = logging.getLogger(__name__)
 
@@ -1203,107 +1203,98 @@ def customer_insights(request):
     }
     return render(request, 'reports/customer_insights.html', context)
 
-def get_period_dates(period):
-    """Helper function to get start and end dates based on period"""
-    end_date = timezone.now().date()
-    
-    if period == 'day':
-        start_date = end_date
-    elif period == 'week':
-        start_date = end_date - timedelta(days=7)
-    elif period == 'month':
-        start_date = end_date - timedelta(days=30)
-    elif period == 'year':
-        start_date = end_date - timedelta(days=365)
-    else:  # Default to month
-        start_date = end_date - timedelta(days=30)
-    
-    return start_date, end_date
 
 def financial_reports(request):
     try:
         # Get time period from request
-        period = request.GET.get('period', 'month')
-        start_date, end_date = get_period_dates(period)
-
-        # Get orders for the selected period
-        period_orders = Order.objects.filter(
-            date__range=[start_date, end_date],
+        period = request.GET.get('period', 'day')  # Default to daily view
+        today = timezone.now().date()
+        
+        # Calculate date ranges
+        if period == 'day':
+            start_date = today
+        elif period == 'week':
+            start_date = today - timedelta(days=7)
+        elif period == 'month':
+            start_date = today - timedelta(days=30)
+        else:  # year
+            start_date = today - timedelta(days=365)
+        
+        # Get completed orders for current period
+        current_orders = Order.objects.filter(
+            date__range=[start_date, today],
             status='completed'
         )
 
-        # Calculate previous period
-        prev_start_date = start_date - (end_date - start_date)
+        # Get previous period orders for comparison
+        prev_start_date = start_date - (today - start_date)
         prev_end_date = start_date - timedelta(days=1)
-        prev_orders = Order.objects.filter(
+        previous_orders = Order.objects.filter(
             date__range=[prev_start_date, prev_end_date],
             status='completed'
         )
 
-        # Basic metrics
-        total_revenue = period_orders.aggregate(total=Sum('grand_total'))['total'] or 0
-        total_gst = period_orders.aggregate(total=Sum('gst_amount'))['total'] or 0
-        total_orders = period_orders.count()
-        avg_order_value = total_revenue / total_orders if total_orders > 0 else 0
+        # Calculate current period metrics
+        total_revenue = current_orders.aggregate(
+            total=Coalesce(Sum('grand_total'), Decimal('0.00'))
+        )['total']
+        
+        total_orders = current_orders.count()
+        avg_order_value = (total_revenue / total_orders) if total_orders > 0 else 0
+        total_gst = current_orders.aggregate(
+            total=Coalesce(Sum('gst_amount'), Decimal('0.00'))
+        )['total']
 
-        # Previous period metrics
-        prev_revenue = prev_orders.aggregate(total=Sum('grand_total'))['total'] or 0
-        prev_orders_count = prev_orders.count()
-        prev_avg_order = prev_revenue / prev_orders_count if prev_orders_count > 0 else 0
+        # Calculate previous period metrics
+        prev_revenue = previous_orders.aggregate(
+            total=Coalesce(Sum('grand_total'), Decimal('0.00'))
+        )['total']
+        prev_orders = previous_orders.count()
+        prev_avg_order = (prev_revenue / prev_orders) if prev_orders > 0 else 0
 
         # Calculate growth percentages
         revenue_trend = ((total_revenue - prev_revenue) / prev_revenue * 100) if prev_revenue > 0 else 0
-        order_growth = ((total_orders - prev_orders_count) / prev_orders_count * 100) if prev_orders_count > 0 else 0
+        order_growth = ((total_orders - prev_orders) / prev_orders * 100) if prev_orders > 0 else 0
         avg_order_growth = ((avg_order_value - prev_avg_order) / prev_avg_order * 100) if prev_avg_order > 0 else 0
 
-        # Performance analysis
-        daily_performance = period_orders.annotate(
-            order_date=TruncDate('created_at')  # Changed from 'date' to 'order_date'
+        # Daily performance analysis
+        daily_performance = current_orders.annotate(
+            order_date=TruncDate('created_at')
         ).values('order_date').annotate(
             revenue=Sum('grand_total'),
             orders=Count('id')
         ).order_by('-revenue')
 
-        # Get top and bottom performing days
+        # Get top and bottom 3 days
         top_days = list(daily_performance[:3])
-        bottom_days = list(daily_performance.reverse()[:3])
+        bottom_days = list(daily_performance.order_by('revenue')[:3])
 
-        # Peak hours analysis
-        peak_hours = period_orders.annotate(
-            hour=TruncHour('created_at')
-        ).values('hour').annotate(
-            revenue=Sum('grand_total'),
-            orders=Count('id')
-        ).order_by('-orders')[:3]
+        # Calculate targets
+        monthly_revenue = Order.objects.filter(
+            date__month=today.month,
+            status='completed'
+        ).aggregate(total=Coalesce(Sum('grand_total'), Decimal('0.00')))['total']
 
-        # Calculate peak hour performance
-        max_orders_per_hour = 20  # Threshold for 100% performance
-        for hour in peak_hours:
-            hour['performance'] = min((hour['orders'] / max_orders_per_hour) * 100, 100)
+        # Set your monthly targets (adjust these values as needed)
+        monthly_revenue_target = Decimal('100000.00')  # Example: ₹1,00,000
+        monthly_order_target = 500  # Example: 500 orders
 
-        # Update the daily revenue data calculation
-        daily_revenue = period_orders.annotate(
-            order_day=TruncDate('date')  # Changed from 'day' to 'order_day'
-        ).values('order_day').annotate(
+        target_progress = (monthly_revenue / monthly_revenue_target * 100) if monthly_revenue_target > 0 else 0
+        order_target_progress = (total_orders / monthly_order_target * 100) if monthly_order_target > 0 else 0
+
+        # Daily revenue trend data - Fix the date annotation
+        daily_revenue = current_orders.annotate(
+            order_date=TruncDate('created_at')  # Changed from 'date' to 'order_date'
+        ).values('order_date').annotate(
             total=Sum('grand_total')
-        ).order_by('order_day')
+        ).order_by('order_date')
 
-        # Target calculations (example targets)
-        monthly_revenue_target = 100000
-        monthly_order_target = 1000
-        target_progress = (total_revenue / monthly_revenue_target * 100)
-        order_target_progress = (total_orders / monthly_order_target * 100)
-
-        # Calculate CGST and SGST
+        # Calculate GST breakup
         cgst_amount = total_gst / 2
         sgst_amount = total_gst / 2
 
-        # Update the context to use the new field names
         context = {
             'total_revenue': total_revenue,
-            'total_gst': total_gst,
-            'cgst_amount': cgst_amount,
-            'sgst_amount': sgst_amount,
             'total_orders': total_orders,
             'avg_order_value': avg_order_value,
             'revenue_trend': revenue_trend,
@@ -1311,28 +1302,22 @@ def financial_reports(request):
             'avg_order_growth': avg_order_growth,
             'target_progress': target_progress,
             'order_target_progress': order_target_progress,
-            'top_days': [{
-                'date': day['order_date'],
-                'revenue': day['revenue'],
-                'orders': day['orders']
-            } for day in top_days],
-            'bottom_days': [{
-                'date': day['order_date'],
-                'revenue': day['revenue'],
-                'orders': day['orders']
-            } for day in bottom_days],
-            'peak_hours': peak_hours,
-            'daily_revenue_dates': json.dumps([item['order_day'].strftime('%Y-%m-%d') for item in daily_revenue]),
+            'total_gst': total_gst,
+            'cgst_amount': cgst_amount,
+            'sgst_amount': sgst_amount,
+            'top_days': top_days,
+            'bottom_days': bottom_days,
             'daily_revenue_data': json.dumps([float(item['total']) for item in daily_revenue]),
+            'daily_revenue_dates': json.dumps([item['order_date'].strftime('%Y-%m-%d') for item in daily_revenue]),
             'selected_period': period,
         }
-        
+
         return render(request, 'reports/financial_reports.html', context)
-    
+
     except Exception as e:
         logger.error(f"Error in financial_reports: {str(e)}", exc_info=True)
         return render(request, 'reports/financial_reports.html', {
-            'error': 'An error occurred while generating the financial report.',
-            'debug_message': str(e) if django_settings.DEBUG else None
+            'error': 'An error occurred while generating the report.',
+            'debug_message': str(e) if settings.DEBUG else None  # Now using correct settings import
         })
 

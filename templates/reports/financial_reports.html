@@ -242,7 +242,7 @@
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Revenue Trend Chart only
+    // Revenue Trend Chart
     const revenueTrendOptions = {
         series: [{
             name: 'Revenue',
@@ -250,65 +250,65 @@ document.addEventListener('DOMContentLoaded', function() {
         }],
         chart: {
             type: 'area',
-            height: 150,  // Reduced from 200
+            height: 150,
             toolbar: {
                 show: false
             },
             foreColor: '#9CA3AF'
         },
-        // ...existing revenue chart options...
+        dataLabels: {
+            enabled: false
+        },
+        stroke: {
+            curve: 'smooth',
+            width: 2
+        },
+        fill: {
+            type: 'gradient',
+            gradient: {
+                shadeIntensity: 1,
+                opacityFrom: 0.45,
+                opacityTo: 0.05,
+                stops: [50, 100, 100]
+            }
+        },
+        xaxis: {
+            categories: {{ daily_revenue_dates|safe }},
+            labels: {
+                style: {
+                    colors: '#9CA3AF'
+                }
+            }
+        },
+        yaxis: {
+            labels: {
+                formatter: function(value) {
+                    return '₹' + value.toFixed(0);
+                },
+                style: {
+                    colors: '#9CA3AF'
+                }
+            }
+        },
+        tooltip: {
+            theme: 'dark',
+            y: {
+                formatter: function(value) {
+                    return '₹' + value.toFixed(2);
+                }
+            }
+        }
     };
 
-    // Render revenue chart
     new ApexCharts(document.querySelector("#revenueTrendChart"), revenueTrendOptions).render();
 
-    // Date range selector functionality
-    // ...existing date range code...
-
-    // Time period selector functionality
-    const periodButtons = document.querySelectorAll('.bg-gray-700 button');
-    periodButtons.forEach(button => {
+    // Period selector functionality
+    document.querySelectorAll('.bg-gray-700 button').forEach(button => {
         button.addEventListener('click', function() {
-            // Remove active class from all buttons
-            periodButtons.forEach(btn => {
-                btn.classList.remove('bg-blue-500', 'text-white');
-                btn.classList.add('text-gray-300');
-            });
-            
-            // Add active class to clicked button
-            this.classList.remove('text-gray-300');
-            this.classList.add('bg-blue-500', 'text-white');
-            
-            // Update URL and reload data
             const period = this.textContent.toLowerCase();
             window.location.href = `?period=${period}`;
         });
-
-        // Set active state for current period
-        if (button.textContent.toLowerCase() === '{{ selected_period }}') {
-            button.classList.remove('text-gray-300');
-            button.classList.add('bg-blue-500', 'text-white');
-        }
     });
-
-    // Export functionality
-    document.querySelector('button:contains("Export Report")').addEventListener('click', function() {
-        });
-
-        // Set active state for current period
-        if (button.textContent.toLowerCase() === '{{ selected_period }}') {
-            button.classList.remove('text-gray-300');
-            button.classList.add('bg-blue-500', 'text-white');
-        }
-    });
-
-    // Export functionality
-    document.querySelector('button:contains("Export Report")').addEventListener('click', function() {
-        const period = '{{ selected_period }}';
-        window.location.href = `/reports/financial/export/?period=${period}`;
-    });
-
-    // ... rest of the chart initialization code ...
 });
 </script>
 {% endblock %}
