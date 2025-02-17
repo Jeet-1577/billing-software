@@ -207,3 +207,23 @@ class KoOrder(models.Model):
 
     def __str__(self):
         return f"KoOrder {self.order_id} - ₹{self.grand_total}"
+
+class TargetSetting(models.Model):
+    TIMEFRAME_CHOICES = [
+        ('daily', 'Daily'),
+        ('weekly', 'Weekly'),
+        ('monthly', 'Monthly'),
+        ('yearly', 'Yearly'),
+    ]
+    
+    timeframe = models.CharField(max_length=10, choices=TIMEFRAME_CHOICES)
+    revenue_target = models.DecimalField(max_digits=12, decimal_places=2)
+    order_target = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['timeframe']  # Only one target per timeframe
+
+    def __str__(self):
+        return f"{self.timeframe.title()} Target - Revenue: ₹{self.revenue_target}, Orders: {self.order_target}"

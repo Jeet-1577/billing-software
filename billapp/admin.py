@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Category, Item, Order, CustomizationOption, CustomizationCategory, OrderItem, Table, Employee,TableOrder  # Removed TableOrder
+from .models import Category, Item, Order, CustomizationOption, CustomizationCategory, OrderItem, Table, Employee,TableOrder, TargetSetting  # Removed TableOrder
 from django import forms
 from django.contrib.auth.hashers import make_password
 
@@ -149,6 +149,24 @@ class TableOrderAdmin(admin.ModelAdmin):
     search_fields = ('table_order_id', 'table_number')
     list_filter = ('status', 'created_at')
     readonly_fields = ('created_at', 'updated_at')
+
+@admin.register(TargetSetting)
+class TargetSettingAdmin(admin.ModelAdmin):
+    list_display = ['timeframe', 'revenue_target', 'order_target', 'created_at', 'updated_at']
+    list_filter = ['timeframe']
+    search_fields = ['timeframe']
+    ordering = ['timeframe']
+    readonly_fields = ['created_at', 'updated_at']
+    
+    fieldsets = [
+        ('Target Information', {
+            'fields': ['timeframe', 'revenue_target', 'order_target']
+        }),
+        ('Timestamps', {
+            'fields': ['created_at', 'updated_at'],
+            'classes': ['collapse']
+        })
+    ]
 
 # Register other models
 admin.site.register(Category)

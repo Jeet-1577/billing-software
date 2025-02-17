@@ -9,7 +9,8 @@ from .models import (
     KoOrder, 
     TableOrder,
     CustomizationCategory,
-    CustomizationOption
+    CustomizationOption,
+    TargetSetting
 )
 from .forms import CategoryForm, ItemForm, EmployeeForm  # Update this line to only import existing forms
 from django.http import JsonResponse
@@ -1535,7 +1536,6 @@ def generate_pdf_report(request):
             'hotel_phone': '+91 1234567890',
             'hotel_email': 'contact@hotel.com',
             'hotel_gstin': 'XXXXXXXXXXXX',
-            # ...rest of your existing context...
         })
         
         # Render template and generate PDF
@@ -1601,4 +1601,46 @@ def share_report(request):
             return JsonResponse({'status': 'error', 'message': str(e)})
             
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+@csrf_exempt
+def save_targets(request):
+    if request.method == 'GET':
+        try:
+            timeframe = request.GET.get('timeframe')
+            print(f"GET request - Fetching targets for timeframe: {timeframe}")
+            
+            try:
+                target = TargetSetting.objects.get(timeframe=timeframe)
+                print(f"Found existing target: {target.revenue_target}, {target.order_target}")
+                return JsonResponse({
+                    'status': 'success',
+                    'data': {
+                        'revenue_target': str(target.revenue_target),
+                        'order_target': target.order_target
+                    }
+                })
+            except TargetSetting.DoesNotExist:
+                print(f"No target found for timeframe: {timeframe}")
+                return JsonResponse({
+                    'status': 'success',
+                    'data': {
+                        'revenue_target': '0',
+                        'order_target': '0'
+                    }
+                })
+        except Exception as e:
+            print(f"Error in GET request: {str(e)}")
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=400)
+
+    elif request.method == 'POST':
+        # ... existing POST handling code ...
+        pass
+
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Invalid request method'
+    }, status=405)
 
