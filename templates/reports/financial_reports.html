@@ -17,11 +17,41 @@
                 <option>Outlet 1</option>
                 <option>Outlet 2</option>
             </select>
-            <div class="flex bg-gray-700 rounded-md p-1">
-                <button class="px-3 py-1 text-sm rounded-md bg-blue-500 text-white">Day</button>
-                <button class="px-3 py-1 text-sm text-gray-300">Week</button>
-                <button class="px-3 py-1 text-sm text-gray-300">Month</button>
-                <button class="px-3 py-1 text-sm text-gray-300">Year</button>
+            <!-- New Modern Time Picker Design -->
+            <div class="flex items-center">
+                <div class="bg-gray-900/40 backdrop-blur-lg rounded-xl p-1 flex items-center shadow-xl border border-gray-800/50">
+                    <a href="?period=day" 
+                       class="px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative overflow-hidden {% if selected_period == 'day' %}text-white{% else %}text-gray-400{% endif %}">
+                        <span class="relative z-10">24h</span>
+                        {% if selected_period == 'day' %}
+                        <div class="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-lg animate-gradient"></div>
+                        {% endif %}
+                    </a>
+                    
+                    <a href="?period=week" 
+                       class="px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative overflow-hidden {% if selected_period == 'week' %}text-white{% else %}text-gray-400{% endif %}">
+                        <span class="relative z-10">7d</span>
+                        {% if selected_period == 'week' %}
+                        <div class="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-lg animate-gradient"></div>
+                        {% endif %}
+                    </a>
+                    
+                    <a href="?period=month" 
+                       class="px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative overflow-hidden {% if selected_period == 'month' %}text-white{% else %}text-gray-400{% endif %}">
+                        <span class="relative z-10">30d</span>
+                        {% if selected_period == 'month' %}
+                        <div class="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-lg animate-gradient"></div>
+                        {% endif %}
+                    </a>
+                    
+                    <a href="?period=year" 
+                       class="px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative overflow-hidden {% if selected_period == 'year' %}text-white{% else %}text-gray-400{% endif %}">
+                        <span class="relative z-10">1y</span>
+                        {% if selected_period == 'year' %}
+                        <div class="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-lg animate-gradient"></div>
+                        {% endif %}
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -242,7 +272,9 @@
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Revenue Trend Chart
+    console.clear(); // Clear previous console messages
+
+    // Initialize revenue chart
     const revenueTrendOptions = {
         series: [{
             name: 'Revenue',
@@ -302,13 +334,63 @@ document.addEventListener('DOMContentLoaded', function() {
 
     new ApexCharts(document.querySelector("#revenueTrendChart"), revenueTrendOptions).render();
 
-    // Period selector functionality
-    document.querySelectorAll('.bg-gray-700 button').forEach(button => {
-        button.addEventListener('click', function() {
-            const period = this.textContent.toLowerCase();
-            window.location.href = `?period=${period}`;
+    // Simple Period Switcher
+    function initializePeriodSwitcher() {
+        console.log('Initializing period switcher');
+        
+        const buttons = document.querySelectorAll('[data-period]');
+        console.log(`Found ${buttons.length} period buttons`);
+        
+        if (buttons.length === 0) {
+            console.error('No period buttons found! Check the selectors.');
+            return;
+        }
+
+        buttons.forEach(button => {
+            button.addEventListener('click', function() {
+                const period = this.getAttribute('data-period');
+                console.log(`Period button clicked: ${period}`);
+                
+                try {
+                    // Update URL with the new period
+                    const baseUrl = window.location.pathname;
+                    const newUrl = `${baseUrl}?period=${period}`;
+                    console.log(`Navigating to: ${newUrl}`);
+                    
+                    // Force page reload with new period
+                    window.location.href = newUrl;
+                } catch (err) {
+                    console.error('Error during period switch:', err);
+                    alert('Error switching time period. Please try again.');
+                }
+            });
         });
-    });
+
+        // Log current period
+        const currentPeriod = '{{ selected_period|default:"day" }}';
+        console.log('Current selected period:', currentPeriod);
+    }
+
+    // Initialize the period switcher
+    try {
+        initializePeriodSwitcher();
+    } catch (err) {
+        console.error('Failed to initialize period switcher:', err);
+    }
 });
 </script>
+<!-- Add this to your CSS -->
+<style>
+@keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.animate-gradient {
+    background-size: 200% 200%;
+    animation: gradient 3s ease infinite;
+}
+</style>
 {% endblock %}
+```
