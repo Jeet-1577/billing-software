@@ -195,8 +195,18 @@
         <div class="grid grid-rows-[1fr_1fr_auto] gap-4"> <!-- Reduced gap -->
             <!-- Target Progress -->
             <div class="bg-gray-800 rounded-lg p-4 flex flex-col">
-                <h2 class="text-base font-semibold text-white mb-3">Monthly Targets</h2> <!-- Reduced text and margin -->
-                <div class="space-y-3 flex-1 flex flex-col justify-center"> <!-- Reduced spacing -->
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-base font-semibold text-white">Monthly Targets</h2>
+                    <button type="button"
+                            onclick="document.getElementById('targetSettingsModal').classList.remove('hidden')"
+                            class="text-gray-400 hover:text-white p-1 rounded-full hover:bg-gray-700 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                                  d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="space-y-3 flex-1 flex flex-col justify-center">
                     <div>
                         <div class="flex justify-between text-sm text-gray-300 mb-1">
                             <span>Revenue Target</span>
@@ -209,7 +219,7 @@
                     <div>
                         <div class="flex justify-between text-sm text-gray-300 mb-1">
                             <span>Order Target</span>
-                            <span>{{ order_target_progress|floatformat:1 }}%</  span>
+                            <span>{{ order_target_progress|floatformat:1 }}%</span>
                         </div>
                         <div class="h-2 bg-gray-700 rounded">
                             <div class="h-full bg-green-500 rounded" style="width: {{ order_target_progress }}%"></div>
@@ -217,7 +227,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- Tax Summary -->
             <div class="bg-gray-800 rounded-lg p-4 flex flex-col">
                 <h2 class="text-base font-semibold text-white mb-3">Tax Summary</h2> <!-- Reduced text and margin -->
@@ -236,7 +245,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- Quick Actions -->
             <div class="bg-gray-800 rounded-lg p-4">
                 <h2 class="text-base font-semibold text-white mb-3">Quick Actions</h2>
@@ -250,7 +258,6 @@
                         </svg>
                         Export CSV
                     </a>
-
                     <!-- Share Button -->
                     <button onclick="shareReport()" 
                             class="flex items-center justify-center p-3 bg-green-600 rounded-lg text-white text-sm hover:bg-green-700">
@@ -282,6 +289,82 @@
     </div>
 </div>
 
+<!-- Target Settings Modal -->
+<div id="targetSettingsModal" class="hidden fixed inset-0 bg-gray-900/80 backdrop-blur-sm z-50 flex items-center justify-center">
+    <div class="bg-gray-800 p-6 rounded-xl w-[400px] shadow-2xl transform transition-all">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6 pb-3 border-b border-gray-700">
+            <div>
+                <h3 class="text-lg font-semibold text-white">Target Settings</h3>
+                <p class="text-gray-400 text-sm mt-1">Set performance targets</p>
+            </div>
+            <button data-close-modal class="text-gray-400 hover:text-white hover:bg-gray-700 rounded-full p-2 transition-colors">
+                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"/>
+                </svg>
+            </button>
+        </div>
+        
+        <form id="targetSettingsForm" class="space-y-6">
+            <!-- Time Frame Selector -->
+            <div class="space-y-2">
+                <label class="block text-gray-300 text-sm font-medium">Time Frame</label>
+                <div class="relative">
+                    <select name="timeframe" 
+                            class="w-full bg-gray-700 text-white rounded-lg px-4 py-2.5 text-sm appearance-none cursor-pointer border border-gray-600 hover:border-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors">
+                        <option value="daily">Daily Targets</option>
+                        <option value="weekly">Weekly Targets</option>
+                        <option value="monthly">Monthly Targets</option>
+                        <option value="yearly">Yearly Targets</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-gray-400">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Target Inputs -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <label class="block text-gray-300 text-sm font-medium">Revenue Target</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-400">₹</span>
+                        <input type="number" 
+                               name="revenue_target" 
+                               class="w-full bg-gray-700 text-white rounded-lg pl-8 pr-4 py-2.5 text-sm border border-gray-600 hover:border-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
+                               placeholder="Enter amount">
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="block text-gray-300 text-sm font-medium">Order Target</label>
+                    <input type="number" 
+                           name="order_target" 
+                           class="w-full bg-gray-700 text-white rounded-lg px-4 py-2.5 text-sm border border-gray-600 hover:border-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-colors"
+                           placeholder="Enter count">
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex justify-end space-x-3 pt-6 mt-6 border-t border-gray-700">
+                <button type="button" 
+                        data-close-modal
+                        class="px-4 py-2.5 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 hover:text-white focus:outline-none focus:ring-2 focus:ring-gray-500/20 transition-colors">
+                    Cancel
+                </button>
+                <button type="submit" 
+                        class="px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-colors inline-flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"/>
+                    </svg>
+                    Set Target
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Share Report Modal -->
 <div id="shareModal" class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center">
     <div class="bg-gray-800 p-6 rounded-lg w-96 shadow-xl">
@@ -293,229 +376,95 @@
                 </svg>
             </button>
         </div>
-        <input type="email" 
-               id="shareEmail" 
-               placeholder="Enter email address" 
-               class="w-full bg-gray-700 text-white rounded-md px-3 py-2 mb-4 focus:ring-2 focus:ring-blue-500">
-        <div class="flex justify-end space-x-2">
-            <button onclick="closeShareModal()" 
-                    class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+        <input type="email" id="shareEmail" placeholder="Enter email address" class="w-full bg-gray-700 text-white rounded-md px-3 py-2 mb-4 focus:ring-2 focus:ring-blue-500">
+        <div class="flex justify-end space-x-2">    
+            <button onclick="closeShareModal()" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
                 Cancel
             </button>
-            <button onclick="sendReport()" 
-                    class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                    id="sendReportBtn">
+            <button onclick="sendReport()" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" id="sendReportBtn">
                 Send
             </button>
         </div>
     </div>
 </div>
-
 {% endblock content %}
 
 {% block extra_scripts %}
+<script>
+    // Initialize all event listeners when the DOM is loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        // Modal control functions
+        const targetModal = document.getElementById('targetSettingsModal');
+        
+        function closeModal() {
+            targetModal.classList.add('hidden');
+        }
+
+        function openModal() {
+            targetModal.classList.remove('hidden');
+        }
+
+        // Attach click handlers to close buttons
+        document.querySelectorAll('[data-close-modal]').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                closeModal();
+            });
+        });
+
+        // Close modal when clicking outside
+        targetModal.addEventListener('click', function(e) {
+            if (e.target === targetModal) {
+                closeModal();
+            }
+        });
+
+        // Close modal with ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && !targetModal.classList.contains('hidden')) {
+                closeModal();
+            }
+        });
+
+        // Handle form submission
+        const targetForm = document.getElementById('targetSettingsForm');
+        targetForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = {
+                timeframe: formData.get('timeframe'),
+                revenue_target: formData.get('revenue_target'),
+                order_target: formData.get('order_target')
+            };
+            
+            fetch('{% url "save_targets" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    closeModal();
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Error saving targets');
+                }
+            })
+            .catch(error => {
+                alert('Error saving targets: ' + error);
+            });
+        });
+    });
+</script>
+
+<!-- Existing Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script src="{% static 'js/reports.js' %}"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    console.clear(); // Clear previous console messages
-    // Initialize revenue chart
-    const revenueTrendOptions = {
-        series: [{
-            name: 'Revenue',
-            data: {{ daily_revenue_data|safe }}
-        }],
-        chart: {
-            type: 'area',
-            height: 150,
-            toolbar: {
-                show: false
-            },
-            foreColor: '#9CA3AF'
-        },
-        dataLabels: {
-            enabled: false
-        },
-        stroke: {
-            curve: 'smooth',
-            width: 2
-        },
-        fill: {
-            type: 'gradient',
-            gradient: {
-                shadeIntensity: 1,
-                opacityFrom: 0.45,
-                opacityTo: 0.05,
-                stops: [50, 100, 100]
-            }
-        },
-        xaxis: {
-            categories: {{ daily_revenue_dates|safe }},
-            labels: {
-                style: {
-                    colors: '#9CA3AF'
-                }
-            }
-        },
-        yaxis: {
-            labels: {
-                formatter: function(value) {
-                    return '₹' + value.toFixed(0);
-                },
-                style: {
-                    colors: '#9CA3AF'
-                }
-            }
-        },
-        tooltip: {
-            theme: 'dark',
-            y: {
-                formatter: function(value) {
-                    return '₹' + value.toFixed(2);
-                }
-            }
-        }
-    };
-    new ApexCharts(document.querySelector("#revenueTrendChart"), revenueTrendOptions).render();
-    // Simple Period Switcher
-    function initializePeriodSwitcher() {
-        console.log('Initializing period switcher');
-        const buttons = document.querySelectorAll('[data-period]');
-        console.log(`Found ${buttons.length} period buttons`);
-        if (buttons.length === 0) {
-            console.error('No period buttons found! Check the selectors.');
-            return;
-        }
-        buttons.forEach(button => {
-            button.addEventListener('click', function() {
-                const period = this.getAttribute('data-period');
-                console.log(`Period button clicked: ${period}`);
-                try {
-                    // Update URL with the new period
-                    const baseUrl = window.location.pathname;
-                    const newUrl = `${baseUrl}?period=${period}`;
-                    console.log(`Navigating to: ${newUrl}`);
-                    // Force page reload with new period
-                    window.location.href = newUrl;
-                } catch (err) {
-                    console.error('Error during period switch:', err);
-                    alert('Error switching time period. Please try again.');
-                }
-            });
-        });
-        // Log current period
-        const currentPeriod = '{{ selected_period|default:"day" }}';
-        console.log('Current selected period:', currentPeriod);
-    }
-    // Initialize the period switcher
-    try {
-        initializePeriodSwitcher();
-    } catch (err) {
-        console.error('Failed to initialize period switcher:', err);
-    }
-    // Handle date range form submission
-    const dateRangeForm = document.getElementById('dateRangeForm');
-    dateRangeForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const startDate = document.getElementById('start_date').value;
-        const endDate = document.getElementById('end_date').value;
-        if (!startDate || !endDate) {
-            alert('Please select both start and end dates');
-            return;
-        }
-        if (new Date(endDate) < new Date(startDate)) {
-            alert('End date cannot be before start date');
-            return;
-        }
-        // Clear any existing period selection
-        const periodButtons = document.querySelectorAll('[data-period]');
-        periodButtons.forEach(button => {
-            button.classList.remove('active');
-            const bg = button.querySelector('div');
-            if (bg) bg.remove();
-        });
-        // Update URL and reload page
-        window.location.href = `?start_date=${startDate}&end_date=${endDate}`;
-    });
-    // Period Button Handler
-    function initializePeriodSwitcher() {
-        const buttons = document.querySelectorAll('[data-period]');
-        buttons.forEach(button => {
-            button.addEventListener('click', function() {
-                const period = this.getAttribute('data-period');
-                // Clear date inputs when switching to period view
-                document.getElementById('start_date').value = '';
-                document.getElementById('end_date').value = '';
-                // Update URL with period
-                window.location.href = `?period=${period}`;
-            });
-        });
-    }
-    initializePeriodSwitcher();
-    // Share Report Functions
-    window.shareReport = function() {
-        document.getElementById('shareModal').classList.remove('hidden');
-    }
-    window.closeShareModal = function() {
-        document.getElementById('shareModal').classList.add('hidden');
-        document.getElementById('shareEmail').value = '';
-    }
-    window.sendReport = function() {
-        const email = document.getElementById('shareEmail').value;
-        if (!email) {
-            alert('Please enter an email address');
-            return;
-        }
-        // Show loading state
-        const sendButton = document.getElementById('sendReportBtn');
-        const originalText = sendButton.textContent;
-        sendButton.textContent = 'Sending...';
-        sendButton.disabled = true;
-        fetch('{% url "share_report" %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': '{{ csrf_token }}'
-            },
-            body: JSON.stringify({
-                email: email,
-                period: '{{ selected_period }}',
-                start_date: '{{ start_date }}',
-                end_date: '{{ end_date }}',
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                alert('Report sent successfully!');
-                closeShareModal();
-            } else {
-                alert(data.message || 'Error sending report');
-            }
-        })
-        .catch(error => {
-            alert('Error sharing report: ' + error);
-        })
-        .finally(() => {
-            // Reset button state
-            sendButton.textContent = originalText;
-            sendButton.disabled = false;
-        });
-    }
-    // Add keyboard event listener for Enter key
-    document.getElementById('shareEmail').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            sendReport();
-        }
-    });
-    // Close modal when clicking outside
-    document.getElementById('shareModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeShareModal();
-        }
-    });
-});
-</script>
 
 <!-- Print Styles -->
 <style>
