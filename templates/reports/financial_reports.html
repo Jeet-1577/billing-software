@@ -12,43 +12,52 @@
             <span class="bg-green-500 text-white px-2 py-1 rounded text-sm">Live</span>
         </div>
         <div class="flex items-center space-x-4">
-            <!-- Time Selector Buttons -->
-            <div class="flex items-center bg-gray-800/50 backdrop-blur-sm rounded-lg p-1.5 shadow-lg border border-gray-700">
-                <button data-period="day" class="relative px-4 py-1.5 text-sm rounded-md transition-all duration-200 {% if selected_period == 'day' %}text-white{% else %}text-gray-400 hover:text-gray-200{% endif %} group">
-                    <span class="relative z-10">Day</span>
-                    {% if selected_period == 'day' %}
-                    <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-700 rounded-md shadow-md"></div>
-                    {% endif %}
-                </button>
-                <button data-period="week" class="relative px-4 py-1.5 text-sm rounded-md transition-all duration-200 {% if selected_period == 'week' %}text-white{% else %}text-gray-400 hover:text-gray-200{% endif %} group">
-                    <span class="relative z-10">Week</span>
-                    {% if selected_period == 'week' %}
-                    <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-700 rounded-md shadow-md"></div>
-                    {% endif %}
-                </button>
-                <button data-period="month" class="relative px-4 py-1.5 text-sm rounded-md transition-all duration-200 {% if selected_period == 'month' %}text-white{% else %}text-gray-400 hover:text-gray-200{% endif %} group">
-                    <span class="relative z-10">Month</span>
-                    {% if selected_period == 'month' %}
-                    <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-700 rounded-md shadow-md"></div>
-                    {% endif %}
-                </button>
-                <button data-period="year" class="relative px-4 py-1.5 text-sm rounded-md transition-all duration-200 {% if selected_period == 'year' %}text-white{% else %}text-gray-400 hover:text-gray-200{% endif %} group">
-                    <span class="relative z-10">Year</span>
-                    {% if selected_period == 'year' %}
-                    <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-700 rounded-md shadow-md"></div>
-                    {% endif %}
-                </button>
-            </div>
             <select class="bg-gray-700 text-white rounded-md px-3 py-2 text-sm">
                 <option>All Outlets</option>
                 <option>Outlet 1</option>
                 <option>Outlet 2</option>
             </select>
-            <!-- New Time Picker Design -->
-            <form method="get" action="">
-                <input type="date" name="start_date" class="bg-gray-700 text-white rounded-md px-3 py-2 text-sm" value="{{ request.GET.start_date }}">
-                <input type="date" name="end_date" class="bg-gray-700 text-white rounded-md px-3 py-2 text-sm" value="{{ request.GET.end_date }}">
-                <button type="submit" class="bg-blue-600 text-white rounded-md px-3 py-2 text-sm">Apply</button>
+            <!-- New Time Period Form -->
+            <form method="GET" action="" class="flex items-center space-x-4">
+                <div class="flex items-center bg-gray-800/50 backdrop-blur-sm rounded-lg p-1.5 shadow-lg border border-gray-700">
+                    <button type="submit" name="period" value="day" 
+                            class="relative px-4 py-1.5 text-sm rounded-md transition-all duration-200 
+                            {% if selected_period == 'day' %}text-white bg-gradient-to-r from-blue-600 to-blue-700{% else %}text-gray-400 hover:text-gray-200{% endif %}">
+                        Day
+                    </button>
+                    <button type="submit" name="period" value="week" 
+                            class="relative px-4 py-1.5 text-sm rounded-md transition-all duration-200 
+                            {% if selected_period == 'week' %}text-white bg-gradient-to-r from-blue-600 to-blue-700{% else %}text-gray-400 hover:text-gray-200{% endif %}">
+                        Week
+                    </button>
+                    <button type="submit" name="period" value="month" 
+                            class="relative px-4 py-1.5 text-sm rounded-md transition-all duration-200 
+                            {% if selected_period == 'month' %}text-white bg-gradient-to-r from-blue-600 to-blue-700{% else %}text-gray-400 hover:text-gray-200{% endif %}">
+                        Month
+                    </button>
+                    <button type="submit" name="period" value="year" 
+                            class="relative px-4 py-1.5 text-sm rounded-md transition-all duration-200 
+                            {% if selected_period == 'year' %}text-white bg-gradient-to-r from-blue-600 to-blue-700{% else %}text-gray-400 hover:text-gray-200{% endif %}">
+                        Year
+                    </button>
+                </div>
+            </form>
+
+            <!-- Custom Date Range Form -->
+            <form method="GET" action="" class="flex items-center space-x-2">
+                <input type="date" 
+                       name="start_date" 
+                       class="bg-gray-700 text-white rounded-md px-3 py-2 text-sm"
+                       value="{{ start_date }}">
+                <span class="text-gray-400">to</span>
+                <input type="date" 
+                       name="end_date" 
+                       class="bg-gray-700 text-white rounded-md px-3 py-2 text-sm"
+                       value="{{ end_date }}">
+                <button type="submit" 
+                        class="bg-blue-600 text-white rounded-md px-4 py-2 text-sm hover:bg-blue-700">
+                    Apply Range
+                </button>
             </form>
         </div>
     </div>
@@ -155,10 +164,10 @@
                             {% for day in top_days %}
                             <div class="bg-gray-700 rounded-lg p-2"> <!-- Reduced padding -->
                                 <div class="flex justify-between items-center">
-                                    <span class="text-gray-300 text-xs">{{ day.date|date:"M d" }}</span>
+                                    <span class="text-gray-300 text-xs">{{ day.order_date|date:"M d" }}</span>
                                     <span class="text-green-400 font-medium text-xs">₹{{ day.revenue|floatformat:0 }}</span>
                                 </div>
-                                <div class="mt-0.5 text-xs text-gray-400">{{ day.orders }} orders</div> <!-- Reduced margin -->
+                                <div class="mt-0.5 text-xs text-gray-400">{{ day.orders }} orders</div> <!-- Reduced margin -->                                              
                             </div>
                             {% endfor %}
                         </div>
@@ -170,7 +179,7 @@
                             {% for day in bottom_days %}
                             <div class="bg-gray-700 rounded-lg p-2"> <!-- Reduced padding -->
                                 <div class="flex justify-between items-center">
-                                    <span class="text-gray-300 text-xs">{{ day.date|date:"M d" }}</span>
+                                    <span class="text-gray-300 text-xs">{{ day.order_date|date:"M d" }}</span>
                                     <span class="text-red-400 font-medium text-xs">₹{{ day.revenue|floatformat:0 }}</span>
                                 </div>
                                 <div class="mt-0.5 text-xs text-gray-400">{{ day.orders }} orders</div> <!-- Reduced margin -->
@@ -374,6 +383,55 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (err) {
         console.error('Failed to initialize period switcher:', err);
     }
+
+    // Handle date range form submission
+    const dateRangeForm = document.getElementById('dateRangeForm');
+    dateRangeForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const startDate = document.getElementById('start_date').value;
+        const endDate = document.getElementById('end_date').value;
+
+        if (!startDate || !endDate) {
+            alert('Please select both start and end dates');
+            return;
+        }
+
+        if (new Date(endDate) < new Date(startDate)) {
+            alert('End date cannot be before start date');
+            return;
+        }
+
+        // Clear any existing period selection
+        const periodButtons = document.querySelectorAll('[data-period]');
+        periodButtons.forEach(button => {
+            button.classList.remove('active');
+            const bg = button.querySelector('div');
+            if (bg) bg.remove();
+        });
+
+        // Update URL and reload page
+        window.location.href = `?start_date=${startDate}&end_date=${endDate}`;
+    });
+
+    // Period Button Handler
+    function initializePeriodSwitcher() {
+        const buttons = document.querySelectorAll('[data-period]');
+        
+        buttons.forEach(button => {
+            button.addEventListener('click', function() {
+                const period = this.getAttribute('data-period');
+                
+                // Clear date inputs when switching to period view
+                document.getElementById('start_date').value = '';
+                document.getElementById('end_date').value = '';
+                
+                // Update URL with period
+                window.location.href = `?period=${period}`;
+            });
+        });
+    }
+
+    initializePeriodSwitcher();
 });
 </script>
 {% endblock %}

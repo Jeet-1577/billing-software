@@ -1206,43 +1206,28 @@ def customer_insights(request):
 
 def financial_reports(request):
     try:
-        # Get date range from request
-        start_date = request.GET.get('start_date')
-        end_date = request.GET.get('end_date', timezone.now().date())
-
-        if not start_date:
-            period = request.GET.get('period', 'day')  # Default to daily view
-            today = timezone.now().date()
-            if period == 'day':
-                start_date = today
-            elif period == 'week':
-                start_date = today - timedelta(days=7)
-            elif period == 'month':
-                start_date = today - timedelta(days=30)
-            else:  # year
-                start_date = today - timedelta(days=365)
-        else:
-            try:
-                start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
-            except ValueError:
-                start_date = timezone.now().date() - timedelta(days=30)  # Default to last 30 days if invalid
-
-        if not end_date:
-            end_date = timezone.now().date()
-        else:
-            try:
-                end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
-            except ValueError:
-                end_date = timezone.now().date()  # Default to today if invalid
-
+        # Get time period from request
+        period = request.GET.get('period', 'day')  # Default to daily view
+        today = timezone.now().date()
+        
+        # Calculate date ranges
+        if period == 'day':
+            start_date = today
+        elif period == 'week':
+            start_date = today - timedelta(days=7)
+        elif period == 'month':
+            start_date = today - timedelta(days=30)
+        else:  # year
+            start_date = today - timedelta(days=365)
+        
         # Get completed orders for current period
         current_orders = Order.objects.filter(
-            date__range=[start_date, end_date],
+            date__range=[start_date, today],
             status='completed'
         )
 
         # Get previous period orders for comparison
-        prev_start_date = start_date - (end_date - start_date)
+        prev_start_date = start_date - (today - start_date)
         prev_end_date = start_date - timedelta(days=1)
         previous_orders = Order.objects.filter(
             date__range=[prev_start_date, prev_end_date],
@@ -1272,24 +1257,24 @@ def financial_reports(request):
         order_growth = ((total_orders - prev_orders) / prev_orders * 100) if prev_orders > 0 else 0
         avg_order_growth = ((avg_order_value - prev_avg_order) / prev_avg_order * 100) if prev_avg_order > 0 else 0
 
-        # Daily performance analysis
+        # Daily performance analysis - Updated query
         daily_performance = Order.objects.filter(
-            date__range=[start_date, end_date],
+            date__range=[start_date, today],
             status='completed'
         ).annotate(
-            order_date=TruncDate('created_at')
+            order_date=TruncDate('created_at')  # Renamed to avoid conflict
         ).values('order_date').annotate(
             revenue=Sum('grand_total'),
             orders=Count('id')
         ).order_by('-revenue')
 
-        # Get top and bottom performing days
+        # Get top and bottom performing days with full date info
         top_days = list(daily_performance.order_by('-revenue')[:3])
         bottom_days = list(daily_performance.order_by('revenue')[:3])
 
         # Calculate targets
         monthly_revenue = Order.objects.filter(
-            date__month=end_date.month,
+            date__month=today.month,
             status='completed'
         ).aggregate(total=Coalesce(Sum('grand_total'), Decimal('0.00')))['total']
 
@@ -1300,9 +1285,9 @@ def financial_reports(request):
         target_progress = (monthly_revenue / monthly_revenue_target * 100) if monthly_revenue_target > 0 else 0
         order_target_progress = (total_orders / monthly_order_target * 100) if monthly_order_target > 0 else 0
 
-        # Daily revenue trend data
+        # Daily revenue trend data - Fix the date annotation
         daily_revenue = current_orders.annotate(
-            order_date=TruncDate('created_at')
+            order_date=TruncDate('created_at')  # Changed from 'date' to 'order_date'
         ).values('order_date').annotate(
             total=Sum('grand_total')
         ).order_by('order_date')
@@ -1327,7 +1312,7 @@ def financial_reports(request):
             'bottom_days': bottom_days,
             'daily_revenue_data': json.dumps([float(item['total']) for item in daily_revenue]),
             'daily_revenue_dates': json.dumps([item['order_date'].strftime('%Y-%m-%d') for item in daily_revenue]),
-            'selected_period': request.GET.get('period', 'day'),
+            'selected_period': period,
         }
 
         return render(request, 'reports/financial_reports.html', context)
@@ -1336,7 +1321,6 @@ def financial_reports(request):
         logger.error(f"Error in financial_reports: {str(e)}", exc_info=True)
         return render(request, 'reports/financial_reports.html', {
             'error': 'An error occurred while generating the report.',
-            'debug_message': str(e) if django_settings.DEBUG else None
+            'debug_message': str(e) if django_settings.DEBUG else None  # Now using correct settings import
         })
-
 
