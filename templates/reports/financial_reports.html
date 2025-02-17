@@ -12,47 +12,44 @@
             <span class="bg-green-500 text-white px-2 py-1 rounded text-sm">Live</span>
         </div>
         <div class="flex items-center space-x-4">
+            <!-- Time Selector Buttons -->
+            <div class="flex items-center bg-gray-800/50 backdrop-blur-sm rounded-lg p-1.5 shadow-lg border border-gray-700">
+                <button data-period="day" class="relative px-4 py-1.5 text-sm rounded-md transition-all duration-200 {% if selected_period == 'day' %}text-white{% else %}text-gray-400 hover:text-gray-200{% endif %} group">
+                    <span class="relative z-10">Day</span>
+                    {% if selected_period == 'day' %}
+                    <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-700 rounded-md shadow-md"></div>
+                    {% endif %}
+                </button>
+                <button data-period="week" class="relative px-4 py-1.5 text-sm rounded-md transition-all duration-200 {% if selected_period == 'week' %}text-white{% else %}text-gray-400 hover:text-gray-200{% endif %} group">
+                    <span class="relative z-10">Week</span>
+                    {% if selected_period == 'week' %}
+                    <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-700 rounded-md shadow-md"></div>
+                    {% endif %}
+                </button>
+                <button data-period="month" class="relative px-4 py-1.5 text-sm rounded-md transition-all duration-200 {% if selected_period == 'month' %}text-white{% else %}text-gray-400 hover:text-gray-200{% endif %} group">
+                    <span class="relative z-10">Month</span>
+                    {% if selected_period == 'month' %}
+                    <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-700 rounded-md shadow-md"></div>
+                    {% endif %}
+                </button>
+                <button data-period="year" class="relative px-4 py-1.5 text-sm rounded-md transition-all duration-200 {% if selected_period == 'year' %}text-white{% else %}text-gray-400 hover:text-gray-200{% endif %} group">
+                    <span class="relative z-10">Year</span>
+                    {% if selected_period == 'year' %}
+                    <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-700 rounded-md shadow-md"></div>
+                    {% endif %}
+                </button>
+            </div>
             <select class="bg-gray-700 text-white rounded-md px-3 py-2 text-sm">
                 <option>All Outlets</option>
                 <option>Outlet 1</option>
                 <option>Outlet 2</option>
             </select>
-            <!-- New Modern Time Picker Design -->
-            <div class="flex items-center">
-                <div class="bg-gray-900/40 backdrop-blur-lg rounded-xl p-1 flex items-center shadow-xl border border-gray-800/50">
-                    <a href="?period=day" 
-                       class="px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative overflow-hidden {% if selected_period == 'day' %}text-white{% else %}text-gray-400{% endif %}">
-                        <span class="relative z-10">24h</span>
-                        {% if selected_period == 'day' %}
-                        <div class="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-lg animate-gradient"></div>
-                        {% endif %}
-                    </a>
-                    
-                    <a href="?period=week" 
-                       class="px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative overflow-hidden {% if selected_period == 'week' %}text-white{% else %}text-gray-400{% endif %}">
-                        <span class="relative z-10">7d</span>
-                        {% if selected_period == 'week' %}
-                        <div class="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-lg animate-gradient"></div>
-                        {% endif %}
-                    </a>
-                    
-                    <a href="?period=month" 
-                       class="px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative overflow-hidden {% if selected_period == 'month' %}text-white{% else %}text-gray-400{% endif %}">
-                        <span class="relative z-10">30d</span>
-                        {% if selected_period == 'month' %}
-                        <div class="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-lg animate-gradient"></div>
-                        {% endif %}
-                    </a>
-                    
-                    <a href="?period=year" 
-                       class="px-5 py-2 rounded-lg text-sm font-medium transition-all duration-200 relative overflow-hidden {% if selected_period == 'year' %}text-white{% else %}text-gray-400{% endif %}">
-                        <span class="relative z-10">1y</span>
-                        {% if selected_period == 'year' %}
-                        <div class="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg shadow-lg animate-gradient"></div>
-                        {% endif %}
-                    </a>
-                </div>
-            </div>
+            <!-- New Time Picker Design -->
+            <form method="get" action="">
+                <input type="date" name="start_date" class="bg-gray-700 text-white rounded-md px-3 py-2 text-sm" value="{{ request.GET.start_date }}">
+                <input type="date" name="end_date" class="bg-gray-700 text-white rounded-md px-3 py-2 text-sm" value="{{ request.GET.end_date }}">
+                <button type="submit" class="bg-blue-600 text-white rounded-md px-3 py-2 text-sm">Apply</button>
+            </form>
         </div>
     </div>
 
@@ -379,18 +376,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-<!-- Add this to your CSS -->
-<style>
-@keyframes gradient {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-.animate-gradient {
-    background-size: 200% 200%;
-    animation: gradient 3s ease infinite;
-}
-</style>
 {% endblock %}
-```
