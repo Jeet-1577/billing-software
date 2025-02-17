@@ -1329,39 +1329,100 @@ def financial_reports(request):
         })
 
 def export_financial_report(request):
-    """Export financial data to CSV"""
+    """Export financial data to CSV matching the PDF report format"""
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="financial_report.csv"'
     
     writer = csv.writer(response)
-    writer.writerow(['Date', 'Revenue', 'Orders', 'Average Order Value'])
     
-    # Get the same date range as in financial_reports view
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
+    # Get the same data as PDF report
     period = request.GET.get('period', 'day')
+    end_date = timezone.now().date()
     
-    # Use the same query logic as financial_reports
-    orders = Order.objects.filter(status='completed')
-    if start_date and end_date:
-        orders = orders.filter(created_at__date__range=[start_date, end_date])
+    if period == 'day':
+        start_date = end_date
+    elif period == 'week':
+        start_date = end_date - timedelta(days=7)
+    elif period == 'month':
+        start_date = end_date - timedelta(days=30)
+    else:  # year
+        start_date = end_date - timedelta(days=365)
+
+    # Get orders
+    current_orders = Order.objects.filter(
+        date__range=[start_date, end_date],
+        status='completed'
+    )
+
+    # Calculate totals
+    total_revenue = current_orders.aggregate(
+        total=Coalesce(Sum('grand_total'), Decimal('0.00'))
+    )['total']
     
-    daily_data = orders.annotate(
+    total_gst = current_orders.aggregate(
+        total=Coalesce(Sum('gst_amount'), Decimal('0.00'))
+    )['total']
+    
+    cgst_amount = total_gst / 2
+    sgst_amount = total_gst / 2
+
+    # Write headers
+    writer.writerow(['Financial Report'])
+    writer.writerow([f'Period: {start_date.strftime("%Y-%m-%d")} to {end_date.strftime("%Y-%m-%d")}'])
+    writer.writerow([])  # Empty row for spacing
+
+    # Write summary section
+    writer.writerow(['Financial Summary'])
+    writer.writerow(['Total Revenue', f'₹{total_revenue:.2f}'])
+    writer.writerow(['Total Orders', current_orders.count()])
+    writer.writerow(['Average Order Value', f'₹{(total_revenue/current_orders.count() if current_orders.count() > 0 else 0):.2f}'])
+    writer.writerow(['Total GST', f'₹{total_gst:.2f}'])
+    writer.writerow(['CGST', f'₹{cgst_amount:.2f}'])
+    writer.writerow(['SGST', f'₹{sgst_amount:.2f}'])
+    writer.writerow([])  # Empty row for spacing
+
+    # Write daily performance section
+    writer.writerow(['Daily Performance'])
+    writer.writerow(['Date', 'Revenue', 'Orders', 'GST', 'Avg Order Value'])
+    
+    daily_data = current_orders.annotate(
         order_date=TruncDate('created_at')
     ).values('order_date').annotate(
         revenue=Sum('grand_total'),
-        orders=Count('id')
+        orders=Count('id'),
+        gst=Sum('gst_amount')
     ).order_by('order_date')
-    
+
     for day in daily_data:
         avg_order = day['revenue'] / day['orders'] if day['orders'] > 0 else 0
         writer.writerow([
             day['order_date'].strftime('%Y-%m-%d'),
             f"₹{day['revenue']:.2f}",
             day['orders'],
+            f"₹{day['gst']:.2f}",
             f"₹{avg_order:.2f}"
         ])
-    
+
+    # Write payment methods section if available
+    payment_methods = current_orders.values('payment_type').annotate(
+        revenue=Sum('grand_total'),
+        count=Count('id')
+    ).order_by('-revenue')
+
+    if payment_methods:
+        writer.writerow([])  # Empty row for spacing
+        writer.writerow(['Payment Method Analysis'])
+        writer.writerow(['Method', 'Revenue', 'Transactions', '% of Total'])
+        
+        for method in payment_methods:
+            percentage = (method['revenue'] / total_revenue * 100) if total_revenue > 0 else 0
+            writer.writerow([
+                method['payment_type'],
+                f"₹{method['revenue']:.2f}",
+                method['count'],
+                f"{percentage:.1f}%"
+            ])
+
     return response
 
 def generate_pdf_report(request):
@@ -1424,6 +1485,22 @@ def generate_pdf_report(request):
             orders=Count('id')
         ).order_by('-revenue')
 
+        # Get payment method analysis
+        payment_methods = current_orders.values('payment_type').annotate(
+            revenue=Sum('grand_total'),
+            count=Count('id')
+        ).order_by('-revenue')
+
+        payment_analysis = []
+        for method in payment_methods:
+            percentage = (method['revenue'] / total_revenue * 100) if total_revenue > 0 else 0
+            payment_analysis.append({
+                'type': method['payment_type'],
+                'revenue': method['revenue'],
+                'count': method['count'],
+                'percentage': percentage
+            })
+
         # Create context with all the data
         context = {
             'start_date': start_date,
@@ -1447,6 +1524,7 @@ def generate_pdf_report(request):
                 for item in daily_revenue
             ],
             'now': timezone.now(),
+            'payment_methods': payment_analysis,
         }
         
         # Add hotel information to context

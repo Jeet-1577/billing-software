@@ -335,7 +335,7 @@
             <tbody>
                 {% for day in top_days %}
                 <tr>
-                    <td>{{ day.order_date|date:"M d, Y" }}</td>
+                    <td>{{ day.report_date|date:"M d, Y" }}</td>
                     <td>₹{{ day.revenue|floatformat:2 }}</td>
                     <td>{{ day.orders }}</td>
                     <td>₹{{ day.revenue|divide:day.orders|floatformat:2 }}</td>
@@ -357,12 +357,12 @@
                 </tr>
             </thead>
             <tbody>
-                {% for payment in payment_methods %}
+                {% for method in payment_methods %}
                 <tr>
-                    <td>{{ payment.type }}</td>
-                    <td>₹{{ payment.revenue|floatformat:2 }}</td>
-                    <td>{{ payment.count }}</td>
-                    <td>{{ payment.percentage|floatformat:1 }}%</</td>
+                    <td>{{ method.type }}</td>
+                    <td>₹{{ method.revenue|floatformat:2 }}</td>
+                    <td>{{ method.count }}</td>
+                    <td>{{ method.percentage|floatformat:1 }}%</td>
                 </tr>
                 {% endfor %}
             </tbody>
