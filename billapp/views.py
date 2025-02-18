@@ -42,7 +42,13 @@ logger = logging.getLogger(__name__)
 
 def index(request):
     today = timezone.now().date()
+    
+    # Get today's orders and calculate metrics
     today_orders = Order.objects.filter(date=today)
+    today_revenue = today_orders.aggregate(
+        total=Coalesce(Sum('grand_total'), Decimal('0.00'))
+    )['total']
+    today_orders_count = today_orders.count()
 
     context = {
         'today_revenue': today_revenue,

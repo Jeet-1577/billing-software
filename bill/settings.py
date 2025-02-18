@@ -107,7 +107,7 @@ DATABASES = {
         'PASSWORD': '1577',  # Replace with your PostgreSQL password
         'HOST': 'localhost',  # Or your database server address
         'PORT': '5432',  # Default PostgreSQL port
-    }
+    }   
 }
 
 
