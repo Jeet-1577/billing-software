@@ -43,17 +43,26 @@ logger = logging.getLogger(__name__)
 def index(request):
     today = timezone.now().date()
     
-    # Get today's orders and calculate metrics
     today_orders = Order.objects.filter(date=today)
     today_revenue = today_orders.aggregate(
         total=Coalesce(Sum('grand_total'), Decimal('0.00'))
     )['total']
     today_orders_count = today_orders.count()
+    
+    # Calculate average order value
+    avg_order_value = round(float(today_revenue) / today_orders_count, 2) if today_orders_count > 0 else 0
+    
+    # Get count of tables that have active orders
+    active_tables_count = TableOrder.objects.filter(
+        status='active'
+    ).values('table').distinct().count()
 
     context = {
         'today_revenue': today_revenue,
         'today_orders_count': today_orders_count,
-        'today_orders': today_orders,
+        'today_orders': today_orders.order_by('-created_at')[:10],
+        'avg_order_value': avg_order_value,
+        'active_tables': active_tables_count,  # Updated to use the new count
     }
     return render(request, 'home.html', context)
 

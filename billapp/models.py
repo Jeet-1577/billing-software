@@ -153,6 +153,25 @@ class Table(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     size = models.IntegerField(default=4)  # Number of seats
 
+    def has_active_orders(self):
+        """Check if table has any active orders"""
+        return TableOrder.objects.filter(
+            table=self,
+            status='active'
+        ).exists()
+
+    def update_booking_status(self):
+        """Update table booking status based on active orders"""
+        self.is_booked = self.has_active_orders()
+        self.save(update_fields=['is_booked'])
+        return self.is_booked
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Update booking status when saving if not explicitly updating is_booked
+        if 'update_fields' not in kwargs or 'is_booked' not in kwargs.get('update_fields', []):
+            self.update_booking_status()
+
     def __str__(self):
         return f"Table {self.number} ({self.place})"
 
