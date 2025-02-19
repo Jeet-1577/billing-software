@@ -57,12 +57,67 @@ def index(request):
         status='active'
     ).values('table').distinct().count()
 
+    # Get hourly order distribution
+    hourly_data = Order.objects.filter(
+        date=today
+    ).annotate(
+        hour=ExtractHour('created_at')
+    ).values('hour').annotate(
+        count=Count('id')
+    ).order_by('hour')
+
+    # Format hours for display
+    hour_labels = []
+    hourly_orders = []
+    hour_counts = {h['hour']: h['count'] for h in hourly_data}
+    
+    # Initialize all 24 hours with 0 if no data
+    for hour in range(24):
+        am_pm = 'AM' if hour < 12 else 'PM'
+        display_hour = hour if hour < 12 else hour - 12
+        if display_hour == 0:
+            display_hour = 12
+        hour_labels.append(f'{display_hour}{am_pm}')
+        hourly_orders.append(hour_counts.get(hour, 0))
+
+    # Find peak and quiet hours
+    if hourly_data:
+        peak_hour_data = max(hourly_data, key=lambda x: x['count'])
+        quiet_hour_data = min(hourly_data, key=lambda x: x['count'])
+        
+        # Format peak hours
+        peak_am_pm = 'AM' if peak_hour_data['hour'] < 12 else 'PM'
+        peak_display_hour = peak_hour_data['hour'] if peak_hour_data['hour'] < 12 else peak_hour_data['hour'] - 12
+        if peak_display_hour == 0:
+            peak_display_hour = 12
+        peak_hours = f'{peak_display_hour}{peak_am_pm}'
+        peak_orders_count = peak_hour_data['count']
+
+        # Format quiet hours
+        quiet_am_pm = 'AM' if quiet_hour_data['hour'] < 12 else 'PM'
+        quiet_display_hour = quiet_hour_data['hour'] if quiet_hour_data['hour'] < 12 else quiet_hour_data['hour'] - 12
+        if quiet_display_hour == 0:
+            quiet_display_hour = 12
+        quiet_hours = f'{quiet_display_hour}{quiet_am_pm}'
+        quiet_orders_count = quiet_hour_data['count']
+    else:
+        peak_hours = "N/A"
+        quiet_hours = "N/A"
+        peak_orders_count = 0
+        quiet_orders_count = 0
+
     context = {
         'today_revenue': today_revenue,
         'today_orders_count': today_orders_count,
         'today_orders': today_orders.order_by('-created_at')[:10],
         'avg_order_value': avg_order_value,
         'active_tables': active_tables_count,  # Updated to use the new count
+        'hour_labels': json.dumps(hour_labels),
+        'hourly_orders': json.dumps(hourly_orders),
+        'peak_hours': peak_hours,
+        'quiet_hours': quiet_hours,
+        'peak_orders_count': peak_orders_count,
+        'quiet_orders_count': quiet_orders_count,
     }
     return render(request, 'home.html', context)
 

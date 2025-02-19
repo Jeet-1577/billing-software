@@ -61,6 +61,7 @@ class Migration(migrations.Migration):
                 ('total_price', models.DecimalField(decimal_places=2, max_digits=10)),
                 ('item_details', models.JSONField(default=dict)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
+                ('item', models.ForeignKey('Item', on_delete=models.SET_NULL, null=True, related_name='orderitem')),
             ],
         ),
         migrations.CreateModel(
