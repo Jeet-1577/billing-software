@@ -225,6 +225,14 @@
         try {
             const hourLabels = {{ hour_labels|safe }};
             const hourlyData = {{ hourly_orders|safe }};
+            const hourlyRevenue = {{ hourly_revenue|safe }};
+            const currentHour = {{ current_hour }};
+
+            // Create gradient fill
+            const ctx2d = ctx.getContext('2d');
+            const gradient = ctx2d.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(59, 130, 246, 0.2)');
+            gradient.addColorStop(1, 'rgba(59, 130, 246, 0)');
 
             new Chart(ctx, {
                 type: 'line',
@@ -234,15 +242,22 @@
                         label: 'Orders',
                         data: hourlyData,
                         fill: true,
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        backgroundColor: gradient,
                         borderColor: 'rgba(59, 130, 246, 1)',
                         borderWidth: 2,
                         tension: 0.4,
-                        pointRadius: 4,
-                        pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+                        pointRadius: (context) => {
+                            // Larger point for current hour
+                            return context.dataIndex === currentHour ? 6 : 4;
+                        },
+                        pointBackgroundColor: (context) => {
+                            // Different color for current hour
+                            return context.dataIndex === currentHour ? 
+                                'rgba(34, 197, 94, 1)' : 'rgba(59, 130, 246, 1)';
+                        },
                         pointBorderColor: '#fff',
                         pointBorderWidth: 2,
-                        pointHoverRadius: 6,
+                        pointHoverRadius: 8,
                         pointHoverBackgroundColor: '#fff',
                         pointHoverBorderColor: 'rgba(59, 130, 246, 1)',
                         pointHoverBorderWidth: 2,
@@ -267,7 +282,12 @@
                             displayColors: false,
                             callbacks: {
                                 label: function(context) {
-                                    return `${context.parsed.y} orders`;
+                                    const orders = context.parsed.y;
+                                    const revenue = hourlyRevenue[context.dataIndex];
+                                    return [
+                                        `Orders: ${orders}`,
+                                        `Revenue: ₹${revenue.toFixed(2)}`
+                                    ];
                                 }
                             }
                         }

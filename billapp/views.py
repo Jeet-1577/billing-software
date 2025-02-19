@@ -42,84 +42,108 @@ logger = logging.getLogger(__name__)
 
 def index(request):
     today = timezone.now().date()
+    current_hour = timezone.now().hour
     
-    today_orders = Order.objects.filter(date=today)
-    today_revenue = today_orders.aggregate(
-        total=Coalesce(Sum('grand_total'), Decimal('0.00'))
-    )['total']
+    # Get today's orders and basic stats
+    today_orders = Order.objects.filter(created_at__date=today)
+    today_revenue = float(today_orders.aggregate(
+        total=Coalesce(Sum('grand_total'), Value(Decimal('0.00')))
+    )['total'])
     today_orders_count = today_orders.count()
-    
-    # Calculate average order value
-    avg_order_value = round(float(today_revenue) / today_orders_count, 2) if today_orders_count > 0 else 0
-    
-    # Get count of tables that have active orders
-    active_tables_count = TableOrder.objects.filter(
-        status='active'
-    ).values('table').distinct().count()
 
-    # Get hourly order distribution
+    # Get actual order hours from database with timezone conversion
     hourly_data = Order.objects.filter(
-        date=today
+        created_at__date=today
     ).annotate(
-        hour=ExtractHour('created_at')
+        # Convert UTC time to local timezone before extracting hour
+        hour=ExtractHour(
+            Cast(
+                F('created_at'),
+                output_field=models.DateTimeField()
+            ) + timedelta(hours=5, minutes=30)  # Add IST offset
+        )
     ).values('hour').annotate(
-        count=Count('id')
+        count=Count('id'),
+        revenue=Sum('grand_total', default=0)
     ).order_by('hour')
 
-    # Format hours for display
+    print("Debug - Raw hourly data:", list(hourly_data))  # Debug print
+
+    # Initialize data for all 24 hours
+    hours = list(range(24))
+    hour_data = {hour: {'count': 0, 'revenue': 0.0} for hour in hours}
+
+    # Fill in actual data from orders
+    for entry in hourly_data:
+        actual_hour = entry['hour']
+        hour_data[actual_hour] = {
+            'count': int(entry['count']),
+            'revenue': float(entry['revenue'] or 0)
+        }
+
+    print("Debug - Processed hour_data:", hour_data)  # Debug print
+
+    # Create arrays for chart while preserving actual hours
     hour_labels = []
     hourly_orders = []
-    hour_counts = {h['hour']: h['count'] for h in hourly_data}
-    
-    # Initialize all 24 hours with 0 if no data
+    hourly_revenue = []
+
+    # Format data for chart in chronological order
     for hour in range(24):
+        # Format hour label (e.g., "3PM", "4PM", etc.)
         am_pm = 'AM' if hour < 12 else 'PM'
         display_hour = hour if hour < 12 else hour - 12
         if display_hour == 0:
             display_hour = 12
+            
         hour_labels.append(f'{display_hour}{am_pm}')
-        hourly_orders.append(hour_counts.get(hour, 0))
+        hourly_orders.append(hour_data[hour]['count'])
+        hourly_revenue.append(hour_data[hour]['revenue'])
 
-    # Find peak and quiet hours
-    if hourly_data:
-        peak_hour_data = max(hourly_data, key=lambda x: x['count'])
-        quiet_hour_data = min(hourly_data, key=lambda x: x['count'])
-        
-        # Format peak hours
-        peak_am_pm = 'AM' if peak_hour_data['hour'] < 12 else 'PM'
-        peak_display_hour = peak_hour_data['hour'] if peak_hour_data['hour'] < 12 else peak_hour_data['hour'] - 12
-        if peak_display_hour == 0:
-            peak_display_hour = 12
-        peak_hours = f'{peak_display_hour}{peak_am_pm}'
-        peak_orders_count = peak_hour_data['count']
+    print("Debug - Chart data:")  # Debug prints
+    print("Labels:", hour_labels)
+    print("Orders:", hourly_orders)
+    print("Revenue:", hourly_revenue)
 
-        # Format quiet hours
-        quiet_am_pm = 'AM' if quiet_hour_data['hour'] < 12 else 'PM'
-        quiet_display_hour = quiet_hour_data['hour'] if quiet_hour_data['hour'] < 12 else quiet_hour_data['hour'] - 12
-        if quiet_display_hour == 0:
-            quiet_display_hour = 12
-        quiet_hours = f'{quiet_display_hour}{quiet_am_pm}'
-        quiet_orders_count = quiet_hour_data['count']
+    # Find peak and quiet hours from actual data
+    active_hours = [(h, data['count']) for h, data in hour_data.items() if data['count'] > 0]
+    
+    if active_hours:
+        peak_hour = max(active_hours, key=lambda x: x[1])
+        quiet_hour = min(active_hours, key=lambda x: x[1])
+        peak_hours = format_hour(peak_hour[0])
+        quiet_hours = format_hour(quiet_hour[0])
+        peak_orders_count = peak_hour[1]
+        quiet_orders_count = quiet_hour[1]
     else:
-        peak_hours = "N/A"
-        quiet_hours = "N/A"
-        peak_orders_count = 0
-        quiet_orders_count = 0
+        peak_hours = quiet_hours = "N/A"
+        peak_orders_count = quiet_orders_count = 0
 
     context = {
         'today_revenue': today_revenue,
         'today_orders_count': today_orders_count,
         'today_orders': today_orders.order_by('-created_at')[:10],
-        'avg_order_value': avg_order_value,
-        'active_tables': active_tables_count,  # Updated to use the new count
+        'avg_order_value': round(float(today_revenue) / max(today_orders_count, 1), 2),
+        'active_tables': TableOrder.objects.filter(status='active').values('table').distinct().count(),
         'hour_labels': json.dumps(hour_labels),
         'hourly_orders': json.dumps(hourly_orders),
+        'hourly_revenue': json.dumps(hourly_revenue),
         'peak_hours': peak_hours,
         'quiet_hours': quiet_hours,
         'peak_orders_count': peak_orders_count,
         'quiet_orders_count': quiet_orders_count,
+        'current_hour': current_hour,
     }
+
     return render(request, 'home.html', context)
+
+def format_hour(hour):
+    """Helper function to format hours in 12-hour format"""
+    am_pm = 'AM' if hour < 12 else 'PM'
+    display_hour = hour if hour < 12 else hour - 12
+    if (display_hour == 0):
+        display_hour = 12
+    return f'{display_hour}{am_pm}'
 
 def profile(request):
     return render(request, 'profile.html')
