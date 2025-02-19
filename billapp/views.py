@@ -46,64 +46,56 @@ def index(request):
     
     # Get today's orders and basic stats
     today_orders = Order.objects.filter(created_at__date=today)
-    today_revenue = float(today_orders.aggregate(
-        total=Coalesce(Sum('grand_total'), Value(Decimal('0.00')))
-    )['total'])
+    today_revenue = today_orders.aggregate(
+        total=Coalesce(Sum('grand_total'), Decimal('0.00'))
+    )['total']
     today_orders_count = today_orders.count()
 
-    # Get actual order hours from database with timezone conversion
+    # Updated query with explicit output_field
     hourly_data = Order.objects.filter(
         created_at__date=today
     ).annotate(
-        # Convert UTC time to local timezone before extracting hour
-        hour=ExtractHour(
-            Cast(
-                F('created_at'),
-                output_field=models.DateTimeField()
-            ) + timedelta(hours=5, minutes=30)  # Add IST offset
-        )
+        hour=ExtractHour('created_at')
     ).values('hour').annotate(
         count=Count('id'),
-        revenue=Sum('grand_total', default=0)
+        revenue=Coalesce(
+            Sum('grand_total'),
+            Value(0, output_field=DecimalField(max_digits=10, decimal_places=2))
+        )
     ).order_by('hour')
 
-    print("Debug - Raw hourly data:", list(hourly_data))  # Debug print
-
-    # Initialize data for all 24 hours
+    # Rest of the initialization
     hours = list(range(24))
-    hour_data = {hour: {'count': 0, 'revenue': 0.0} for hour in hours}
-
+    hour_data = {hour: {'count': 0, 'revenue': 0} for hour in hours}
     # Fill in actual data from orders
     for entry in hourly_data:
-        actual_hour = entry['hour']
-        hour_data[actual_hour] = {
-            'count': int(entry['count']),
-            'revenue': float(entry['revenue'] or 0)
+        hour = entry['hour']
+        hour_data[hour] = {
+            'count': entry['count'],
+            'revenue': float(entry['revenue'])
         }
 
-    print("Debug - Processed hour_data:", hour_data)  # Debug print
-
-    # Create arrays for chart while preserving actual hours
+    # Format data for the chart
     hour_labels = []
     hourly_orders = []
     hourly_revenue = []
 
-    # Format data for chart in chronological order
-    for hour in range(24):
-        # Format hour label (e.g., "3PM", "4PM", etc.)
+    for hour in hours:
+        # Format hour label (e.g., "1AM", "2PM", etc.)
         am_pm = 'AM' if hour < 12 else 'PM'
         display_hour = hour if hour < 12 else hour - 12
         if display_hour == 0:
             display_hour = 12
-            
         hour_labels.append(f'{display_hour}{am_pm}')
+        
+        # Add data points
         hourly_orders.append(hour_data[hour]['count'])
         hourly_revenue.append(hour_data[hour]['revenue'])
 
-    print("Debug - Chart data:")  # Debug prints
+    print("Debug - Formatted data:")  # Debug prints
     print("Labels:", hour_labels)
     print("Orders:", hourly_orders)
-    print("Revenue:", hourly_revenue)
+    print("Current hour:", current_hour)
 
     # Find peak and quiet hours from actual data
     active_hours = [(h, data['count']) for h, data in hour_data.items() if data['count'] > 0]
@@ -134,7 +126,7 @@ def index(request):
         'quiet_orders_count': quiet_orders_count,
         'current_hour': current_hour,
     }
-
+    
     return render(request, 'home.html', context)
 
 def format_hour(hour):
@@ -1274,7 +1266,6 @@ def item_analytics(request):
             'today_items_revenue': today_items_revenue,
             'top_items_labels': json.dumps([item['name'] for item in top_items_by_quantity]) if top_items_by_quantity else '[]',
             'top_items_data': json.dumps([float(item['total_quantity']) for item in top_items_by_quantity]) if top_items_by_quantity else '[]',
-
         }
         
         return render(request, 'reports/item_analytics.html', context)
@@ -1342,6 +1333,10 @@ def financial_reports(request):
         total_gst = current_orders.aggregate(
             total=Coalesce(Sum('gst_amount'), Decimal('0.00'))
         )['total']
+
+        # Calculate net profit by subtracting total GST from total revenue
+        net_profit = total_revenue - total_gst
+        profit_margin = (net_profit / total_revenue * 100) if total_revenue > 0 else 0
 
         # Calculate previous period metrics
         prev_revenue = previous_orders.aggregate(
@@ -1411,6 +1406,8 @@ def financial_reports(request):
             'daily_revenue_data': json.dumps([float(item['total']) for item in daily_revenue]),
             'daily_revenue_dates': json.dumps([item['order_date'].strftime('%Y-%m-%d') for item in daily_revenue]),
             'selected_period': period,
+            'net_profit': net_profit,
+            'profit_margin': profit_margin,
         }
 
         return render(request, 'reports/financial_reports.html', context)
@@ -1549,6 +1546,14 @@ def generate_pdf_report(request):
             total=Coalesce(Sum('grand_total'), Decimal('0.00'))
         )['total']
         
+        total_gst = current_orders.aggregate(
+            total=Coalesce(Sum('gst_amount'), Decimal('0.00'))
+        )['total']
+
+        # Calculate net profit by subtracting total GST from total revenue
+        net_profit = total_revenue - total_gst
+        profit_margin = (net_profit / total_revenue * 100) if total_revenue > 0 else 0
+
         # Get daily revenue breakdown - Changed annotation name from 'date' to 'report_date'
         daily_revenue = current_orders.annotate(
             report_date=TruncDate('created_at')  # Changed from 'date' to 'report_date'
@@ -1603,9 +1608,9 @@ def generate_pdf_report(request):
             'total_revenue': total_revenue,
             'total_orders': current_orders.count(),
             'avg_order_value': total_revenue / current_orders.count() if current_orders.count() > 0 else 0,
-            'total_gst': current_orders.aggregate(Sum('gst_amount'))['gst_amount__sum'] or 0,
-            'cgst_amount': (current_orders.aggregate(Sum('gst_amount'))['gst_amount__sum'] or 0) / 2,
-            'sgst_amount': (current_orders.aggregate(Sum('gst_amount'))['gst_amount__sum'] or 0) / 2,
+            'total_gst': total_gst,
+            'cgst_amount': total_gst / 2,
+            'sgst_amount': total_gst / 2,
             'revenue_trend': revenue_trend,
             'top_days': list(daily_performance[:3]),
             'daily_revenue': [
@@ -1619,6 +1624,8 @@ def generate_pdf_report(request):
             ],
             'now': timezone.now(),
             'payment_methods': payment_analysis,
+            'net_profit': net_profit,
+            'profit_margin': profit_margin,
         }
         
         # Add hotel information to context

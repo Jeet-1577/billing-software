@@ -318,6 +318,14 @@
                     <div>SGST: ₹{{ sgst_amount|floatformat:2 }}</div>
                 </div>
             </div>
+            <div class="metric-card">
+                <h3 class="metric-title">Net Profit</h3>
+                <div class="metric-value">₹{{ net_profit|floatformat:2 }}</div>
+            </div>
+            <div class="metric-card">
+                <h3 class="metric-title">Profit Margin</h3>
+                <div class="metric-value">{{ profit_margin|floatformat:1 }}%</div>
+            </div>
         </div>
     </div>
 
