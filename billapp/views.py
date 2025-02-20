@@ -9,7 +9,8 @@ from .models import (
     KoOrder, 
     TableOrder,
     CustomizationCategory,
-    CustomizationOption
+    CustomizationOption,
+    Owner  # Add this import
 )
 from .forms import CategoryForm, ItemForm, EmployeeForm, OwnerForm  # Update this line to only import existing forms
 from django.http import JsonResponse
@@ -138,32 +139,66 @@ def format_hour(hour):
     return f'{display_hour}{am_pm}'
 
 def profile(request):
-    owners = []  # Replace with your actual logic to fetch owners
+    owners = Owner.objects.all().order_by('-created_at')
     hotel = {}    # Replace with your actual logic to fetch hotel details
-    employees = [] # Replace with your actual logic to fetch employees
+    employees = Employee.objects.all()
     return render(request, 'profile.html', {'owners': owners, 'hotel': hotel, 'employees': employees})
 
 def add_owner(request):
     if request.method == 'POST':
-        form = OwnerForm(request.POST, request.FILES)
-        if form.is_valid():
-            name = form.cleaned_data['name']
-            email = form.cleaned_data['email']
-            phone = form.cleaned_data['phone']
+        try:
+            name = request.POST.get('name')
+            email = request.POST.get('email')
+            phone = request.POST.get('phone')
             photo = request.FILES.get('photo')
 
-            # Here, you would typically save the owner to the database
-            # For example:
-            # owner = Owner(name=name, email=email, phone=phone, photo=photo)
-            # owner.save()
-
-            # Redirect back to the profile page
+            # Create new owner
+            owner = Owner.objects.create(
+                name=name,
+                email=email,
+                phone=phone,
+                photo=photo
+            )
+            messages.success(request, 'Owner added successfully!')
             return redirect('profile')
-    else:
-        form = OwnerForm()
-    return render(request, 'profile.html', {'form': form})
+        except Exception as e:
+            messages.error(request, f'Error adding owner: {str(e)}')
+            return redirect('profile')
+    return redirect('profile')
 
-# Add more views as needed
+@csrf_exempt
+def edit_owner(request, owner_id):
+    if request.method == 'POST':
+        try:
+            owner = Owner.objects.get(id=owner_id)
+            owner.name = request.POST.get('name')
+            owner.email = request.POST.get('email')
+            owner.phone = request.POST.get('phone')
+            
+            if 'photo' in request.FILES:
+                owner.photo = request.FILES['photo']
+            
+            owner.save()
+            messages.success(request, 'Owner updated successfully!')
+            return redirect('profile')
+        except Exception as e:
+            messages.error(request, f'Error updating owner: {str(e)}')
+            return redirect('profile')
+    return redirect('profile')
+
+@csrf_exempt
+def delete_owner(request, owner_id):
+    if request.method == 'POST':
+        try:
+            owner = Owner.objects.get(id=owner_id)
+            owner.delete()
+            messages.success(request, 'Owner deleted successfully!')
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            messages.error(request, f'Error deleting owner: {str(e)}')
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
 def settings(request):
     return render(request, 'settings.html')
 

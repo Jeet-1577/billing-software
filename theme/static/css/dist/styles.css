@@ -962,6 +962,14 @@ select {
   top: 0.5rem;
 }
 
+.right-4 {
+  right: 1rem;
+}
+
+.top-4 {
+  top: 1rem;
+}
+
 .z-10 {
   z-index: 10;
 }
@@ -1235,6 +1243,10 @@ select {
   max-height: calc(100vh - 400px);
 }
 
+.max-h-\[280px\] {
+  max-height: 280px;
+}
+
 .min-h-0 {
   min-height: 0px;
 }
@@ -1325,6 +1337,10 @@ select {
 
 .min-w-full {
   min-width: 100%;
+}
+
+.min-w-0 {
+  min-width: 0px;
 }
 
 .max-w-4xl {
@@ -1628,6 +1644,12 @@ select {
   overflow-y: scroll;
 }
 
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .rounded {
   border-radius: 0.25rem;
 }
@@ -1847,6 +1869,10 @@ select {
 .bg-yellow-600 {
   --tw-bg-opacity: 1;
   background-color: rgb(202 138 4 / var(--tw-bg-opacity, 1));
+}
+
+.bg-gray-700\/50 {
+  background-color: rgb(55 65 81 / 0.5);
 }
 
 .bg-opacity-40 {
@@ -2591,6 +2617,11 @@ select {
 .hover\:text-white:hover {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+}
+
+.hover\:text-red-300:hover {
+  --tw-text-opacity: 1;
+  color: rgb(252 165 165 / var(--tw-text-opacity, 1));
 }
 
 .hover\:underline:hover {
