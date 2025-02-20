@@ -199,6 +199,63 @@ def delete_owner(request, owner_id):
             return JsonResponse({'status': 'error', 'message': str(e)})
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
 
+@csrf_exempt
+def add_employee(request):
+    if request.method == 'POST':
+        try:
+            employee = Employee.objects.create(
+                employee_id=request.POST.get('employee_id'),
+                name=request.POST.get('name'),
+                email=request.POST.get('email'),
+                mobile_number=request.POST.get('mobile_number'),
+                address=request.POST.get('address'),
+                aadhar=request.POST.get('aadhar'),
+                password=request.POST.get('password')  # Will be hashed by the model's save method
+            )
+            messages.success(request, 'Employee added successfully!')
+            return redirect('profile')
+        except Exception as e:
+            messages.error(request, f'Error adding employee: {str(e)}')
+            return redirect('profile')
+    return redirect('profile')
+
+@csrf_exempt
+def edit_employee(request, employee_id):
+    if request.method == 'POST':
+        try:
+            employee = Employee.objects.get(id=employee_id)
+            employee.employee_id = request.POST.get('employee_id')
+            employee.name = request.POST.get('name')
+            employee.email = request.POST.get('email')
+            employee.mobile_number = request.POST.get('mobile_number')
+            employee.address = request.POST.get('address')
+            employee.aadhar = request.POST.get('aadhar')
+            
+            # Only update password if provided
+            if password := request.POST.get('password'):
+                employee.password = password
+            
+            employee.save()
+            messages.success(request, 'Employee updated successfully!')
+            return redirect('profile')
+        except Exception as e:
+            messages.error(request, f'Error updating employee: {str(e)}')
+            return redirect('profile')
+    return redirect('profile')
+
+@csrf_exempt
+def delete_employee(request, employee_id):
+    if request.method == 'POST':
+        try:
+            employee = Employee.objects.get(id=employee_id)
+            employee.delete()
+            messages.success(request, 'Employee deleted successfully!')
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            messages.error(request, f'Error deleting employee: {str(e)}')
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
 def settings(request):
     return render(request, 'settings.html')
 

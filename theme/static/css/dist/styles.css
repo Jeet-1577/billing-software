@@ -1259,6 +1259,10 @@ select {
   min-height: 100vh;
 }
 
+.min-h-\[80px\] {
+  min-height: 80px;
+}
+
 .w-1\/2 {
   width: 50%;
 }
@@ -1480,6 +1484,10 @@ select {
 
 .content-start {
   align-content: flex-start;
+}
+
+.items-start {
+  align-items: flex-start;
 }
 
 .items-center {
