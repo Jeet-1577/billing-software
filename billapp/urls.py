@@ -5,6 +5,7 @@ from .views import table_view, store_order, save_table_order, get_table_order_de
 urlpatterns = [
     path('', views.index, name='index'),
     path('profile/', views.profile, name='profile'),
+    path('add_owner/', views.add_owner, name='add_owner'),
     path('settings/', views.settings, name='settings'),
     path('inventory/', views.inventory, name='inventory'),
     path('portfolio/', views.portfolio, name='portfolio'),

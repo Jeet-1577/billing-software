@@ -11,7 +11,7 @@ from .models import (
     CustomizationCategory,
     CustomizationOption
 )
-from .forms import CategoryForm, ItemForm, EmployeeForm  # Update this line to only import existing forms
+from .forms import CategoryForm, ItemForm, EmployeeForm, OwnerForm  # Update this line to only import existing forms
 from django.http import JsonResponse
 import json
 from datetime import datetime
@@ -138,7 +138,30 @@ def format_hour(hour):
     return f'{display_hour}{am_pm}'
 
 def profile(request):
-    return render(request, 'profile.html')
+    owners = []  # Replace with your actual logic to fetch owners
+    hotel = {}    # Replace with your actual logic to fetch hotel details
+    employees = [] # Replace with your actual logic to fetch employees
+    return render(request, 'profile.html', {'owners': owners, 'hotel': hotel, 'employees': employees})
+
+def add_owner(request):
+    if request.method == 'POST':
+        form = OwnerForm(request.POST, request.FILES)
+        if form.is_valid():
+            name = form.cleaned_data['name']
+            email = form.cleaned_data['email']
+            phone = form.cleaned_data['phone']
+            photo = request.FILES.get('photo')
+
+            # Here, you would typically save the owner to the database
+            # For example:
+            # owner = Owner(name=name, email=email, phone=phone, photo=photo)
+            # owner.save()
+
+            # Redirect back to the profile page
+            return redirect('profile')
+    else:
+        form = OwnerForm()
+    return render(request, 'profile.html', {'form': form})
 
 # Add more views as needed
 def settings(request):

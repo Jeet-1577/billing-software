@@ -49,10 +49,9 @@
         {% empty %}
         <p class="text-gray-400">No owners listed.</p>
         {% endfor %}
-        <button class="w-full py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition">Add New Owner</button>
+        <button class="w-full py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition" onclick="openOwnerPopup()">Add New Owner</button>
       </div>
     </section>
-
 
     <!-- Settings & Preferences -->
     <section class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -139,14 +138,386 @@
   </div>
 </div>
 
+<!-- The Modal -->
+<div id="ownerModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title">
+  <div class="flex items-center justify-center min-h-screen p-0">
+    <!-- Background overlay -->
+    <div class="fixed inset-0 bg-black bg-opacity-80 transition-opacity"></div>
+
+    <!-- Modal panel -->
+    <div class="relative bg-gray-800 rounded-lg w-96 transform transition-all">
+      <!-- Header -->
+      <div class="bg-gray-700 rounded-t-lg px-4 py-3 flex items-center justify-between">
+        <h3 class="text-white text-lg font-medium" id="modal-title">Add New Hotel Owner</h3>
+        <button onclick="closeOwnerPopup()" class="text-gray-400 hover:text-white">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <!-- Form -->
+      <form id="ownerForm" method="post" action="{% url 'add_owner' %}" enctype="multipart/form-data" class="p-4 space-y-3">
+        {% csrf_token %}
+        
+        <!-- Name Input -->
+        <div>
+          <label for="name" class="block text-sm text-gray-300 mb-1">Full Name</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
+              <i class="fas fa-user text-gray-500 text-sm"></i>
+            </div>
+            <input type="text" id="name" name="name" required 
+                   class="w-full pl-9 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+          </div>
+        </div>
+
+        <!-- Email Input -->
+        <div>
+          <label for="email" class="block text-sm text-gray-300 mb-1">Email Address</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
+              <i class="fas fa-envelope text-gray-500 text-sm"></i>
+            </div>
+            <input type="email" id="email" name="email" required 
+                   class="w-full pl-9 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+          </div>
+        </div>
+
+        <!-- Phone Input -->
+        <div>
+          <label for="phone" class="block text-sm text-gray-300 mb-1">Phone Number</label>
+          <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
+              <i class="fas fa-phone text-gray-500 text-sm"></i>
+            </div>
+            <input type="text" id="phone" name="phone" required 
+                   class="w-full pl-9 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+          </div>
+        </div>
+
+        <!-- Photo Upload -->
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">Profile Photo</label>
+          <div class="mt-1 p-2 border-2 border-gray-600 border-dashed rounded-lg hover:border-gray-500">
+            <div class="text-center">
+              <div class="flex flex-col items-center">
+                <i class="fas fa-cloud-upload-alt text-gray-400 text-xl mb-2"></i>
+                <label for="photo" class="cursor-pointer">
+                  <span class="text-sm text-blue-400 hover:text-blue-300">Choose a file</span>
+                  <input id="photo" name="photo" type="file" class="hidden" accept="image/*">
+                </label>
+                <p class="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-4 pt-3 flex justify-end space-x-2 border-t border-gray-700">
+          <button type="button" onclick="closeOwnerPopup()" 
+                  class="px-4 py-2 text-xs font-medium text-gray-300 bg-gray-700 rounded hover:bg-gray-600 focus:outline-none">
+            Cancel
+          </button>
+          <button type="submit" 
+                  class="px-4 py-2 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 focus:outline-none">
+            Add Owner
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
 <style>
-    /* Custom Scrollbar Styles */
-    .custom-scrollbar {
-        scrollbar-width: none; /* Firefox */
-        -ms-overflow-style: none;  /* Internet Explorer 10+ */
-    }
-    .custom-scrollbar::-webkit-scrollbar {
-        display: none; /* Safari and Chrome */
-    }
+/* The Modal (background) */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1000; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgba(0, 0, 0, 0.75); /* Black w/ opacity */
+  backdrop-filter: blur(4px);
+}
+
+.modal.show {
+  display: block;
+}
+
+@keyframes modalFade {
+  from {
+    opacity: 0;
+    transform: translateY(-1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-content {
+  animation: modalFade 0.3s ease-out;
+}
+
+/* Focus styles for inputs */
+.modal input:focus {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+/* Hover effects for buttons */
+.modal button:hover {
+  transform: translateY(-1px);
+}
+
+/* Transition for all interactive elements */
+.modal button, 
+.modal input,
+.modal label {
+  transition: all 0.2s ease;
+}
+
+/* Modal Content/Box */
+.modal-content {
+  background-color: #333; /* Dark background */
+  color: #fff; /* White text */
+  margin: 5% auto;
+  padding: 2rem;
+  border: 1px solid #555; /* Darker border */
+  width: 80%;
+  max-width: 600px;
+  border-radius: 10px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+  from {
+    transform: translateY(-10%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* The Close Button */
+.close {
+  color: #aaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+  transition: color 0.2s;
+}
+
+.close:hover,
+.close:focus {
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* Form Styling */
+.input-group {
+  margin-bottom: 15px;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #ddd;
+}
+
+.input-group input[type="text"],
+.input-group input[type="email"],
+.input-group input[type="file"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #555;
+  background-color: #444;
+  color: #fff;
+  border-radius: 5px;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.input-group input[type="text"]:focus,
+.input-group input[type="email"]:focus,
+.input-group input[type="file"]:focus {
+  border-color: #80bdff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
+}
+
+.input-group input::placeholder {
+  color: #6B7280;
+}
+
+.input-group input:focus {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+
+/* Submit Button */
+.submit-btn {
+  background-color: #28a745;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.2s;
+}
+
+.submit-btn:hover {
+  background-color: #218838;
+}
+
+/* General Styling */
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #fff;
+}
+
+i {
+  margin-right: 8px;
+  color: #bbb;
+}
+
+/* Custom Scrollbar Styles */
+.custom-scrollbar {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+}
+.custom-scrollbar::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+}
+
+/* Update modal animations */
+@keyframes modalFade {
+  from {
+    opacity: 0;
+    transform: translate(0, -10px) scale(.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+#ownerModal {
+  display: none;
+}
+
+#ownerModal[data-show="true"] {
+  display: block;
+}
+
+#ownerModal > div > div:last-child {
+  animation: modalFade 0.3s ease-out;
+}
+
+/* Improve input spacing */
+.input-group + .input-group {
+  margin-top: 1.5rem;
+}
+
+/* Better form control spacing */
+.input-group input {
+  margin-top: 0.5rem;
+  padding: 0.75rem 1rem 0.75rem 2.5rem;
+}
+
+/* Improved focus states */
+.input-group input:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* Update existing styles */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+}
+
+@keyframes modalFade {
+  from {
+    opacity: 0;
+    transform: translate(0, -8px) scale(.98);
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+#ownerModal[data-show="true"] {
+  display: block;
+}
+
+#ownerModal > div > div:last-child {
+  animation: modalFade 0.2s ease-out;
+}
+
+/* Rest of your existing styles... */
+#ownerModal .bg-gray-800 {
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+}
+
+#ownerModal input:focus {
+  outline: none;
+}
 </style>
+
+<script>
+// Get the modal
+var modal = document.getElementById("ownerModal");
+
+// Get the button that opens the modal
+var btn = document.getElementById("myBtn");
+
+// Get the <span> element that closes the modal
+var span = document.getElementsByClassName("close")[0];
+
+// Open the modal
+function openOwnerPopup() {
+  const modal = document.getElementById("ownerModal");
+  modal.setAttribute('data-show', 'true');
+  document.body.style.overflow = 'hidden';
+}
+
+// Close the modal
+function closeOwnerPopup() {
+  const modal = document.getElementById("ownerModal");
+  modal.setAttribute('data-show', 'false');
+  document.body.style.overflow = '';
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
+
+// Close modal on background click
+document.getElementById("ownerModal").addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) {
+    closeOwnerPopup();
+  }
+});
+</script>
 {% endblock %}
