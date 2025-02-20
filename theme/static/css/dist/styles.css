@@ -1054,6 +1054,10 @@ select {
   margin-top: 1.5rem;
 }
 
+.ml-3 {
+  margin-left: 0.75rem;
+}
+
 .block {
   display: block;
 }
@@ -1134,10 +1138,6 @@ select {
   height: 85%;
 }
 
-.h-\[calc\(100\%-3\.5rem\)\] {
-  height: calc(100% - 3.5rem);
-}
-
 .h-\[calc\(100\%-3rem\)\] {
   height: calc(100% - 3rem);
 }
@@ -1160,6 +1160,14 @@ select {
 
 .h-screen {
   height: 100vh;
+}
+
+.h-\[calc\(100\%-3\.5rem\)\] {
+  height: calc(100% - 3.5rem);
+}
+
+.h-8 {
+  height: 2rem;
 }
 
 .max-h-40 {
@@ -1280,6 +1288,10 @@ select {
 
 .w-full {
   width: 100%;
+}
+
+.w-64 {
+  width: 16rem;
 }
 
 .min-w-\[600px\] {
@@ -2018,6 +2030,10 @@ select {
 
 .tracking-normal {
   letter-spacing: 0em;
+}
+
+.tracking-wider {
+  letter-spacing: 0.05em;
 }
 
 .text-black {

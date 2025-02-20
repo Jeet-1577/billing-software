@@ -1215,9 +1215,10 @@ def item_analytics(request):
         float_output_field = FloatField()
         char_output_field = models.CharField(max_length=255)
 
-        # Get items analysis data without rating aggregation
+        # Get items analysis data with category aggregation
         items_analysis = OrderItem.objects.values(
-            'name'
+            'name',
+            'item_details__category'  # Fetch category from item details
         ).annotate(
             category=Coalesce(
                 Cast('item_details__category', output_field=char_output_field),

@@ -55,27 +55,39 @@
         <!-- Item Performance Analysis Table -->
         <div class="w-full xl:w-2/3 bg-gray-800 rounded-lg p-3 md:p-4 shadow-lg overflow-hidden flex flex-col">
             <h3 class="text-lg font-semibold text-white mb-2 md:mb-4">Item Performance Analysis</h3>
-            <div class="overflow-auto flex-grow">
-                <div class="min-w-[600px] xl:min-w-0">
+            <div class="overflow-auto flex-grow" style="scrollbar-width: none; -ms-overflow-style: none;">
+                <style>
+                    .hidden-scrollbar::-webkit-scrollbar {
+                        display: none;
+                    }
+                    .hidden-scrollbar {
+                        -ms-overflow-style: none;  /* IE and Edge */
+                        scrollbar-width: none;  /* Firefox */
+                    }
+                    .center-text {
+                        text-align: center;
+                    }
+                </style>
+                <div class="min-w-[600px] xl:min-w-0 hidden-scrollbar">
                     {% if items_analysis %}
                         <table class="w-full text-gray-300 table-auto">
                             <thead class="sticky top-0 bg-gray-800 z-10">
                                 <tr class="bg-gray-700">
-                                    <th class="px-3 py-2 text-left">Item Name</th>
-                                    <th class="px-3 py-2 text-left">Category</th>
-                                    <th class="px-3 py-2 text-right">Total Sold</th>
-                                    <th class="px-3 py-2 text-right">Revenue</th>
-                                    <th class="px-3 py-2 text-right">Avg. Rating</th>
+                                    <th class="px-3 py-2 text-left center-text">Item Name</th>
+                                    <th class="px-3 py-2 text-left center-text">Category</th>
+                                    <th class="px-3 py-2 text-right center-text">Total Sold</th>
+                                    <th class="px-3 py-2 text-right center-text">Revenue</th>
+                                    <th class="px-3 py-2 text-right center-text">Avg. Rating</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-700">
                                 {% for item in items_analysis %}
                                 <tr class="border-b border-gray-700">
-                                    <td class="px-4 py-2">{{ item.name }}</td>
-                                    <td class="px-4 py-2">{{ item.category }}</td>
-                                    <td class="px-4 py-2">{{ item.total_sold }}</td>
-                                    <td class="px-4 py-2">₹{{ item.revenue }}</td>
-                                    <td class="px-4 py-2">{{ item.avg_rating|floatformat:1 }}</td>
+                                    <td class="px-4 py-2 center-text">{{ item.name }}</td>
+                                    <td class="px-4 py-2 center-text">{{ item.category }}</td>
+                                    <td class="px-4 py-2 center-text">{{ item.total_sold }}</td>
+                                    <td class="px-4 py-2 center-text">₹{{ item.revenue }}</td>
+                                    <td class="px-4 py-2 center-text">{{ item.avg_rating|floatformat:1 }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
