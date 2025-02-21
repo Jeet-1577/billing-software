@@ -535,6 +535,69 @@ function deleteEmployee(employeeId) {
         });
     }
 }
+
+// Add this after your existing JavaScript code
+
+// Handle email notifications toggle
+document.getElementById('notifications').addEventListener('change', function(e) {
+    updatePreferences({
+        email_notifications: e.target.checked,
+        two_factor_auth: document.getElementById('2fa').checked,
+        language: document.getElementById('language').value
+    });
+});
+
+// Handle 2FA toggle
+document.getElementById('2fa').addEventListener('change', function(e) {
+    updatePreferences({
+        email_notifications: document.getElementById('notifications').checked,
+        two_factor_auth: e.target.checked,
+        language: document.getElementById('language').value
+    });
+});
+
+// Handle language change
+document.getElementById('language').addEventListener('change', function(e) {
+    updatePreferences({
+        email_notifications: document.getElementById('notifications').checked,
+        two_factor_auth: document.getElementById('2fa').checked,
+        language: e.target.value
+    });
+});
+
+// Function to update preferences
+function updatePreferences(preferences) {
+    const formData = new FormData();
+    formData.append('email_notifications', preferences.email_notifications);
+    formData.append('two_factor_auth', preferences.two_factor_auth);
+    formData.append('language', preferences.language);
+
+    fetch('/update-preferences/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Show success message if needed
+            console.log('Preferences updated successfully');
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating preferences');
+    });
+}
+
+// Initialize preference toggles from hotel data
+document.addEventListener('DOMContentLoaded', function() {
+    // Set initial values based on hotel data
+    document.getElementById('notifications').checked = {{ hotel.email_notifications|yesno:"true,false" }};
+    document.getElementById('2fa').checked = {{ hotel.two_factor_auth|yesno:"true,false" }};
+    document.getElementById('language').value = "{{ hotel.language }}";
+});
 </script>
 
 <style>

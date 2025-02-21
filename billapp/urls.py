@@ -77,4 +77,5 @@ urlpatterns += [
 
 urlpatterns += [
     path('update-hotel-profile/', views.update_hotel_profile, name='update_hotel_profile'),
+    path('update-preferences/', views.update_preferences, name='update_preferences'),
 ]

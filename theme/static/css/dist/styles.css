@@ -1194,6 +1194,10 @@ select {
   max-height: 200px;
 }
 
+.max-h-\[250px\] {
+  max-height: 250px;
+}
+
 .max-h-\[270px\] {
   max-height: 270px;
 }
@@ -1220,14 +1224,6 @@ select {
 
 .max-h-\[calc\(100vh-400px\)\] {
   max-height: calc(100vh - 400px);
-}
-
-.max-h-\[250px\] {
-  max-height: 250px;
-}
-
-.max-h-\[2700px\] {
-  max-height: 2700px;
 }
 
 .min-h-0 {
@@ -1324,10 +1320,6 @@ select {
 
 .min-w-full {
   min-width: 100%;
-}
-
-.min-w-0 {
-  min-width: 0px;
 }
 
 .max-w-4xl {
@@ -1625,12 +1617,6 @@ select {
 
 .overflow-y-scroll {
   overflow-y: scroll;
-}
-
-.truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .rounded {

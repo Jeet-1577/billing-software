@@ -1101,7 +1101,7 @@ def manage_items(request):
                 )
 
                 # Handle customization options if enabled
-                if has_customization:
+                if (has_customization):
                     customization_options = request.POST.getlist('customization_options')
                     if customization_options:
                         item.customization_options.set(customization_options)
@@ -2062,4 +2062,43 @@ def manage_employee(request, employee_id):
         return JsonResponse({'status': 'error', 'message': 'Employee not found'}, status=404)
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+@csrf_exempt
+def update_preferences(request):
+    if request.method == 'POST':
+        try:
+            hotel = Hotel.objects.first()
+            if not hotel:
+                hotel = Hotel()
+
+            # Parse form data
+            email_notifications = request.POST.get('email_notifications') == 'true'
+            two_factor_auth = request.POST.get('two_factor_auth') == 'true'
+            language = request.POST.get('language', 'en')
+
+            # Update hotel preferences
+            hotel.email_notifications = email_notifications
+            hotel.two_factor_auth = two_factor_auth
+            hotel.language = language
+            hotel.save()
+
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Preferences updated successfully',
+                'data': {
+                    'email_notifications': hotel.email_notifications,
+                    'two_factor_auth': hotel.two_factor_auth,
+                    'language': hotel.language
+                }
+            })
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=400)
+
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Invalid request method'
+    }, status=405)
 
