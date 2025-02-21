@@ -249,8 +249,17 @@ class Hotel(models.Model):
     phone = models.CharField(max_length=20)
     gstin = models.CharField(max_length=15, blank=True, null=True)
     logo = models.ImageField(upload_to='hotel_logos/', blank=True, null=True)
+    language = models.CharField(max_length=10, default='en')
+    currency = models.CharField(max_length=10, default='INR')
+    timezone = models.CharField(max_length=50, default='Asia/Kolkata')
+    email_notifications = models.BooleanField(default=True)
+    two_factor_auth = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        verbose_name = 'Hotel Profile'
+        verbose_name_plural = 'Hotel Profile'

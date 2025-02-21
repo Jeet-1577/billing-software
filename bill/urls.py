@@ -29,3 +29,6 @@ urlpatterns = [
     # path('table_order/<int:table_id>/', views.get_table_order_details, name='get_table_order_details'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

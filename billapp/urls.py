@@ -5,7 +5,6 @@ from .views import table_view, store_order, save_table_order, get_table_order_de
 urlpatterns = [
     path('', views.index, name='index'),
     path('profile/', views.profile, name='profile'),
-    path('add_owner/', views.add_owner, name='add_owner'),
     path('settings/', views.settings, name='settings'),
     path('inventory/', views.inventory, name='inventory'),
     path('portfolio/', views.portfolio, name='portfolio'),
@@ -45,8 +44,6 @@ urlpatterns = [
     path('manage-items/', views.manage_items, name='manage_items'),
     path('manage-items/update/', views.update_item, name='update_item'),
     path('manage-items/delete/<str:form_type>/<int:item_id>/', views.delete_item, name='delete_item'),
-    path('edit_owner/<int:owner_id>/', views.edit_owner, name='edit_owner'),
-    path('delete_owner/<int:owner_id>/', views.delete_owner, name='delete_owner'),
 ]
 
 urlpatterns += [
@@ -63,7 +60,21 @@ urlpatterns += [
 ]
 
 urlpatterns += [
-    path('add_employee/', views.add_employee, name='add_employee'),
-    path('edit_employee/<int:employee_id>/', views.edit_employee, name='edit_employee'),
-    path('delete_employee/<int:employee_id>/', views.delete_employee, name='delete_employee'),
+    path('add-owner/', views.add_owner, name='add_owner'),
+    path('add-employee/', views.add_employee, name='add_employee'),
+    path('edit-owner/<int:owner_id>/', views.edit_owner, name='edit_owner'),
+    path('edit-employee/<int:employee_id>/', views.edit_employee, name='edit_employee'),
+    path('delete-owner/<int:owner_id>/', views.delete_owner, name='delete_owner'),
+    path('delete-employee/<int:employee_id>/', views.delete_employee, name='delete_employee'),
+]
+
+urlpatterns += [
+    path('api/owners/', views.manage_owners, name='manage_owners'),
+    path('api/owners/<int:owner_id>/', views.manage_owner, name='manage_owner'),
+    path('api/staff/', views.manage_staff, name='manage_staff'),
+    path('api/staff/<int:employee_id>/', views.manage_employee, name='manage_employee'),
+]
+
+urlpatterns += [
+    path('update-hotel-profile/', views.update_hotel_profile, name='update_hotel_profile'),
 ]

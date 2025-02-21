@@ -11,11 +11,19 @@
     <section class="bg-gray-800 rounded-3xl shadow-2xl overflow-hidden">
       <div class="h-48 bg-gradient-to-r from-blue-600 to-purple-600 relative">
         <div class="absolute inset-0 bg-black opacity-20"></div>
-        <img src="{% if hotel.logo %}{% static 'img/default-logo.png' %}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" alt="Hotel Logo" class="absolute inset-0 w-full h-full object-cover">
+        {% if hotel.logo and hotel.logo.url %}
+            <img src="{{ hotel.logo.url }}" alt="Hotel Logo" class="absolute inset-0 w-full h-full object-cover">
+        {% else %}
+            <img src="{% static 'img/default-avatar.png' %}" alt="Default Logo" class="absolute inset-0 w-full h-full object-cover">
+        {% endif %}
       </div>
       <div class="px-8 py-6">
         <div class="relative -mt-24 mb-6">
-          <img src="{% if hotel.logo %}{% static 'img/default-logo.png' %}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" alt="Hotel Logo" class="w-32 h-32 rounded-full mx-auto border-4 border-white shadow-xl">
+          {% if hotel.logo and hotel.logo.url %}
+            <img src="{{ hotel.logo.url }}" alt="Hotel Logo" class="w-32 h-32 rounded-full mx-auto border-4 border-white shadow-xl">
+          {% else %}
+            <img src="{% static 'img/default-avatar.png' %}" alt="Default Logo" class="w-32 h-32 rounded-full mx-auto border-4 border-white shadow-xl">
+          {% endif %}
           <button title="Change Hotel Logo" class="absolute bottom-1 right-1 transform translate-x-1/4 translate-y-1/4 bg-blue-600 p-2 rounded-full hover:bg-blue-700 transition-colors">
             <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12l4-4m0 0l-4-4m4 4H9"/>
@@ -33,55 +41,42 @@
       </div>
     </section>
 
-    <!-- Add this right after the header section -->
-    {% if messages %}
-    <div class="fixed top-4 right-4 z-50">
-        {% for message in messages %}
-        <div class="{% if message.tags == 'success' %}bg-green-500{% else %}bg-red-500{% endif %} text-white px-6 py-4 rounded-lg shadow-lg mb-4">
-            {{ message }}
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
     <!-- Hotel Owners -->
     <section class="bg-gray-800 rounded-3xl shadow overflow-hidden">
       <h2 class="bg-gray-700 text-lg font-semibold text-white p-5">Hotel Owners</h2>
       <div class="p-6">
-        <!-- Add a fixed height container with scrollbar -->
-        <div class="max-h-[280px] overflow-y-auto custom-scrollbar space-y-4 mb-4">
-          {% for owner in owners %}
-          <div class="flex items-center justify-between space-x-6 bg-gray-700/50 p-4 rounded-xl">
+        <div class="max-h-[270px] overflow-y-auto pr-2" style="scrollbar-width: thin; scrollbar-color: #4B5563 #1F2937;">
+          <div class="space-y-4">
+            {% for owner in owners %}
+            <div class="flex items-center justify-between p-4 bg-gray-700 rounded-lg" data-owner-id="{{ owner.id }}">
               <div class="flex items-center space-x-4">
-                  <img src="{% if owner.photo %}{{ owner.photo.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
-                       alt="{{ owner.name }}" 
-                       class="w-16 h-16 rounded-full border-2 border-blue-500 object-cover flex-shrink-0">
-                  <div class="min-w-0">
-                      <h3 class="text-lg font-semibold text-white truncate">{{ owner.name }}</h3>
-                      <p class="text-gray-400 text-sm truncate">{{ owner.email }}</p>
-                      <p class="text-gray-400 text-sm truncate">{{ owner.phone }}</p>
-                  </div>
+                <img src="{% if owner.photo %}{{ owner.photo.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
+                     alt="Owner Photo" class="w-16 h-16 rounded-full border-2 border-blue-500 object-cover flex-shrink-0">
+                <div>
+                  <h3 class="text-lg font-semibold text-white owner-name">{{ owner.name|default:"Owner Name" }}</h3>
+                  <p class="text-gray-400 text-sm owner-email">{{ owner.email|default:"owner@example.com" }}</p>
+                  <p class="text-gray-400 text-sm owner-phone">{{ owner.phone|default:"+1 123 456 7890" }}</p>
+                </div>
               </div>
-              <div class="flex items-center space-x-2 flex-shrink-0">
-                  <button onclick="editOwner('{{ owner.id }}', '{{ owner.name }}', '{{ owner.email }}', '{{ owner.phone }}')" 
-                          class="p-2 text-blue-400 hover:text-blue-300 transition-colors">
-                      <i class="fas fa-edit"></i>
-                  </button>
-                  <button onclick="deleteOwner('{{ owner.id }}')" 
-                          class="p-2 text-red-400 hover:text-red-300 transition-colors">
-                      <i class="fas fa-trash"></i>
-                  </button>
+              <div class="flex space-x-2">
+                <button onclick="editOwner('{{ owner.id }}')" class="p-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 hover:text-white transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <button onclick="deleteOwner('{{ owner.id }}')" class="p-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 hover:text-white transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
               </div>
+            </div>
+            {% empty %}
+            <p class="text-gray-400">No owners listed.</p>
+            {% endfor %}
           </div>
-          {% empty %}
-          <p class="text-gray-400 text-center py-4">No owners listed.</p>
-          {% endfor %}
         </div>
-        <!-- Add Owner Button -->
-        <button class="w-full py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition" 
-                onclick="openOwnerPopup()">
-            Add New Owner
-        </button>
+        <button onclick="openOwnerModal()" class="w-full py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition mt-4">Add New Owner</button>
       </div>
     </section>
 
@@ -91,15 +86,20 @@
       <div class="bg-gray-800 rounded-3xl shadow overflow-hidden">
         <h2 class="bg-gray-700 text-lg font-semibold text-white p-5">Profile Settings</h2>
         <div class="p-6 space-y-5">
-          <button class="w-full py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition">Edit Profile</button>
-          <button class="w-full py-3 bg-yellow-600 text-white rounded-2xl hover:bg-yellow-700 transition">Change Password</button>
+          <button onclick="openHotelProfileModal()" 
+                  class="w-full py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition">
+            Edit Profile
+          </button>
+          <button class="w-full py-3 bg-yellow-600 text-white rounded-2xl hover:bg-yellow-700 transition">
+            Change Password
+          </button>
           <div class="flex items-center justify-between">
             <label for="2fa" class="text-white font-medium">Two-Factor Authentication</label>
             <input type="checkbox" id="2fa" class="switch">
           </div>
         </div>
       </div>
-
+      
       <!-- Preferences -->
       <div class="bg-gray-800 rounded-3xl shadow overflow-hidden">
         <h2 class="bg-gray-700 text-lg font-semibold text-white p-5">Preferences</h2>
@@ -125,160 +125,36 @@
     <section class="bg-gray-800 rounded-3xl shadow overflow-hidden">
       <h2 class="bg-gray-700 text-lg font-semibold text-white p-5">Staff Management</h2>
       <div class="p-6">
-        <!-- Add a fixed height container with scrollbar -->
-        <div class="max-h-[280px] overflow-y-auto custom-scrollbar space-y-4 mb-4">
-          {% for employee in employees %}
-          <div class="flex items-center justify-between p-4 bg-gray-700/50 rounded-xl">
-            <div class="flex items-center space-x-4">
-              <div class="min-w-0">
-                <h3 class="text-lg font-semibold text-white truncate">{{ employee.name }}</h3>
-                <p class="text-gray-400 text-sm truncate">{{ employee.email }}</p>
-                <p class="text-gray-400 text-sm truncate">{{ employee.mobile_number }}</p>
-                <p class="text-gray-400 text-sm truncate">ID: {{ employee.employee_id }}</p>
+        <div class="max-h-[250px] overflow-y-auto pr-2" style="scrollbar-width: thin; scrollbar-color: #4B5563 #1F2937;">
+          <div class="space-y-3">
+            {% for employee in employees %}
+            <div class="flex items-center justify-between p-4 bg-gray-700 rounded-lg" data-employee-id="{{ employee.id }}">
+              <div>
+                <h3 class="text-white font-semibold employee-name">{{ employee.name }}</h3>
+                <p class="text-gray-400 text-sm employee-email">{{ employee.email }}</p>
+                <p class="text-gray-400 text-sm employee-mobile">{{ employee.mobile_number }}</p>
+              </div>
+              <div class="flex space-x-2">
+                <button onclick="editEmployee('{{ employee.id }}')" class="p-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 hover:text-white transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                </button>
+                <button onclick="deleteEmployee('{{ employee.id }}')" class="p-2 bg-gray-700 text-gray-300 rounded-lg hover:bg-gray-600 hover:text-white transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
               </div>
             </div>
-            <div class="flex items-center space-x-2 flex-shrink-0">
-              <button onclick="editEmployee('{{ employee.id }}', '{{ employee.employee_id }}', '{{ employee.name }}', '{{ employee.email }}', '{{ employee.mobile_number }}', '{{ employee.address }}', '{{ employee.aadhar }}')" 
-                      class="p-2 text-blue-400 hover:text-blue-300 transition-colors">
-                <i class="fas fa-edit"></i>
-              </button>
-              <button onclick="deleteEmployee('{{ employee.id }}')" 
-                      class="p-2 text-red-400 hover:text-red-300 transition-colors">
-                <i class="fas fa-trash"></i>
-              </button>
-            </div>
+            {% empty %}
+            <p class="text-gray-400">No employees listed.</p>
+            {% endfor %}
           </div>
-          {% empty %}
-          <p class="text-gray-400 text-center py-4">No employees listed.</p>
-          {% endfor %}
         </div>
-        <!-- Add Employee Button -->
-        <button class="w-full py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition"
-                onclick="openEmployeePopup()">
-          Add New Employee
-        </button>
+        <button onclick="openEmployeeModal()" class="w-full py-3 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition mt-4">Add New Employee</button>
       </div>
     </section>
-
-    <!-- Employee Modal -->
-    <div id="employeeModal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title">
-      <div class="flex items-center justify-center min-h-screen p-0">
-        <!-- Background overlay -->
-        <div class="fixed inset-0 bg-black bg-opacity-80 transition-opacity"></div>
-
-        <!-- Modal panel -->
-        <div class="relative bg-gray-800 rounded-lg w-96 transform transition-all">
-          <!-- Header -->
-          <div class="bg-gray-700 rounded-t-lg px-4 py-3 flex items-center justify-between">
-            <h3 class="text-white text-lg font-medium" id="employeeModalTitle">Add New Employee</h3>
-            <button onclick="closeEmployeePopup()" class="text-gray-400 hover:text-white">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-
-          <!-- Form -->
-          <form id="employeeForm" method="post" action="{% url 'add_employee' %}" class="p-4 space-y-3">
-            {% csrf_token %}
-            
-            <!-- Employee ID -->
-            <div>
-              <label for="employee_id" class="block text-sm text-gray-300 mb-1">Employee ID</label>
-              <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
-                  <i class="fas fa-id-card text-gray-500 text-sm"></i>
-                </div>
-                <input type="text" id="employee_id" name="employee_id" required 
-                       class="w-full pl-9 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white placeholder-gray-400">
-              </div>
-            </div>
-
-            <!-- Name -->
-            <div>
-              <label for="emp_name" class="block text-sm text-gray-300 mb-1">Full Name</label>
-              <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
-                  <i class="fas fa-user text-gray-500 text-sm"></i>
-                </div>
-                <input type="text" id="emp_name" name="name" required 
-                       class="w-full pl-9 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white placeholder-gray-400">
-              </div>
-            </div>
-
-            <!-- Email -->
-            <div>
-              <label for="emp_email" class="block text-sm text-gray-300 mb-1">Email Address</label>
-              <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
-                  <i class="fas fa-envelope text-gray-500 text-sm"></i>
-                </div>
-                <input type="email" id="emp_email" name="email" required 
-                       class="w-full pl-9 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white placeholder-gray-400">
-              </div>
-            </div>
-
-            <!-- Mobile Number -->
-            <div>
-              <label for="mobile_number" class="block text-sm text-gray-300 mb-1">Mobile Number</label>
-              <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
-                  <i class="fas fa-phone text-gray-500 text-sm"></i>
-                </div>
-                <input type="text" id="mobile_number" name="mobile_number" required 
-                       class="w-full pl-9 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white placeholder-gray-400">
-              </div>
-            </div>
-
-            <!-- Address -->
-            <div>
-              <label for="address" class="block text-sm text-gray-300 mb-1">Address</label>
-              <div class="relative">
-                <div class="absolute top-2 left-0 pl-3 flex items-start">
-                  <i class="fas fa-home text-gray-500 text-sm"></i>
-                </div>
-                <textarea id="address" name="address" required 
-                          class="w-full pl-9 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white placeholder-gray-400 min-h-[80px]"></textarea>
-              </div>
-            </div>
-
-            <!-- Aadhar -->
-            <div>
-              <label for="aadhar" class="block text-sm text-gray-300 mb-1">Aadhar Number</label>
-              <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
-                  <i class="fas fa-id-card text-gray-500 text-sm"></i>
-                </div>
-                <input type="text" id="aadhar" name="aadhar" required 
-                       class="w-full pl-9 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white placeholder-gray-400">
-              </div>
-            </div>
-
-            <!-- Password -->
-            <div>
-              <label for="password" class="block text-sm text-gray-300 mb-1">Password</label>
-              <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
-                  <i class="fas fa-lock text-gray-500 text-sm"></i>
-                </div>
-                <input type="password" id="password" name="password" required 
-                       class="w-full pl-9 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white placeholder-gray-400">
-              </div>
-            </div>
-
-            <!-- Footer -->
-            <div class="mt-4 pt-3 flex justify-end space-x-2 border-t border-gray-700">
-              <button type="button" onclick="closeEmployeePopup()" 
-                      class="px-4 py-2 text-xs font-medium text-gray-300 bg-gray-700 rounded hover:bg-gray-600 focus:outline-none">
-                Cancel
-              </button>
-              <button type="submit" 
-                      class="px-4 py-2 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 focus:outline-none">
-                Add Employee
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
 
     <!-- Activity & Security -->
     <section class="bg-gray-800 rounded-3xl shadow overflow-hidden">
@@ -300,406 +176,317 @@
   </div>
 </div>
 
-<!-- The Modal -->
-<div id="ownerModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title">
-  <div class="flex items-center justify-center min-h-screen p-0">
-    <!-- Background overlay -->
-    <div class="fixed inset-0 bg-black bg-opacity-80 transition-opacity"></div>
-
-    <!-- Modal panel -->
-    <div class="relative bg-gray-800 rounded-lg w-96 transform transition-all">
-      <!-- Header -->
-      <div class="bg-gray-700 rounded-t-lg px-4 py-3 flex items-center justify-between">
-        <h3 class="text-white text-lg font-medium" id="modal-title">Add New Hotel Owner</h3>
-        <button onclick="closeOwnerPopup()" class="text-gray-400 hover:text-white">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-
-      <!-- Form -->
-      <form id="ownerForm" method="post" action="{% url 'add_owner' %}" enctype="multipart/form-data" class="p-4 space-y-3">
-        {% csrf_token %}
+<!-- Hotel Profile Modal -->
+<div id="hotelProfileModal" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-filter backdrop-blur-sm"></div>
+    
+    <!-- Modal Content -->
+    <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] bg-gray-800 rounded-lg shadow-2xl">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between p-4 border-b border-gray-700">
+            <h3 class="text-lg font-medium text-white">Hotel Profile</h3>
+            <button onclick="closeHotelProfileModal()" class="text-gray-400 hover:text-white">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
         
-        <!-- Name Input -->
-        <div>
-          <label for="name" class="block text-sm text-gray-300 mb-1">Full Name</label>
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
-              <i class="fas fa-user text-gray-500 text-sm"></i>
+        <form id="hotelProfileForm" class="p-4" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- Logo Section -->
+            <div class="flex items-center space-x-4 mb-4 p-3 bg-gray-700 rounded-lg">
+                <div class="relative group">
+                    {% if hotel.logo and hotel.logo.url %}
+                        <img id="currentLogo" src="{{ hotel.logo.url }}" alt="Hotel Logo" class="w-16 h-16 rounded object-cover">
+                    {% else %}
+                        <img id="currentLogo" src="{% static 'img/default-avatar.png' %}" alt="Default Logo" class="w-16 h-16 rounded object-cover">
+                    {% endif %}
+                    <label for="logoInput" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 rounded cursor-pointer">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                        </svg>
+                    </label>
+                    <input type="file" name="logo" id="logoInput" accept="image/*" class="hidden">
+                </div>
+                <div class="flex-1 text-sm text-gray-400">
+                    <p class="font-medium">Hotel Logo</p>
+                    <p class="text-xs">Recommended: 400x400px</p>
+                </div>
             </div>
-            <input type="text" id="name" name="name" required 
-                   class="w-full pl-9 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-          </div>
-        </div>
 
-        <!-- Email Input -->
-        <div>
-          <label for="email" class="block text-sm text-gray-300 mb-1">Email Address</label>
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
-              <i class="fas fa-envelope text-gray-500 text-sm"></i>
+            <!-- Form Fields -->
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Hotel Name</label>
+                    <input type="text" name="name" value="{{ hotel.name }}" required
+                           class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Address</label>
+                    <textarea name="address" required rows="2"
+                            class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">{{ hotel.address }}</textarea>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                        <input type="email" name="email" value="{{ hotel.email }}" required
+                               class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Phone</label>
+                        <input type="text" name="phone" value="{{ hotel.phone }}" required
+                               class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">GSTIN</label>
+                    <input type="text" name="gstin" value="{{ hotel.gstin }}"
+                           class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
+                </div>
             </div>
-            <input type="email" id="email" name="email" required 
-                   class="w-full pl-9 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-          </div>
-        </div>
 
-        <!-- Phone Input -->
-        <div>
-          <label for="phone" class="block text-sm text-gray-300 mb-1">Phone Number</label>
-          <div class="relative">
-            <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
-              <i class="fas fa-phone text-gray-500 text-sm"></i>
+            <!-- Actions -->
+            <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-700">
+                <button type="button" onclick="closeHotelProfileModal()"
+                        class="px-4 py-2 bg-gray-700 text-sm text-white rounded hover:bg-gray-600">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-sm text-white rounded hover:bg-blue-500 flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Save Changes
+                </button>
             </div>
-            <input type="text" id="phone" name="phone" required 
-                   class="w-full pl-9 pr-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-sm text-white placeholder-gray-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-          </div>
-        </div>
-
-        <!-- Photo Upload -->
-        <div>
-          <label class="block text-sm text-gray-300 mb-1">Profile Photo</label>
-          <div class="mt-1 p-2 border-2 border-gray-600 border-dashed rounded-lg hover:border-gray-500">
-            <div class="text-center">
-              <div class="flex flex-col items-center">
-                <i class="fas fa-cloud-upload-alt text-gray-400 text-xl mb-2"></i>
-                <label for="photo" class="cursor-pointer">
-                  <span class="text-sm text-blue-400 hover:text-blue-300">Choose a file</span>
-                  <input id="photo" name="photo" type="file" class="hidden" accept="image/*">
-                </label>
-                <p class="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="mt-4 pt-3 flex justify-end space-x-2 border-t border-gray-700">
-          <button type="button" onclick="closeOwnerPopup()" 
-                  class="px-4 py-2 text-xs font-medium text-gray-300 bg-gray-700 rounded hover:bg-gray-600 focus:outline-none">
-            Cancel
-          </button>
-          <button type="submit" 
-                  class="px-4 py-2 text-xs font-medium text-white bg-blue-600 rounded hover:bg-blue-700 focus:outline-none">
-            Add Owner
-          </button>
-        </div>
-      </form>
+        </form>
     </div>
-  </div>
 </div>
 
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<!-- Owner Modal -->
+<div id="ownerModal" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-filter backdrop-blur-sm"></div>
+    <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] bg-gray-800 rounded-lg shadow-2xl">
+        <div class="flex items-center justify-between p-4 border-b border-gray-700">
+            <h3 class="text-lg font-medium text-white">Add New Owner</h3>
+            <button onclick="closeOwnerModal()" class="text-gray-400 hover:text-white">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <form id="ownerForm" class="p-4 space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">Name</label>
+                <input type="text" name="name" required class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                <input type="email" name="email" required class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">Phone</label>
+                <input type="tel" name="phone" required class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">Photo</label>
+                <input type="file" name="photo" accept="image/*" class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
+            </div>
+            <div class="flex justify-end space-x-3 pt-4">
+                <button type="button" onclick="closeOwnerModal()" class="px-4 py-2 bg-gray-700 text-sm text-white rounded hover:bg-gray-600">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-sm text-white rounded hover:bg-blue-500">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
 
-<style>
-/* The Modal (background) */
-.modal {
-  display: none; /* Hidden by default */
-  position: fixed; /* Stay in place */
-  z-index: 1000; /* Sit on top */
-  left: 0;
-  top: 0;
-  width: 100%; /* Full width */
-  height: 100%; /* Full height */
-  overflow: auto; /* Enable scroll if needed */
-  background-color: rgba(0, 0, 0, 0.75); /* Black w/ opacity */
-  backdrop-filter: blur(4px);
-}
+<!-- Employee Modal -->
+<div id="employeeModal" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-filter backdrop-blur-sm"></div>
+    <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] bg-gray-800 rounded-lg shadow-2xl">
+        <div class="flex items-center justify-between p-4 border-b border-gray-700">
+            <h3 class="text-lg font-medium text-white">Add New Employee</h3>
+            <button onclick="closeEmployeeModal()" class="text-gray-400 hover:text-white">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <form id="employeeForm" class="p-4 space-y-4">
+            {% csrf_token %}
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Employee ID</label>
+                    <input type="text" name="employee_id" required class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Name</label>
+                    <input type="text" name="name" required class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                <input type="email" name="email" required class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">Mobile Number</label>
+                <input type="tel" name="mobile_number" required class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">Address</label>
+                <textarea name="address" rows="2" class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm"></textarea>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">Password</label>
+                <input type="password" name="password" required class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
+            </div>
+            <div class="flex justify-end space-x-3 pt-4">
+                <button type="button" onclick="closeEmployeeModal()" class="px-4 py-2 bg-gray-700 text-sm text-white rounded hover:bg-gray-600">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-sm text-white rounded hover:bg-blue-500">Save</button>
+            </div>
+        </form>
+    </div>
+</div>
 
-.modal.show {
-  display: block;
-}
-
-@keyframes modalFade {
-  from {
-    opacity: 0;
-    transform: translateY(-1rem);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.modal-content {
-  animation: modalFade 0.3s ease-out;
-}
-
-/* Focus styles for inputs */
-.modal input:focus {
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
-}
-
-/* Hover effects for buttons */
-.modal button:hover {
-  transform: translateY(-1px);
-}
-
-/* Transition for all interactive elements */
-.modal button, 
-.modal input,
-.modal label {
-  transition: all 0.2s ease;
-}
-
-/* Modal Content/Box */
-.modal-content {
-  background-color: #333; /* Dark background */
-  color: #fff; /* White text */
-  margin: 5% auto;
-  padding: 2rem;
-  border: 1px solid #555; /* Darker border */
-  width: 80%;
-  max-width: 600px;
-  border-radius: 10px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-  animation: modalSlideIn 0.3s ease-out;
-}
-
-@keyframes modalSlideIn {
-  from {
-    transform: translateY(-10%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-/* The Close Button */
-.close {
-  color: #aaa;
-  float: right;
-  font-size: 28px;
-  font-weight: bold;
-  transition: color 0.2s;
-}
-
-.close:hover,
-.close:focus {
-  color: #fff;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-/* Form Styling */
-.input-group {
-  margin-bottom: 15px;
-}
-
-.input-group label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-  color: #ddd;
-}
-
-.input-group input[type="text"],
-.input-group input[type="email"],
-.input-group input[type="file"] {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #555;
-  background-color: #444;
-  color: #fff;
-  border-radius: 5px;
-  box-sizing: border-box;
-  transition: border-color 0.2s;
-}
-
-.input-group input[type="text"]:focus,
-.input-group input[type="email"]:focus,
-.input-group input[type="file"]:focus {
-  border-color: #80bdff;
-  outline: 0;
-  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, .25);
-}
-
-.input-group input::placeholder {
-  color: #6B7280;
-}
-
-.input-group input:focus {
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
-}
-
-/* Submit Button */
-.submit-btn {
-  background-color: #28a745;
-  color: white;
-  padding: 12px 20px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background-color 0.2s;
-}
-
-.submit-btn:hover {
-  background-color: #218838;
-}
-
-/* General Styling */
-h2 {
-  text-align: center;
-  margin-bottom: 20px;
-  color: #fff;
-}
-
-i {
-  margin-right: 8px;
-  color: #bbb;
-}
-
-/* Custom Scrollbar Styles */
-.custom-scrollbar {
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none;  /* Internet Explorer 10+ */
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-    display: none; /* Safari and Chrome */
-}
-
-/* Update modal animations */
-@keyframes modalFade {
-  from {
-    opacity: 0;
-    transform: translate(0, -10px) scale(.95);
-  }
-  to {
-    opacity: 1;
-    transform: translate(0, 0) scale(1);
-  }
-}
-
-#ownerModal {
-  display: none;
-}
-
-#ownerModal[data-show="true"] {
-  display: block;
-}
-
-#ownerModal > div > div:last-child {
-  animation: modalFade 0.3s ease-out;
-}
-
-/* Improve input spacing */
-.input-group + .input-group {
-  margin-top: 1.5rem;
-}
-
-/* Better form control spacing */
-.input-group input {
-  margin-top: 0.5rem;
-  padding: 0.75rem 1rem 0.75rem 2.5rem;
-}
-
-/* Improved focus states */
-.input-group input:focus {
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
-}
-
-/* Update existing styles */
-.modal {
-  display: none;
-  position: fixed;
-  z-index: 1000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background-color: rgba(0, 0, 0, 0.75);
-  backdrop-filter: blur(4px);
-}
-
-@keyframes modalFade {
-  from {
-    opacity: 0;
-    transform: translate(0, -8px) scale(.98);
-  }
-  to {
-    opacity: 1;
-    transform: translate(0, 0) scale(1);
-  }
-}
-
-#ownerModal[data-show="true"] {
-  display: block;
-}
-
-#ownerModal > div > div:last-child {
-  animation: modalFade 0.2s ease-out;
-}
-
-/* Rest of your existing styles... */
-#ownerModal .bg-gray-800 {
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
-}
-
-#ownerModal input:focus {
-  outline: none;
-}
-</style>
-
+<!-- Add this JavaScript section at the end of your template -->
 <script>
-// Get the modal
-var modal = document.getElementById("ownerModal");
-
-// Get the button that opens the modal
-var btn = document.getElementById("myBtn");
-
-// Get the <span> element that closes the modal
-var span = document.getElementsByClassName("close")[0];
-
-// Open the modal
-function openOwnerPopup() {
-  const modal = document.getElementById("ownerModal");
-  modal.setAttribute('data-show', 'true');
-  document.body.style.overflow = 'hidden';
+function openHotelProfileModal() {
+    document.getElementById('hotelProfileModal').classList.remove('hidden');
 }
 
-// Close the modal
-function closeOwnerPopup() {
-  const modal = document.getElementById("ownerModal");
-  modal.setAttribute('data-show', 'false');
-  document.body.style.overflow = '';
+function closeHotelProfileModal() {
+    document.getElementById('hotelProfileModal').classList.add('hidden');
 }
 
-// When the user clicks anywhere outside of the modal, close it
-window.onclick = function(event) {
-  if (event.target == modal) {
-    modal.style.display = "none";
-  }
-}
-
-// Close modal on background click
-document.getElementById("ownerModal").addEventListener('click', (e) => {
-  if (e.target === e.currentTarget) {
-    closeOwnerPopup();
-  }
+// Preview logo image before upload
+document.getElementById('logoInput').addEventListener('change', function(e) {
+    if (e.target.files && e.target.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('currentLogo').src = e.target.result;
+        }
+        reader.readAsDataURL(e.target.files[0]);
+    }
 });
 
-function editOwner(id, name, email, phone) {
-    // Populate the modal with existing data
-    document.getElementById('ownerForm').action = `/edit_owner/${id}/`;
-    document.getElementById('name').value = name;
-    document.getElementById('email').value = email;
-    document.getElementById('phone').value = phone;
-    
-    // Show the modal
-    openOwnerPopup();
+// Handle form submission
+document.getElementById('hotelProfileForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+
+    fetch('/update-hotel-profile/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            closeHotelProfileModal();
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating hotel profile');
+    });
+});
+
+// Owner Modal Functions
+function openOwnerModal() {
+    document.getElementById('ownerModal').classList.remove('hidden');
 }
 
-function deleteOwner(id) {
+function closeOwnerModal() {
+    document.getElementById('ownerModal').classList.add('hidden');
+}
+
+// Employee Modal Functions
+function openEmployeeModal() {
+    document.getElementById('employeeModal').classList.remove('hidden');
+}
+
+function closeEmployeeModal() {
+    document.getElementById('employeeModal').classList.add('hidden');
+}
+
+// Form handling
+document.getElementById('ownerForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const ownerId = this.dataset.ownerId;
+    const url = ownerId ? `/api/owners/${ownerId}/` : '/api/owners/';
+    const method = ownerId ? 'PUT' : 'POST';
+
+    fetch(url, {
+        method: method,
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            closeOwnerModal();
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    });
+});
+
+document.getElementById('employeeForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const employeeId = this.dataset.employeeId;
+    const url = employeeId ? `/api/staff/${employeeId}/` : '/api/staff/';
+    const method = employeeId ? 'PUT' : 'POST';
+
+    fetch(url, {
+        method: method,
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            closeEmployeeModal();
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    });
+});
+
+// Add this JavaScript right after your existing event handlers
+
+function editOwner(ownerId) {
+    // Get owner data from the DOM
+    const ownerCard = document.querySelector(`[data-owner-id="${ownerId}"]`);
+    const name = ownerCard.querySelector('.owner-name').textContent;
+    const email = ownerCard.querySelector('.owner-email').textContent;
+    const phone = ownerCard.querySelector('.owner-phone').textContent;
+    
+    // Update the owner modal with current data
+    document.querySelector('#ownerModal h3').textContent = 'Edit Owner';
+    document.querySelector('#ownerForm [name="name"]').value = name;
+    document.querySelector('#ownerForm [name="email"]').value = email;
+    document.querySelector('#ownerForm [name="phone"]').value = phone;
+    document.querySelector('#ownerForm').dataset.ownerId = ownerId;
+    
+    openOwnerModal();
+}
+
+function deleteOwner(ownerId) {
     if (confirm('Are you sure you want to delete this owner?')) {
-        fetch(`/delete_owner/${id}/`, {
-            method: 'POST',
+        fetch(`/api/owners/${ownerId}/`, {
+            method: 'DELETE',
             headers: {
-                'X-CSRFToken': getCookie('csrftoken'),
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
             }
         })
         .then(response => response.json())
@@ -707,81 +494,122 @@ function deleteOwner(id) {
             if (data.status === 'success') {
                 location.reload();
             } else {
-                alert('Error deleting owner: ' + data.message);
+                alert('Error: ' + data.message);
             }
-        })
-        .catch(error => {
-            alert('Error: ' + error);
         });
     }
 }
 
-// Helper function to get CSRF token
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
+function editEmployee(employeeId) {
+    // Get employee data from the DOM
+    const employeeCard = document.querySelector(`[data-employee-id="${employeeId}"]`);
+    const name = employeeCard.querySelector('.employee-name').textContent;
+    const email = employeeCard.querySelector('.employee-email').textContent;
+    const mobile = employeeCard.querySelector('.employee-mobile').textContent;
+    
+    // Update the employee modal with current data
+    document.querySelector('#employeeModal h3').textContent = 'Edit Employee';
+    document.querySelector('#employeeForm [name="name"]').value = name;
+    document.querySelector('#employeeForm [name="email"]').value = email;
+    document.querySelector('#employeeForm [name="mobile_number"]').value = mobile;
+    document.querySelector('#employeeForm').dataset.employeeId = employeeId;
+    
+    openEmployeeModal();
+}
+
+function deleteEmployee(employeeId) {
+    if (confirm('Are you sure you want to delete this employee?')) {
+        fetch(`/api/staff/${employeeId}/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
             }
-        }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        });
     }
-    return cookieValue;
-}
-
-function openEmployeePopup() {
-  const modal = document.getElementById("employeeModal");
-  modal.classList.remove('hidden');
-  document.body.style.overflow = 'hidden';
-}
-
-function closeEmployeePopup() {
-  const modal = document.getElementById("employeeModal");
-  modal.classList.add('hidden');
-  document.body.style.overflow = '';
-}
-
-function editEmployee(id, employeeId, name, email, mobile, address, aadhar) {
-  // Update form action and title
-  const form = document.getElementById('employeeForm');
-  form.action = `/edit_employee/${id}/`;
-  document.getElementById('employeeModalTitle').textContent = 'Edit Employee';
-  
-  // Populate form fields
-  document.getElementById('employee_id').value = employeeId;
-  document.getElementById('emp_name').value = name;
-  document.getElementById('emp_email').value = email;
-  document.getElementById('mobile_number').value = mobile;
-  document.getElementById('address').value = address;
-  document.getElementById('aadhar').value = aadhar;
-  document.getElementById('password').required = false;
-  
-  openEmployeePopup();
-}
-
-function deleteEmployee(id) {
-  if (confirm('Are you sure you want to delete this employee?')) {
-    fetch(`/delete_employee/${id}/`, {
-      method: 'POST',
-      headers: {
-        'X-CSRFToken': getCookie('csrftoken'),
-      }
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.status === 'success') {
-        location.reload();
-      } else {
-        alert('Error deleting employee: ' + data.message);
-      }
-    })
-    .catch(error => {
-      alert('Error: ' + error);
-    });
-  }
 }
 </script>
+
+<style>
+/* Switch toggle styles */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #4B5563;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #2563EB;
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+</style>
+
+<style>
+    /* Custom Scrollbar Styles */
+    .custom-scrollbar {
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+        display: none; /* Safari and Chrome */
+    }
+    .overflow-y-auto::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .overflow-y-auto::-webkit-scrollbar-track {
+        background: #1F2937;
+        border-radius: 3px;
+    }
+    
+    .overflow-y-auto::-webkit-scrollbar-thumb {
+        background-color: #4B5563;
+        border-radius: 3px;
+    }
+    
+    .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+        background-color: #6B7280;
+    }
+</style>
 {% endblock %}

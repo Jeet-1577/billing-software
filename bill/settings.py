@@ -168,6 +168,8 @@ WKHTMLTOPDF_CMD = r'C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe'  # Update 
 
 # Report Settings
 EXPORT_REPORT_PATH = BASE_DIR / 'reports' / 'exports'
-MEDIA_ROOT = BASE_DIR / 'media'
+
+# Media files configuration
 MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 

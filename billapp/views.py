@@ -10,9 +10,10 @@ from .models import (
     TableOrder,
     CustomizationCategory,
     CustomizationOption,
-    Owner  # Add this import
+    Hotel,  # Add this import
+    Owner   # Add this import too since it's used in profile view
 )
-from .forms import CategoryForm, ItemForm, EmployeeForm, OwnerForm  # Update this line to only import existing forms
+from .forms import CategoryForm, ItemForm, EmployeeForm  # Update this line to only import existing forms
 from django.http import JsonResponse
 import json
 from datetime import datetime
@@ -38,6 +39,8 @@ from django.template.loader import render_to_string
 import tempfile
 from django.core.mail import EmailMessage
 import pdfkit  # You'll need to pip install pdfkit and install wkhtmltopdf
+from django.views.decorators.http import require_http_methods
+from django.core.files.storage import default_storage
 
 logger = logging.getLogger(__name__)
 
@@ -139,123 +142,23 @@ def format_hour(hour):
     return f'{display_hour}{am_pm}'
 
 def profile(request):
-    owners = Owner.objects.all().order_by('-created_at')
-    hotel = {}    # Replace with your actual logic to fetch hotel details
-    employees = Employee.objects.all()
-    return render(request, 'profile.html', {'owners': owners, 'hotel': hotel, 'employees': employees})
+    hotel = Hotel.objects.first()  # Get the first hotel instance
+    if not hotel:
+        hotel = Hotel.objects.create(
+            name="Your Hotel Name",
+            address="Your Address",
+            email="email@example.com",
+            phone="1234567890"
+        )
+    
+    context = {
+        'hotel': hotel,
+        'owners': Owner.objects.all(),
+        'employees': Employee.objects.all()
+    }
+    return render(request, 'profile.html', context)
 
-def add_owner(request):
-    if request.method == 'POST':
-        try:
-            name = request.POST.get('name')
-            email = request.POST.get('email')
-            phone = request.POST.get('phone')
-            photo = request.FILES.get('photo')
-
-            # Create new owner
-            owner = Owner.objects.create(
-                name=name,
-                email=email,
-                phone=phone,
-                photo=photo
-            )
-            messages.success(request, 'Owner added successfully!')
-            return redirect('profile')
-        except Exception as e:
-            messages.error(request, f'Error adding owner: {str(e)}')
-            return redirect('profile')
-    return redirect('profile')
-
-@csrf_exempt
-def edit_owner(request, owner_id):
-    if request.method == 'POST':
-        try:
-            owner = Owner.objects.get(id=owner_id)
-            owner.name = request.POST.get('name')
-            owner.email = request.POST.get('email')
-            owner.phone = request.POST.get('phone')
-            
-            if 'photo' in request.FILES:
-                owner.photo = request.FILES['photo']
-            
-            owner.save()
-            messages.success(request, 'Owner updated successfully!')
-            return redirect('profile')
-        except Exception as e:
-            messages.error(request, f'Error updating owner: {str(e)}')
-            return redirect('profile')
-    return redirect('profile')
-
-@csrf_exempt
-def delete_owner(request, owner_id):
-    if request.method == 'POST':
-        try:
-            owner = Owner.objects.get(id=owner_id)
-            owner.delete()
-            messages.success(request, 'Owner deleted successfully!')
-            return JsonResponse({'status': 'success'})
-        except Exception as e:
-            messages.error(request, f'Error deleting owner: {str(e)}')
-            return JsonResponse({'status': 'error', 'message': str(e)})
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
-
-@csrf_exempt
-def add_employee(request):
-    if request.method == 'POST':
-        try:
-            employee = Employee.objects.create(
-                employee_id=request.POST.get('employee_id'),
-                name=request.POST.get('name'),
-                email=request.POST.get('email'),
-                mobile_number=request.POST.get('mobile_number'),
-                address=request.POST.get('address'),
-                aadhar=request.POST.get('aadhar'),
-                password=request.POST.get('password')  # Will be hashed by the model's save method
-            )
-            messages.success(request, 'Employee added successfully!')
-            return redirect('profile')
-        except Exception as e:
-            messages.error(request, f'Error adding employee: {str(e)}')
-            return redirect('profile')
-    return redirect('profile')
-
-@csrf_exempt
-def edit_employee(request, employee_id):
-    if request.method == 'POST':
-        try:
-            employee = Employee.objects.get(id=employee_id)
-            employee.employee_id = request.POST.get('employee_id')
-            employee.name = request.POST.get('name')
-            employee.email = request.POST.get('email')
-            employee.mobile_number = request.POST.get('mobile_number')
-            employee.address = request.POST.get('address')
-            employee.aadhar = request.POST.get('aadhar')
-            
-            # Only update password if provided
-            if password := request.POST.get('password'):
-                employee.password = password
-            
-            employee.save()
-            messages.success(request, 'Employee updated successfully!')
-            return redirect('profile')
-        except Exception as e:
-            messages.error(request, f'Error updating employee: {str(e)}')
-            return redirect('profile')
-    return redirect('profile')
-
-@csrf_exempt
-def delete_employee(request, employee_id):
-    if request.method == 'POST':
-        try:
-            employee = Employee.objects.get(id=employee_id)
-            employee.delete()
-            messages.success(request, 'Employee deleted successfully!')
-            return JsonResponse({'status': 'success'})
-        except Exception as e:
-            messages.error(request, f'Error deleting employee: {str(e)}')
-            return JsonResponse({'status': 'error', 'message': str(e)})
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
-
+# Add more views as needed
 def settings(request):
     return render(request, 'settings.html')
 
@@ -1818,4 +1721,345 @@ def share_report(request):
             return JsonResponse({'status': 'error', 'message': str(e)})
             
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+@csrf_exempt
+def update_hotel_profile(request):
+    if request.method == 'POST':
+        try:
+            # Get or create hotel instance
+            hotel = Hotel.objects.first()
+            if not hotel:
+                hotel = Hotel()
+
+            # Handle file upload
+            if 'logo' in request.FILES:
+                # Delete old logo if it exists
+                if hotel.logo:
+                    try:
+                        default_storage.delete(hotel.logo.path)
+                    except:
+                        pass  # Ignore if file doesn't exist
+                # Save new logo
+                hotel.logo = request.FILES['logo']
+
+            # Update other fields
+            hotel.name = request.POST.get('name', hotel.name)
+            hotel.address = request.POST.get('address', hotel.address)
+            hotel.email = request.POST.get('email', hotel.email)
+            hotel.phone = request.POST.get('phone', hotel.phone)
+            hotel.gstin = request.POST.get('gstin', hotel.gstin)
+            
+            # Save changes
+            hotel.save()
+            
+            # Return success response with updated data
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Hotel profile updated successfully',
+                'data': {
+                    'name': hotel.name,
+                    'address': hotel.address,
+                    'email': hotel.email,
+                    'phone': hotel.phone,
+                    'gstin': hotel.gstin,
+                    'logo_url': hotel.logo.url if hotel.logo else None
+                }
+            })
+        except Exception as e:
+            import traceback
+            print("Error updating hotel profile:", str(e))
+            print(traceback.format_exc())
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=400)
+    
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Invalid request method'
+    }, status=405)
+
+@csrf_exempt
+def add_owner(request):
+    if request.method == 'POST':
+        try:
+            name = request.POST.get('name')
+            email = request.POST.get('email')
+            phone = request.POST.get('phone')
+            photo = request.FILES.get('photo')
+            
+            owner = Owner.objects.create(
+                name=name,
+                email=email,
+                phone=phone,
+                photo=photo
+            )
+            
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Owner added successfully',
+                'owner': {
+                    'id': owner.id,
+                    'name': owner.name,
+                    'email': owner.email,
+                    'phone': owner.phone
+                }
+            })
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=400)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+@csrf_exempt
+def edit_owner(request, owner_id):
+    if request.method == 'POST':
+        try:
+            owner = get_object_or_404(Owner, id=owner_id)
+            owner.name = request.POST.get('name', owner.name)
+            owner.email = request.POST.get('email', owner.email)
+            owner.phone = request.POST.get('phone', owner.phone)
+            
+            if 'photo' in request.FILES:
+                owner.photo = request.FILES['photo']
+            
+            owner.save()
+            
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Owner updated successfully'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=400)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+@csrf_exempt
+def delete_owner(request, owner_id):
+    if request.method == 'POST':
+        try:
+            owner = get_object_or_404(Owner, id=owner_id)
+            owner.delete()
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Owner deleted successfully'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=400)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+@csrf_exempt
+def add_employee(request):
+    if request.method == 'POST':
+        try:
+            employee = Employee.objects.create(
+                employee_id=request.POST.get('employee_id'),
+                name=request.POST.get('name'),
+                email=request.POST.get('email'),
+                mobile_number=request.POST.get('mobile_number'),
+                address=request.POST.get('address'),
+                password=request.POST.get('password')  # Password will be hashed in the model's save method
+            )
+            
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Employee added successfully',
+                'employee': {
+                    'id': employee.id,
+                    'name': employee.name,
+                    'email': employee.email,
+                    'employee_id': employee.employee_id
+                }
+            })
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=400)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+@csrf_exempt
+def edit_employee(request, employee_id):
+    if request.method == 'POST':
+        try:
+            employee = get_object_or_404(Employee, id=employee_id)
+            employee.name = request.POST.get('name', employee.name)
+            employee.email = request.POST.get('email', employee.email)
+            employee.mobile_number = request.POST.get('mobile_number', employee.mobile_number)
+            employee.address = request.POST.get('address', employee.address)
+            
+            if request.POST.get('password'):  # Only update password if provided
+                employee.password = request.POST.get('password')
+            
+            employee.save()
+            
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Employee updated successfully'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=400)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+@csrf_exempt
+def delete_employee(request, employee_id):
+    if request.method == 'POST':
+        try:
+            employee = get_object_or_404(Employee, id=employee_id)
+            employee.delete()
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Employee deleted successfully'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=400)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
+def manage_owners(request):
+    if request.method == "GET":
+        owners = Owner.objects.all()
+        return JsonResponse({
+            'status': 'success',
+            'owners': list(owners.values('id', 'name', 'email', 'phone', 'photo'))
+        })
+    elif request.method == "POST":
+        try:
+            name = request.POST.get('name')
+            email = request.POST.get('email')
+            phone = request.POST.get('phone')
+            photo = request.FILES.get('photo')
+            
+            owner = Owner.objects.create(
+                name=name,
+                email=email,
+                phone=phone,
+                photo=photo if photo else None
+            )
+            
+            return JsonResponse({
+                'status': 'success',
+                'owner': {
+                    'id': owner.id,
+                    'name': owner.name,
+                    'email': owner.email,
+                    'phone': owner.phone,
+                    'photo': owner.photo.url if owner.photo else None
+                }
+            })
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+@csrf_exempt
+@require_http_methods(["PUT", "DELETE"])
+def manage_owner(request, owner_id):
+    try:
+        owner = Owner.objects.get(id=owner_id)
+        
+        if request.method == "PUT":
+            data = json.loads(request.body)
+            owner.name = data.get('name', owner.name)
+            owner.email = data.get('email', owner.email)
+            owner.phone = data.get('phone', owner.phone)
+            owner.save()
+            
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Owner updated successfully'
+            })
+            
+        elif request.method == "DELETE":
+            if owner.photo:
+                default_storage.delete(owner.photo.path)
+            owner.delete()
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Owner deleted successfully'
+            })
+            
+    except Owner.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Owner not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
+def manage_staff(request):
+    if request.method == "GET":
+        employees = Employee.objects.all()
+        return JsonResponse({
+            'status': 'success',
+            'employees': list(employees.values('id', 'employee_id', 'name', 'email', 'mobile_number'))
+        })
+    elif request.method == "POST":
+        try:
+            employee = Employee.objects.create(
+                employee_id=request.POST.get('employee_id'),
+                name=request.POST.get('name'),
+                email=request.POST.get('email'),
+                mobile_number=request.POST.get('mobile_number'),
+                address=request.POST.get('address', ''),
+                password=request.POST.get('password')
+            )
+            
+            return JsonResponse({
+                'status': 'success',
+                'employee': {
+                    'id': employee.id,
+                    'employee_id': employee.employee_id,
+                    'name': employee.name,
+                    'email': employee.email,
+                    'mobile_number': employee.mobile_number
+                }
+            })
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+@csrf_exempt
+@require_http_methods(["PUT", "DELETE"])
+def manage_employee(request, employee_id):
+    try:
+        employee = Employee.objects.get(id=employee_id)
+        
+        if request.method == "PUT":
+            data = json.loads(request.body)
+            employee.name = data.get('name', employee.name)
+            employee.email = data.get('email', employee.email)
+            employee.mobile_number = data.get('mobile_number', employee.mobile_number)
+            employee.address = data.get('address', employee.address)
+            
+            if 'password' in data:
+                employee.password = data['password']
+                
+            employee.save()
+            
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Employee updated successfully'
+            })
+            
+        elif request.method == "DELETE":
+            employee.delete()
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Employee deleted successfully'
+            })
+            
+    except Employee.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Employee not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
