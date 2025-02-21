@@ -1,5 +1,5 @@
 from django import forms
-from .models import Category, Item, Employee
+from .models import Category, Item, Employee, Owner, Hotel
 
 class CategoryForm(forms.ModelForm):
     class Meta:
@@ -16,8 +16,12 @@ class EmployeeForm(forms.ModelForm):
         model = Employee
         fields = ['employee_id', 'name', 'email', 'mobile_number', 'address', 'aadhar', 'password']
 
-class OwnerForm(forms.Form):
-    name = forms.CharField(max_length=100)
-    email = forms.EmailField()
-    phone = forms.CharField(max_length=20)
-    photo = forms.ImageField(required=False)
+class OwnerForm(forms.ModelForm):
+    class Meta:
+        model = Owner
+        fields = ['name', 'email', 'phone', 'photo']
+
+class HotelForm(forms.ModelForm):
+    class Meta:
+        model = Hotel
+        fields = ['name', 'address', 'email', 'phone', 'gstin', 'logo']

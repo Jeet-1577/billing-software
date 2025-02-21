@@ -1727,3 +1727,74 @@ def share_report(request):
             
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
 
+@csrf_exempt
+def edit_owner(request, owner_id):
+    if request.method == 'POST':
+        try:
+            owner = Owner.objects.get(id=owner_id)
+            owner.name = request.POST.get('name')
+            owner.email = request.POST.get('email')
+            owner.phone = request.POST.get('phone')
+            
+            if 'photo' in request.FILES:
+                owner.photo = request.FILES['photo']
+            
+            owner.save()
+            messages.success(request, 'Owner updated successfully!')
+            return redirect('profile')
+        except Exception as e:
+            messages.error(request, f'Error updating owner: {str(e)}')
+            return redirect('profile')
+    return redirect('profile')
+
+@csrf_exempt
+def delete_owner(request, owner_id):
+    if request.method == 'POST':
+        try:
+            owner = Owner.objects.get(id=owner_id)
+            owner.delete()
+            messages.success(request, 'Owner deleted successfully!')
+            return JsonResponse({'status': 'success'})
+        except Owner.DoesNotExist:
+            messages.error(request, 'Owner not found.')
+            return JsonResponse({'status': 'error', 'message': 'Owner not found'}, status=404)
+        except Exception as e:
+            messages.error(request, f'Error deleting owner: {str(e)}')
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
+@csrf_exempt 
+def update_profile(request):
+    if request.method == 'POST':
+        try:
+            # Handle owner profile updates
+            if 'owner_id' in request.POST:
+                owner = Owner.objects.get(id=request.POST.get('owner_id'))
+                owner.name = request.POST.get('name')
+                owner.email = request.POST.get('email')
+                owner.phone = request.POST.get('phone')
+                if 'photo' in request.FILES:
+                    owner.photo = request.FILES['photo']
+                owner.save()
+                messages.success(request, 'Owner profile updated successfully!')
+            
+            # Handle hotel profile updates
+            if 'hotel_id' in request.POST:
+                hotel = Hotel.objects.get(id=request.POST.get('hotel_id'))
+                hotel.name = request.POST.get('hotel_name')
+                hotel.address = request.POST.get('address')
+                hotel.email = request.POST.get('hotel_email')
+                hotel.phone = request.POST.get('hotel_phone')
+                hotel.gstin = request.POST.get('gstin')
+                if 'logo' in request.FILES:
+                    hotel.logo = request.FILES['logo']
+                hotel.save()
+                messages.success(request, 'Hotel profile updated successfully!')
+
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            messages.error(request, f'Error updating profile: {str(e)}')
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+
