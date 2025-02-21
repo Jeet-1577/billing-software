@@ -6,9 +6,6 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('profile/', views.profile, name='profile'),
     path('add_owner/', views.add_owner, name='add_owner'),
-    path('edit_owner/<int:owner_id>/', views.edit_owner, name='edit_owner'),
-    path('delete_owner/<int:owner_id>/', views.delete_owner, name='delete_owner'),
-    path('update_profile/', views.update_profile, name='update_profile'),
     path('settings/', views.settings, name='settings'),
     path('inventory/', views.inventory, name='inventory'),
     path('portfolio/', views.portfolio, name='portfolio'),
@@ -48,6 +45,8 @@ urlpatterns = [
     path('manage-items/', views.manage_items, name='manage_items'),
     path('manage-items/update/', views.update_item, name='update_item'),
     path('manage-items/delete/<str:form_type>/<int:item_id>/', views.delete_item, name='delete_item'),
+    path('edit_owner/<int:owner_id>/', views.edit_owner, name='edit_owner'),
+    path('delete_owner/<int:owner_id>/', views.delete_owner, name='delete_owner'),
 ]
 
 urlpatterns += [
@@ -61,4 +60,10 @@ urlpatterns += [
     path('reports/financial/export/', views.export_financial_report, name='export_financial_report'),
     path('reports/financial/pdf/', views.generate_pdf_report, name='generate_pdf_report'),
     path('reports/financial/share/', views.share_report, name='share_report'),
+]
+
+urlpatterns += [
+    path('add_employee/', views.add_employee, name='add_employee'),
+    path('edit_employee/<int:employee_id>/', views.edit_employee, name='edit_employee'),
+    path('delete_employee/<int:employee_id>/', views.delete_employee, name='delete_employee'),
 ]

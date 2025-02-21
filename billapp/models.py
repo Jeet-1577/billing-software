@@ -232,8 +232,12 @@ class Owner(models.Model):
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20)
     photo = models.ImageField(upload_to='owners/', blank=True, null=True)
+    role = models.CharField(max_length=50, default='owner')
+    status = models.CharField(max_length=20, default='active')
+    address = models.TextField(blank=True, null=True)
+    joined_date = models.DateField(auto_now_add=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name

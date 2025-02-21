@@ -9,7 +9,8 @@ from .models import (
     KoOrder, 
     TableOrder,
     CustomizationCategory,
-    CustomizationOption
+    CustomizationOption,
+    Owner  # Add this import
 )
 from .forms import CategoryForm, ItemForm, EmployeeForm, OwnerForm  # Update this line to only import existing forms
 from django.http import JsonResponse
@@ -138,32 +139,123 @@ def format_hour(hour):
     return f'{display_hour}{am_pm}'
 
 def profile(request):
-    owners = []  # Replace with your actual logic to fetch owners
+    owners = Owner.objects.all().order_by('-created_at')
     hotel = {}    # Replace with your actual logic to fetch hotel details
-    employees = [] # Replace with your actual logic to fetch employees
+    employees = Employee.objects.all()
     return render(request, 'profile.html', {'owners': owners, 'hotel': hotel, 'employees': employees})
 
 def add_owner(request):
     if request.method == 'POST':
-        form = OwnerForm(request.POST, request.FILES)
-        if form.is_valid():
-            name = form.cleaned_data['name']
-            email = form.cleaned_data['email']
-            phone = form.cleaned_data['phone']
+        try:
+            name = request.POST.get('name')
+            email = request.POST.get('email')
+            phone = request.POST.get('phone')
             photo = request.FILES.get('photo')
 
-            # Here, you would typically save the owner to the database
-            # For example:
-            # owner = Owner(name=name, email=email, phone=phone, photo=photo)
-            # owner.save()
-
-            # Redirect back to the profile page
+            # Create new owner
+            owner = Owner.objects.create(
+                name=name,
+                email=email,
+                phone=phone,
+                photo=photo
+            )
+            messages.success(request, 'Owner added successfully!')
             return redirect('profile')
-    else:
-        form = OwnerForm()
-    return render(request, 'profile.html', {'form': form})
+        except Exception as e:
+            messages.error(request, f'Error adding owner: {str(e)}')
+            return redirect('profile')
+    return redirect('profile')
 
-# Add more views as needed
+@csrf_exempt
+def edit_owner(request, owner_id):
+    if request.method == 'POST':
+        try:
+            owner = Owner.objects.get(id=owner_id)
+            owner.name = request.POST.get('name')
+            owner.email = request.POST.get('email')
+            owner.phone = request.POST.get('phone')
+            
+            if 'photo' in request.FILES:
+                owner.photo = request.FILES['photo']
+            
+            owner.save()
+            messages.success(request, 'Owner updated successfully!')
+            return redirect('profile')
+        except Exception as e:
+            messages.error(request, f'Error updating owner: {str(e)}')
+            return redirect('profile')
+    return redirect('profile')
+
+@csrf_exempt
+def delete_owner(request, owner_id):
+    if request.method == 'POST':
+        try:
+            owner = Owner.objects.get(id=owner_id)
+            owner.delete()
+            messages.success(request, 'Owner deleted successfully!')
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            messages.error(request, f'Error deleting owner: {str(e)}')
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+@csrf_exempt
+def add_employee(request):
+    if request.method == 'POST':
+        try:
+            employee = Employee.objects.create(
+                employee_id=request.POST.get('employee_id'),
+                name=request.POST.get('name'),
+                email=request.POST.get('email'),
+                mobile_number=request.POST.get('mobile_number'),
+                address=request.POST.get('address'),
+                aadhar=request.POST.get('aadhar'),
+                password=request.POST.get('password')  # Will be hashed by the model's save method
+            )
+            messages.success(request, 'Employee added successfully!')
+            return redirect('profile')
+        except Exception as e:
+            messages.error(request, f'Error adding employee: {str(e)}')
+            return redirect('profile')
+    return redirect('profile')
+
+@csrf_exempt
+def edit_employee(request, employee_id):
+    if request.method == 'POST':
+        try:
+            employee = Employee.objects.get(id=employee_id)
+            employee.employee_id = request.POST.get('employee_id')
+            employee.name = request.POST.get('name')
+            employee.email = request.POST.get('email')
+            employee.mobile_number = request.POST.get('mobile_number')
+            employee.address = request.POST.get('address')
+            employee.aadhar = request.POST.get('aadhar')
+            
+            # Only update password if provided
+            if password := request.POST.get('password'):
+                employee.password = password
+            
+            employee.save()
+            messages.success(request, 'Employee updated successfully!')
+            return redirect('profile')
+        except Exception as e:
+            messages.error(request, f'Error updating employee: {str(e)}')
+            return redirect('profile')
+    return redirect('profile')
+
+@csrf_exempt
+def delete_employee(request, employee_id):
+    if request.method == 'POST':
+        try:
+            employee = Employee.objects.get(id=employee_id)
+            employee.delete()
+            messages.success(request, 'Employee deleted successfully!')
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            messages.error(request, f'Error deleting employee: {str(e)}')
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
 def settings(request):
     return render(request, 'settings.html')
 
@@ -1726,75 +1818,4 @@ def share_report(request):
             return JsonResponse({'status': 'error', 'message': str(e)})
             
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
-
-@csrf_exempt
-def edit_owner(request, owner_id):
-    if request.method == 'POST':
-        try:
-            owner = Owner.objects.get(id=owner_id)
-            owner.name = request.POST.get('name')
-            owner.email = request.POST.get('email')
-            owner.phone = request.POST.get('phone')
-            
-            if 'photo' in request.FILES:
-                owner.photo = request.FILES['photo']
-            
-            owner.save()
-            messages.success(request, 'Owner updated successfully!')
-            return redirect('profile')
-        except Exception as e:
-            messages.error(request, f'Error updating owner: {str(e)}')
-            return redirect('profile')
-    return redirect('profile')
-
-@csrf_exempt
-def delete_owner(request, owner_id):
-    if request.method == 'POST':
-        try:
-            owner = Owner.objects.get(id=owner_id)
-            owner.delete()
-            messages.success(request, 'Owner deleted successfully!')
-            return JsonResponse({'status': 'success'})
-        except Owner.DoesNotExist:
-            messages.error(request, 'Owner not found.')
-            return JsonResponse({'status': 'error', 'message': 'Owner not found'}, status=404)
-        except Exception as e:
-            messages.error(request, f'Error deleting owner: {str(e)}')
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
-
-@csrf_exempt 
-def update_profile(request):
-    if request.method == 'POST':
-        try:
-            # Handle owner profile updates
-            if 'owner_id' in request.POST:
-                owner = Owner.objects.get(id=request.POST.get('owner_id'))
-                owner.name = request.POST.get('name')
-                owner.email = request.POST.get('email')
-                owner.phone = request.POST.get('phone')
-                if 'photo' in request.FILES:
-                    owner.photo = request.FILES['photo']
-                owner.save()
-                messages.success(request, 'Owner profile updated successfully!')
-            
-            # Handle hotel profile updates
-            if 'hotel_id' in request.POST:
-                hotel = Hotel.objects.get(id=request.POST.get('hotel_id'))
-                hotel.name = request.POST.get('hotel_name')
-                hotel.address = request.POST.get('address')
-                hotel.email = request.POST.get('hotel_email')
-                hotel.phone = request.POST.get('hotel_phone')
-                hotel.gstin = request.POST.get('gstin')
-                if 'logo' in request.FILES:
-                    hotel.logo = request.FILES['logo']
-                hotel.save()
-                messages.success(request, 'Hotel profile updated successfully!')
-
-            return JsonResponse({'status': 'success'})
-        except Exception as e:
-            messages.error(request, f'Error updating profile: {str(e)}')
-            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
-
-    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
 
