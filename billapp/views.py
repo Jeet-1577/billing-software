@@ -2102,3 +2102,78 @@ def update_preferences(request):
         'message': 'Invalid request method'
     }, status=405)
 
+@require_POST
+def logout_all_sessions(request):
+    try:
+        # Get current user's employee instance
+        employee = Employee.objects.get(id=request.user.id)
+        
+        # Mark all devices as inactive
+        ConnectedDevice.objects.filter(user=employee).update(is_active=False)
+        
+        # Log the mass logout
+        LoginActivity.objects.create(
+            user=employee,
+            ip_address=get_client_ip(request),
+            device_info='Mass logout from all devices',
+            status='logout'
+        )
+        
+        return JsonResponse({'status': 'success'})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+def get_security_info(request):
+    try:
+        employee = Employee.objects.get(id=request.user.id)
+        
+        # Get recent login activities
+        recent_logins = LoginActivity.objects.filter(
+            user=employee
+        ).order_by('-login_time')[:5]
+        
+        # Get connected devices
+        devices = ConnectedDevice.objects.filter(
+            user=employee,
+            is_active=True
+        )
+        
+        context = {
+            'recent_logins': recent_logins,
+            'connected_devices': devices,
+        }
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'status': 'success',
+                'data': {
+                    'logins': [
+                        {
+                            'ip': login.ip_address,
+                            'device': login.device_info,
+                            'time': login.login_time.isoformat(),
+                            'status': login.status
+                        } for login in recent_logins
+                    ],
+                    'devices': [
+                        {
+                            'name': device.device_name,
+                            'last_active': device.last_active.isoformat()
+                        } for device in devices
+                    ]
+                }
+            })
+        
+        return render(request, 'security_info.html', context)
+        
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+

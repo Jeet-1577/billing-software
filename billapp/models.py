@@ -263,3 +263,31 @@ class Hotel(models.Model):
     class Meta:
         verbose_name = 'Hotel Profile'
         verbose_name_plural = 'Hotel Profile'
+
+class LoginActivity(models.Model):
+    user = models.ForeignKey('Employee', on_delete=models.CASCADE)
+    ip_address = models.GenericIPAddressField()
+    device_info = models.CharField(max_length=255)
+    login_time = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=[
+        ('success', 'Success'),
+        ('failed', 'Failed'),
+        ('logout', 'Logout')
+    ])
+
+    class Meta:
+        ordering = ['-login_time']
+        verbose_name_plural = 'Login Activities'
+
+    def __str__(self):
+        return f"{self.user} - {self.ip_address} - {self.login_time}"
+
+class ConnectedDevice(models.Model):
+    user = models.ForeignKey('Employee', on_delete=models.CASCADE)
+    device_name = models.CharField(max_length=255)
+    device_id = models.CharField(max_length=255, unique=True)
+    last_active = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.user} - {self.device_name}"

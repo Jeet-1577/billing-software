@@ -161,15 +161,15 @@
       <h2 class="bg-gray-700 text-lg font-semibold text-white p-5">Activity & Security</h2>
       <!-- Tabs -->
       <div class="flex text-gray-400 divide-x divide-gray-700">
-        <button class="py-3 px-6 w-1/3 hover:bg-gray-700 transition-colors">Recent Logins</button>
-        <button class="py-3 px-6 w-1/3 hover:bg-gray-700 transition-colors">Connected Devices</button>
-        <button class="py-3 px-6 w-1/3 hover:bg-gray-700 transition-colors">Logout Sessions</button>
+        <button class="py-3 px-6 w-1/3 hover:bg-gray-700 transition-colors" data-tab="security">Recent Logins</button>
+        <button class="py-3 px-6 w-1/3 hover:bg-gray-700 transition-colors" data-tab="security">Connected Devices</button>
+        <button class="py-3 px-6 w-1/3 hover:bg-gray-700 transition-colors" data-tab="security">Logout Sessions</button>
       </div>
       <!-- Tab Content -->
       <div class="p-6 text-gray-300 space-y-4">
-        <div>Login from IP 192.168.1.10 on 2023-10-05 09:15</div>
-        <div>Login from IP 192.168.1.11 on 2023-10-04 19:45</div>
-        <button class="w-full py-3 bg-red-600 text-white rounded-2xl hover:bg-red-700 transition" onclick="alert('Logged out from all sessions')">Logout from All Sessions</button>
+        <div id="recentLoginsList">Login from IP 192.168.1.10 on 2023-10-05 09:15</div>
+        <div id="connectedDevicesList">Login from IP 192.168.1.11 on 2023-10-04 19:45</div>
+        <button id="logoutAllSessions" class="w-full py-3 bg-red-600 text-white rounded-2xl hover:bg-red-700 transition" onclick="alert('Logged out from all sessions')">Logout from All Sessions</button>
       </div>
     </section>
 
@@ -597,6 +597,70 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('notifications').checked = {{ hotel.email_notifications|yesno:"true,false" }};
     document.getElementById('2fa').checked = {{ hotel.two_factor_auth|yesno:"true,false" }};
     document.getElementById('language').value = "{{ hotel.language }}";
+});
+
+// ...existing code...
+
+function loadSecurityInfo() {
+    fetch('/security/info/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                updateSecurityTabs(data.data);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+function updateSecurityTabs(data) {
+    // Update Recent Logins tab
+    const loginsList = document.getElementById('recentLoginsList');
+    loginsList.innerHTML = data.logins.map(login => `
+        <div class="text-gray-300 py-2">
+            Login from IP ${login.ip} on ${new Date(login.time).toLocaleString()}
+            <span class="text-sm text-gray-400">${login.device}</span>
+        </div>
+    `).join('');
+
+    // Update Connected Devices tab
+    const devicesList = document.getElementById('connectedDevicesList');
+    devicesList.innerHTML = data.devices.map(device => `
+        <div class="text-gray-300 py-2">
+            ${device.name}
+            <span class="text-sm text-gray-400">Last active: ${new Date(device.last_active).toLocaleString()}</span>
+        </div>
+    `).join('');
+}
+
+// Load security info when the section becomes visible
+document.querySelectorAll('[data-tab]').forEach(tab => {
+    tab.addEventListener('click', function() {
+        if (this.dataset.tab === 'security') {
+            loadSecurityInfo();
+        }
+    });
+});
+
+// Handle "Logout from All Sessions" button
+document.getElementById('logoutAllSessions').addEventListener('click', function() {
+    if (confirm('Are you sure you want to log out from all sessions?')) {
+        fetch('/security/logout-all/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('Successfully logged out from all sessions');
+                loadSecurityInfo(); // Reload security info
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }
 });
 </script>
 

@@ -79,3 +79,8 @@ urlpatterns += [
     path('update-hotel-profile/', views.update_hotel_profile, name='update_hotel_profile'),
     path('update-preferences/', views.update_preferences, name='update_preferences'),
 ]
+
+urlpatterns += [
+    path('security/logout-all/', views.logout_all_sessions, name='logout_all_sessions'),
+    path('security/info/', views.get_security_info, name='security_info'),
+]
