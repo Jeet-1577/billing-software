@@ -1260,6 +1260,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
 function closeSidebar() {
     selectionSidebar.classList.remove('open');
+    // Clear selected table on sidebar close
+    localStorage.removeItem('selectedTable');
+    const selectedTableElement = document.getElementById('selectedTable');
+    if (selectedTableElement) {
+        selectedTableElement.textContent = '';
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -1423,6 +1429,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 checkoutButton.removeEventListener('click', handleCheckout);
                 checkoutButton.addEventListener('click', handleSaveOrder);
             } else {
+                // Clear table selection for non-dine-in options
+                localStorage.removeItem('selectedTable');
+                const selectedTableElement = document.getElementById('selectedTable');
+                if (selectedTableElement) {
+                    selectedTableElement.textContent = '';
+                }
+                
                 checkoutButton.textContent = 'Checkout';
                 checkoutButton.removeEventListener('click', handleSaveOrder);
                 checkoutButton.addEventListener('click', handleCheckout);
@@ -1473,7 +1486,7 @@ function showTableSelectionPopup() {
             </button>
         </div>
         <div class="overflow-y-auto custom-scrollbar mt-4 pr-2" style="max-height: calc(80vh - 120px);">
-            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-4" id="tableList">
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-6 gap-4" id="tableList">
                 <div class="text-center col-span-full">Loading tables...</div>
             </div>
         </div>
@@ -1594,3 +1607,4 @@ document.addEventListener('DOMContentLoaded', () => {
         dineInOption.addEventListener('dblclick', handleDineInOption); // Add double-click event listener
     }
 });
+;
