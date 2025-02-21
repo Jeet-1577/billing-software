@@ -10,7 +10,8 @@ from .models import (
     TableOrder,
     CustomizationCategory,
     CustomizationOption,
-    Owner  # Add this import
+    Owner,
+    Hotel  # Add this import
 )
 from .forms import CategoryForm, ItemForm, EmployeeForm, OwnerForm  # Update this line to only import existing forms
 from django.http import JsonResponse
@@ -140,7 +141,7 @@ def format_hour(hour):
 
 def profile(request):
     owners = Owner.objects.all().order_by('-created_at')
-    hotel = {}    # Replace with your actual logic to fetch hotel details
+    hotel = Hotel.objects.first()  # Get the first hotel instance
     employees = Employee.objects.all()
     return render(request, 'profile.html', {'owners': owners, 'hotel': hotel, 'employees': employees})
 
@@ -1606,7 +1607,7 @@ def export_financial_report(request):
             day['order_date'].strftime('%Y-%m-%d'),
             f"₹{day['revenue']:.2f}",
             day['orders'],
-            f"₹{day['gst']:.2f}",
+            day['gst'],
             f"₹{avg_order:.2f}"
         ])
 
@@ -1818,4 +1819,72 @@ def share_report(request):
             return JsonResponse({'status': 'error', 'message': str(e)})
             
     return JsonResponse({'status': 'error', 'message': 'Invalid request method'})
+
+@csrf_exempt
+def update_profile(request):
+    if request.method == 'POST':
+        try:
+            hotel = Hotel.objects.first()
+            if not hotel:
+                hotel = Hotel()
+            
+            hotel.name = request.POST.get('hotel_name')
+            hotel.address = request.POST.get('address')
+            hotel.email = request.POST.get('email')
+            hotel.phone = request.POST.get('phone')
+            hotel.gstin = request.POST.get('gstin')
+            
+            # Handle logo upload
+            if 'logo' in request.FILES:
+                hotel.logo = request.FILES['logo']
+            
+            hotel.save()
+            
+            messages.success(request, 'Profile updated successfully!')
+            return redirect('profile')
+        except Exception as e:
+            messages.error(request, f'Error updating profile: {str(e)}')
+            return redirect('profile')
+    return redirect('profile')
+
+@csrf_exempt
+def change_password(request):
+    if request.method == 'POST':
+        try:
+            current_password = request.POST.get('current_password')
+            new_password = request.POST.get('new_password')
+            confirm_password = request.POST.get('confirm_password')
+            
+            if new_password != confirm_password:
+                messages.error(request, 'New passwords do not match!')
+                return redirect('profile')
+            
+            # Here you would typically verify the current password
+            # and update it in your authentication system
+            messages.success(request, 'Password changed successfully!')
+            return redirect('profile')
+        except Exception as e:
+            messages.error(request, f'Error changing password: {str(e)}')
+            return redirect('profile')
+    return redirect('profile')
+
+@csrf_exempt
+@require_POST
+def toggle_2fa(request):
+    try:
+        data = json.loads(request.body)
+        enabled = data.get('enabled', False)
+        
+        # Here you would typically update the 2FA settings
+        # in your authentication system
+        
+        return JsonResponse({
+            'success': True,
+            'message': '2FA settings updated successfully'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        })
 

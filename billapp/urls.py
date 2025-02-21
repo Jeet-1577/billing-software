@@ -67,3 +67,9 @@ urlpatterns += [
     path('edit_employee/<int:employee_id>/', views.edit_employee, name='edit_employee'),
     path('delete_employee/<int:employee_id>/', views.delete_employee, name='delete_employee'),
 ]
+
+urlpatterns += [
+    path('update_profile/', views.update_profile, name='update_profile'),
+    path('change_password/', views.change_password, name='change_password'),
+    path('toggle_2fa/', views.toggle_2fa, name='toggle_2fa'),
+]

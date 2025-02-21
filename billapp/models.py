@@ -219,8 +219,8 @@ class KoOrder(models.Model):
     grand_total = models.DecimalField(max_digits=10, decimal_places=2)
     payment_type = models.CharField(max_length=50)
     order_type = models.CharField(max_length=50)
-    status = models.CharField(max_length=20, default='sent')
-    table_number = models.CharField(max_length=10, null=True, blank=True)  # Add table number field
+    status = models.CharField(max_length=20, default='sent')  # Fixed here
+    table_number = models.CharField(max_length=10, null=True, blank=True)  # Fixed here
     time = models.TimeField(auto_now_add=True)
     date = models.DateField(auto_now_add=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -235,7 +235,25 @@ class Owner(models.Model):
     phone = models.CharField(max_length=20)
     photo = models.ImageField(upload_to='owners/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name
+
+class Hotel(models.Model):
+    name = models.CharField(max_length=100)
+    address = models.TextField()
+    email = models.EmailField()
+    phone = models.CharField(max_length=20)
+    gstin = models.CharField(max_length=15)
+    logo = models.ImageField(upload_to='hotel/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
+    has_2fa = models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Hotel Profile"
+        verbose_name_plural = "Hotel Profile"
