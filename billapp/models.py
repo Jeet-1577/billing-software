@@ -66,10 +66,10 @@ class Item(models.Model):
     sgst = models.DecimalField(max_digits=5, decimal_places=2, default=0)  # New field
 
     def get_image_url(self):
-        """Safely get the image URL, return empty string if no image exists"""
+        """Safely get the image URL, return a default image if no image exists"""
         if self.image and hasattr(self.image, 'url'):
             return self.image.url
-        return ''
+        return '/static/images/default-item.png'  # Return default image path
 
     def __str__(self):
         return self.name
@@ -84,6 +84,7 @@ class OrderItem(models.Model):
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
     item_details = models.JSONField(default=dict)
     created_at = models.DateTimeField(auto_now_add=True)
+    making_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Add this line
 
     def save(self, *args, **kwargs):
         # Ensure customizations is a list
@@ -97,6 +98,10 @@ class OrderItem(models.Model):
                 for c in self.customizations
             )
             self.total_price = (self.price + customization_price) * self.quantity
+        
+        if not self.making_cost and hasattr(self, 'item_details'):
+            # Try to get making cost from item details
+            self.making_cost = Decimal(str(self.item_details.get('cost', '0')))
         
         super().save(*args, **kwargs)
 

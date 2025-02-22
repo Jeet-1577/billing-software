@@ -168,6 +168,7 @@ def inventory(request):
     search_query = request.GET.get('search')
     
     try:
+        # Get items based on filters
         if search_query:
             items = Item.objects.filter(
                 models.Q(name__icontains=search_query) | 
@@ -181,26 +182,25 @@ def inventory(request):
         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
             items_data = []
             for item in items:
+                # Get image URL with fallback to default
+                image_url = item.get_image_url()
+                
                 item_data = {
                     'id': item.id,
                     'name': item.name,
                     'price': str(item.price),
-                    'image': item.image.url if item.image else '',
+                    'image': image_url,
                     'has_customization': item.has_customization,
-                    'cgst': str(item.cgst),  # Add CGST
-                    'sgst': str(item.sgst),  # Add SGST
+                    'cgst': str(item.cgst),
+                    'sgst': str(item.sgst),
                     'customization_options': []
                 }
+                
                 if item.has_customization:
                     item_data['customization_options'] = [
-                        {
-                            'id': opt.id,
-                            'name': opt.name,
-                            'price': str(opt.price),
-                            'category': opt.category.name
-                        }
-                        for opt in item.customization_options.all()
+                        opt.to_dict() for opt in item.customization_options.all()
                     ]
+                    
                 items_data.append(item_data)
             
             return JsonResponse({
@@ -214,10 +214,9 @@ def inventory(request):
             'items': items,
             'selected_category_id': selected_category_id
         })
+        
     except Exception as e:
-        import traceback
-        print("Error in inventory view:", str(e))
-        print(traceback.format_exc())
+        print(f"Error in inventory view: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
 
 def portfolio(request):
@@ -1399,7 +1398,7 @@ def financial_reports(request):
         target_progress = (monthly_revenue / monthly_revenue_target * 100) if monthly_revenue_target > 0 else 0
         order_target_progress = (total_orders / monthly_order_target * 100) if monthly_order_target > 0 else 0
 
-        # Daily revenue trend data - Fix the date annotation
+        # Daily revenue trend data - Fix the date annotation    
         daily_revenue = current_orders.annotate(
             order_date=TruncDate('created_at')  # Changed from 'date' to 'order_date'
         ).values('order_date').annotate(
