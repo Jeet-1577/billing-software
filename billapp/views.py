@@ -2178,3 +2178,28 @@ def get_client_ip(request):
         ip = request.META.get('REMOTE_ADDR')
     return ip
 
+@csrf_exempt
+def add_table(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            size = data.get('size', 4)  # Default size is 4
+            table = Table.objects.create(size=size)
+            return JsonResponse({'status': 'success', 'table': {'id': table.id, 'number': table.number, 'size': table.size}})
+        except Exception as e:
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
+    return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
+
+@csrf_exempt
+def remove_table(request, table_id):
+    if request.method == 'DELETE':
+        try:
+            table = Table.objects.get(id=table_id)
+            table.delete()
+            return JsonResponse({'status': 'success'})
+        except Table.DoesNotExist:
+            return JsonResponse({'status': 'failed', 'error': 'Table not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
+    return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
+

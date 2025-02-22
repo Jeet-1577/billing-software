@@ -26,6 +26,8 @@ urlpatterns = [
     path('', include('billapp.urls')),  # Include app URLs
     path('api/', include('billapp.urls')),  # Added this line to include billapp URLs under /api/
     path("__reload__/", include("django_browser_reload.urls")),
+    path('api/add_table/', views.add_table, name='add_table'),
+    path('api/remove_table/<int:table_id>/', views.remove_table, name='remove_table'),
     # path('table_order/<int:table_id>/', views.get_table_order_details, name='get_table_order_details'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

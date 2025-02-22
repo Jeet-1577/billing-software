@@ -79,7 +79,7 @@
         height: 70vh;
         margin-bottom: 50px;
     }
-    .book-button, .release-button, .clear-button {
+    .book-button, .release-button, .clear-button{
         position: absolute;
         top: 100px; /* Adjust this value based on the height of your navbar */
         background-color: #2563eb;
@@ -89,6 +89,21 @@
         cursor: pointer;
         transition: all 0.3s ease;
         z-index: 1; /* Ensure it is behind the sidebar */
+    }
+
+    #manageTableBtn {
+        position: absolute;
+        top: 100px; /* Adjust this value based on the height of your navbar */
+        {% comment %} background-color: #2563eb; {% endcomment %}
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        {% comment %} transition: all 0.3s ease; {% endcomment %}
+        {% comment %} z-index: 1; /* Ensure it is behind the sidebar */ {% endcomment %}
+    }
+    #manageTableBtn{
+        right: 130px
     }
     .book-button {
         left: 10px; /* Position at the left */
@@ -404,6 +419,12 @@
     <button class="book-button" onclick="bookTable()">Book</button>
     <button class="release-button" onclick="releaseTable()">Release</button>
     <button class="clear-button" onclick="clearTable()">Clear</button>
+    <button id="manageTableBtn" class="bg-red-500 hover:bg-red-700 ">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20h9" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.5 3.5a2.121 2.121 0 113 3L7 19.5H4v-3L16.5 3.5z" />
+        </svg>
+    </button>
 </div>
 <div class="table-container">
     {% for table in table_numbers %}
@@ -961,7 +982,7 @@ function onPrintButtonClick() {
         const name = 'csrftoken';
         if (document.cookie && document.cookie !== '') {
             const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
+            for (let i = 0; cookies.length; i++) {
                 const cookie = cookies[i].trim();
                 if (cookie.substring(0, name.length + 1) === (name + '=')) {
                     cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
