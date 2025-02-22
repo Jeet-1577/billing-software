@@ -99,8 +99,8 @@ class OrderItem(models.Model):
             )
             self.total_price = (self.price + customization_price) * self.quantity
         
+        # Set default making_cost if not provided
         if not self.making_cost and hasattr(self, 'item_details'):
-            # Try to get making cost from item details
             self.making_cost = Decimal(str(self.item_details.get('cost', '0')))
         
         super().save(*args, **kwargs)
