@@ -2182,43 +2182,28 @@ def get_client_ip(request):
 def add_table(request):
     if request.method == 'POST':
         try:
-            data = json.loads(request.body)
-            table_number = data.get('number')
-            
-            if not table_number:
-                return JsonResponse({
-                    'status': 'failed', 
-                    'error': 'Table number is required'
-                }, status=400)
+            # Get the highest existing table number
+            highest_table = Table.objects.all().order_by('-number').first()
+            new_table_number = 1 if not highest_table else highest_table.number + 1
 
-            # Check if table number already exists
-            if Table.objects.filter(number=table_number).exists():
-                return JsonResponse({
-                    'status': 'failed', 
-                    'error': 'Table number already exists'
-                }, status=400)
-
-            # Create new table with the provided number
-            table = Table.objects.create(
-                number=table_number,
-                size=4  # Default size
-            )
+            # Create new table with auto-generated number
+            table = Table.objects.create(number=new_table_number)
 
             return JsonResponse({
-                'status': 'success', 
+                'status': 'success',
                 'table': {
-                    'id': table.id, 
-                    'number': table.number, 
-                    'size': table.size
+                    'id': table.id,
+                    'number': table.number
                 }
             })
         except Exception as e:
             return JsonResponse({
-                'status': 'failed', 
+                'status': 'failed',
                 'error': str(e)
             }, status=400)
+
     return JsonResponse({
-        'status': 'failed', 
+        'status': 'failed',
         'error': 'Invalid request method'
     }, status=405)
 

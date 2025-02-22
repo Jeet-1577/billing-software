@@ -1266,7 +1266,7 @@ document.getElementById('manageTableBtn').addEventListener('click', function() {
     });
 });
 
-// Add new table function
+// Replace the old addTableBtn click handler with this simpler version
 document.getElementById('addTableBtn').addEventListener('click', function() {
     fetch('/api/add_table/', {
         method: 'POST',
@@ -1274,7 +1274,7 @@ document.getElementById('addTableBtn').addEventListener('click', function() {
             'Content-Type': 'application/json',
             'X-CSRFToken': getCSRFToken()
         },
-        body: JSON.stringify({})
+        body: JSON.stringify({})  // Empty body since we generate the number on server
     })
     .then(response => response.json())
     .then(data => {
