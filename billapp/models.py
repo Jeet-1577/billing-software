@@ -53,8 +53,9 @@ class CustomizationOption(models.Model):
 
 class Item(models.Model):
     name = models.CharField(max_length=100)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='items')
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Add this line
     image = models.ImageField(upload_to='items/', blank=True, null=True)
     has_customization = models.BooleanField(default=False)
     customization_options = models.ManyToManyField(CustomizationOption, blank=True)
@@ -63,6 +64,12 @@ class Item(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     cgst = models.DecimalField(max_digits=5, decimal_places=2, default=0)  # New field
     sgst = models.DecimalField(max_digits=5, decimal_places=2, default=0)  # New field
+
+    def get_image_url(self):
+        """Safely get the image URL, return empty string if no image exists"""
+        if self.image and hasattr(self.image, 'url'):
+            return self.image.url
+        return ''
 
     def __str__(self):
         return self.name
@@ -151,7 +158,7 @@ class Table(models.Model):
     orders = models.ManyToManyField(Order, blank=True)
     place = models.CharField(max_length=100, null=True, blank=True)
     is_active = models.BooleanField(default=True)
-    is_booked = models.BooleanField(default=False)  # Add this field with a default value
+    is_booked = models.BooleanField(default=False)  # Fixed syntax error
     created_at = models.DateTimeField(auto_now_add=True)
     size = models.IntegerField(default=4)  # Number of seats
 

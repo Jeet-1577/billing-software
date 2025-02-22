@@ -453,12 +453,14 @@ document.addEventListener('DOMContentLoaded', function() {
         var quantityElement = document.getElementById(`quantity-${itemId}`);
         var priceElement = document.getElementById(`price-${itemId}`);
         if (quantityElement && priceElement) {
-            var quantity = parseInt(quantityElement.innerText);
-            quantityElement.innerText = quantity + 1;
-            var totalPrice = itemPrice * (quantity + 1);
+            var quantity = parseInt(quantityElement.innerText) + 1;
+            quantityElement.innerText = quantity;
+            var totalPrice = parseFloat(itemPrice) * quantity;
             priceElement.innerText = `₹${totalPrice.toFixed(2)}`;
+            
+            // Update the total amount after changing quantity
+            updateTotalAmount();
         }
-        updateTotalAmount();
     };
 
     window.decreaseQuantity = function(itemId, itemPrice) {
@@ -467,12 +469,15 @@ document.addEventListener('DOMContentLoaded', function() {
         if (quantityElement && priceElement) {
             var quantity = parseInt(quantityElement.innerText);
             if (quantity > 1) {
-                quantityElement.innerText = quantity - 1;
-                var totalPrice = itemPrice * (quantity - 1);
+                quantity -= 1;
+                quantityElement.innerText = quantity;
+                var totalPrice = parseFloat(itemPrice) * quantity;
                 priceElement.innerText = `₹${totalPrice.toFixed(2)}`;
+                
+                // Update the total amount after changing quantity
+                updateTotalAmount();
             }
         }
-        updateTotalAmount();
     };
 
     function updateTotalAmount() {
@@ -493,44 +498,41 @@ document.addEventListener('DOMContentLoaded', function() {
     
         for (var i = 0; i < selectedItems.length; i++) {
             var item = selectedItems[i];
+            var itemId = item.getAttribute('data-unique-id') || `${item.getAttribute('data-item-id')}-basic`;
             var basePrice = parseFloat(item.getAttribute('data-item-price'));
-            var cgstRate = parseFloat(item.getAttribute('data-cgst') || '9'); // Default 9% if not set
-            var sgstRate = parseFloat(item.getAttribute('data-sgst') || '9'); // Default 9% if not set
-            var uniqueItemId = item.getAttribute('data-unique-id') || `${item.getAttribute('data-item-id')}-basic`;
+            var cgstRate = parseFloat(item.getAttribute('data-cgst') || '9');
+            var sgstRate = parseFloat(item.getAttribute('data-sgst') || '9');
+            
+            // Get quantity
+            var quantityElement = document.getElementById(`quantity-${itemId}`);
+            if (!quantityElement) continue;
+            var quantity = parseInt(quantityElement.innerText);
+    
+            // Calculate base item price with quantity
             var totalItemPrice = basePrice;
     
-            // Add customization prices
+            // Add customization prices if any
             if (item.hasAttribute('data-selected-customizations')) {
                 const customizations = JSON.parse(item.getAttribute('data-selected-customizations'));
                 const customizationPrice = customizations.reduce((sum, opt) => sum + parseFloat(opt.price), 0);
                 totalItemPrice += customizationPrice;
             }
     
-            // Get quantity and calculate total for this item
-            var quantityElement = document.getElementById(`quantity-${uniqueItemId}`);
-            if (!quantityElement) continue;
-            
-            var quantity = parseInt(quantityElement.innerText);
+            // Calculate final price with quantity
             var itemSubtotal = totalItemPrice * quantity;
             
-            // Calculate GST for this item
+            // Calculate GST
             var itemCGST = (itemSubtotal * cgstRate) / 100;
             var itemSGST = (itemSubtotal * sgstRate) / 100;
             
             totalAmount += itemSubtotal;
             totalCGST += itemCGST;
             totalSGST += itemSGST;
-    
-            // Update individual item price display
-            var priceElement = document.getElementById(`price-${uniqueItemId}`);
-            if (priceElement) {
-                priceElement.innerText = `₹${itemSubtotal.toFixed(2)}`;
-            }
         }
     
         var grandTotal = totalAmount + totalCGST + totalSGST;
     
-        // Update display of totals
+        // Update display
         totalAmountElem.innerText = `Subtotal: ₹${totalAmount.toFixed(2)}`;
         cgstAmountElem.innerText = `CGST: ₹${totalCGST.toFixed(2)}`;
         sgstAmountElem.innerText = `SGST: ₹${totalSGST.toFixed(2)}`;
@@ -558,6 +560,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateSidebar();
     }
 
+    restoreSelectedItems();
     restoreSelectedItems();
 
     document.querySelectorAll('.category-link').forEach(function(link) {
