@@ -429,7 +429,13 @@
 <div class="table-container">
     {% for table in table_numbers %}
     <div class="table-box {% if table.is_booked %}booked{% endif %}" id="table-{{ table.id }}" onclick="selectTable(this)" data-size="{{ table.size }}">
-        {{ table.number }} 
+        <!-- Add minus icon (hidden by default) -->
+        <button class="remove-table-btn hidden absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600" onclick="event.stopPropagation(); removeTable({{ table.id }})">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+            </svg>
+        </button>
+        {{ table.number }}
         {% if table.is_booked %}
         <div class="table-timer" id="timer-{{ table.id }}"></div>
         <div class="flag-icon"></div>
@@ -437,6 +443,13 @@
         <img src="{% static 'img/printer.png' %}" class="eye-icon h-6 w-6" data-table-id="{{ table.id }}" alt="Printer Icon">
     </div>
     {% endfor %}
+    
+    <!-- Add table button (hidden by default) -->
+    <div id="addTableBtn" class="hidden table-box bg-gray-700 hover:bg-gray-600 cursor-pointer flex items-center justify-center">
+        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+    </div>
 </div>
 
 <!-- Update the modal content structure -->
@@ -1234,6 +1247,72 @@ function getCSRFToken() {
     return cookieValue;
 }
 
+// Update the manage table button click handler
+document.getElementById('manageTableBtn').addEventListener('click', function() {
+    // Toggle all remove table buttons
+    document.querySelectorAll('.remove-table-btn').forEach(btn => {
+        btn.classList.toggle('hidden');
+    });
+    
+    // Toggle add table button
+    document.getElementById('addTableBtn').classList.toggle('hidden');
+    
+    // Disable table selection when in edit mode
+    const tables = document.querySelectorAll('.table-box');
+    tables.forEach(table => {
+        if (!table.id.includes('addTableBtn')) {
+            table.onclick = table.onclick ? null : function() { selectTable(this); };
+        }
+    });
+});
+
+// Add new table function
+document.getElementById('addTableBtn').addEventListener('click', function() {
+    fetch('/api/add_table/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCSRFToken()
+        },
+        body: JSON.stringify({})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            location.reload(); // Refresh to show new table
+        } else {
+            alert('Failed to add table: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error adding table:', error);
+        alert('An error occurred while adding the table.');
+    });
+});
+
+// Remove table function
+function removeTable(tableId) {
+    if (confirm('Are you sure you want to remove this table?')) {
+        fetch(`/api/remove_table/${tableId}/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': getCSRFToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload(); // Refresh to update table list
+            } else {
+                alert('Failed to remove table: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error removing table:', error);
+            alert('An error occurred while removing the table.');
+        });
+    }
+}
 </script>
 
 {% endblock %}

@@ -2183,12 +2183,44 @@ def add_table(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            size = data.get('size', 4)  # Default size is 4
-            table = Table.objects.create(size=size)
-            return JsonResponse({'status': 'success', 'table': {'id': table.id, 'number': table.number, 'size': table.size}})
+            table_number = data.get('number')
+            
+            if not table_number:
+                return JsonResponse({
+                    'status': 'failed', 
+                    'error': 'Table number is required'
+                }, status=400)
+
+            # Check if table number already exists
+            if Table.objects.filter(number=table_number).exists():
+                return JsonResponse({
+                    'status': 'failed', 
+                    'error': 'Table number already exists'
+                }, status=400)
+
+            # Create new table with the provided number
+            table = Table.objects.create(
+                number=table_number,
+                size=4  # Default size
+            )
+
+            return JsonResponse({
+                'status': 'success', 
+                'table': {
+                    'id': table.id, 
+                    'number': table.number, 
+                    'size': table.size
+                }
+            })
         except Exception as e:
-            return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
-    return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
+            return JsonResponse({
+                'status': 'failed', 
+                'error': str(e)
+            }, status=400)
+    return JsonResponse({
+        'status': 'failed', 
+        'error': 'Invalid request method'
+    }, status=405)
 
 @csrf_exempt
 def remove_table(request, table_id):
@@ -2202,4 +2234,5 @@ def remove_table(request, table_id):
         except Exception as e:
             return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
     return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
+
 
