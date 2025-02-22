@@ -61,6 +61,8 @@ class Item(models.Model):
     short_code = models.CharField(max_length=100, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    cgst = models.DecimalField(max_digits=5, decimal_places=2, default=0)  # New field
+    sgst = models.DecimalField(max_digits=5, decimal_places=2, default=0)  # New field
 
     def __str__(self):
         return self.name

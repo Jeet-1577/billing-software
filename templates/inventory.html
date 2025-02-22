@@ -922,7 +922,13 @@
                 </div>
                 <div id="itemsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-8 gap-x-1 gap-y-2">
                     {% for item in items %}
-                    <div class="item-cube" data-item-id="{{ item.id }}" data-item-name="{{ item.name }}" data-item-code="{{ item.short_code }}" data-item-price="{{ item.price }}">
+                    <div class="item-cube" 
+                        data-item-id="{{ item.id }}"
+                        data-item-name="{{ item.name }}"
+                        data-item-price="{{ item.price }}"
+                        data-cgst="{{ item.cgst }}"
+                        data-sgst="{{ item.sgst }}"
+                        data-has-customization="{{ item.has_customization|lower }}">
                         <h3 class="text-xl font-bold mb-2">{{ item.name }}</h3>
                         <img src="{{ item.image.url }}" alt="{{ item.name }}">
                     </div>
@@ -947,8 +953,9 @@
             </ul>
         </div>
         <div class="options">
-            <p id="totalAmount" class="text-sm -">Total   : ₹0.00</p>
-            <p id="gstAmount" class="text-sm ">GST (18%): ₹0.00</p>
+            <p id="totalAmount" class="text-sm">Subtotal: ₹0.00</p>
+            <p id="cgstAmount" class="text-sm">CGST: ₹0.00</p>
+            <p id="sgstAmount" class="text-sm">SGST: ₹0.00</p>
             <p id="grandTotal" class="text-lg font-bold">Grand Total: ₹0.00</p>
         </div>
         <label class="m-0 p-0">Payment Type:</label>
@@ -1100,19 +1107,5 @@
         document.querySelector('.selection-sidebar').classList.add('open');
     }
 </script>
-
-{% comment %} <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Get table info from localStorage
-    const tableNumber = localStorage.getItem('selectedTableNumber');
-    if (tableNumber) {
-        const tableInfo = document.getElementById('selectedTableInfo');
-        if (tableInfo) {
-            tableInfo.textContent = `Table: ${tableNumber}`;
-        }
-    }
-    // ...rest of your existing DOMContentLoaded code...
-});
-</script> {% endcomment %}
 
 {% endblock %}

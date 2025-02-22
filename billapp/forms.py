@@ -9,7 +9,7 @@ class CategoryForm(forms.ModelForm):
 class ItemForm(forms.ModelForm):
     class Meta:
         model = Item
-        fields = ['name', 'category', 'price', 'image', 'has_customization', 'short_code']
+        fields = ['name', 'category', 'price', 'image', 'has_customization', 'short_code', 'cgst', 'sgst']
 
 class EmployeeForm(forms.ModelForm):
     class Meta:

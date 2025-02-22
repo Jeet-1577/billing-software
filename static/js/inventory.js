@@ -266,14 +266,30 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     window.selectItem = function(element) {
+        if (!element) return; // Add null check
+        
         currentItem = element;
         const itemId = element.getAttribute('data-item-id');
         const uniqueItemId = element.getAttribute('data-unique-id') || `${itemId}-basic`;
-
+    
+        // Check for customization option
         if (element.getAttribute('data-has-customization') === 'true') {
             showCustomizationPopup(element);
         } else {
-            incrementItemQuantity(element);
+            // Simple selection without customization
+            if (!element.classList.contains('selected')) {
+                element.classList.add('selected');
+                // Create quantity tracker if it doesn't exist
+                let quantityDiv = document.getElementById(`quantity-${uniqueItemId}`);
+                if (!quantityDiv) {
+                    quantityDiv = document.createElement('div');
+                    quantityDiv.id = `quantity-${uniqueItemId}`;
+                    quantityDiv.classList.add('quantity-tracker');
+                    quantityDiv.innerText = '1';
+                    element.appendChild(quantityDiv);
+                }
+            }
+            updateSidebar();
         }
     };
 
@@ -460,39 +476,67 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     function updateTotalAmount() {
+        const totalAmountElem = document.getElementById('totalAmount');
+        const cgstAmountElem = document.getElementById('cgstAmount');
+        const sgstAmountElem = document.getElementById('sgstAmount');
+        const grandTotalElem = document.getElementById('grandTotal');
+    
+        if (!totalAmountElem || !cgstAmountElem || !sgstAmountElem || !grandTotalElem) {
+            console.warn('Total amount elements not found');
+            return;
+        }
+    
         var selectedItems = document.getElementsByClassName('item-cube selected');
         var totalAmount = 0;
-
+        var totalCGST = 0;
+        var totalSGST = 0;
+    
         for (var i = 0; i < selectedItems.length; i++) {
             var item = selectedItems[i];
-            var uniqueItemId = item.getAttribute('data-unique-id') || `${item.getAttribute('data-item-id')}-basic`;
             var basePrice = parseFloat(item.getAttribute('data-item-price'));
+            var cgstRate = parseFloat(item.getAttribute('data-cgst') || '9'); // Default 9% if not set
+            var sgstRate = parseFloat(item.getAttribute('data-sgst') || '9'); // Default 9% if not set
+            var uniqueItemId = item.getAttribute('data-unique-id') || `${item.getAttribute('data-item-id')}-basic`;
             var totalItemPrice = basePrice;
-
+    
+            // Add customization prices
             if (item.hasAttribute('data-selected-customizations')) {
                 const customizations = JSON.parse(item.getAttribute('data-selected-customizations'));
                 const customizationPrice = customizations.reduce((sum, opt) => sum + parseFloat(opt.price), 0);
                 totalItemPrice += customizationPrice;
             }
-
+    
+            // Get quantity and calculate total for this item
             var quantityElement = document.getElementById(`quantity-${uniqueItemId}`);
-            if (!quantityElement) {
-                console.error(`Quantity element not found for item ID: ${uniqueItemId}`);
-                continue;
-            }
+            if (!quantityElement) continue;
+            
             var quantity = parseInt(quantityElement.innerText);
-
-            var itemTotal = totalItemPrice * quantity;
-            totalAmount += itemTotal;
+            var itemSubtotal = totalItemPrice * quantity;
+            
+            // Calculate GST for this item
+            var itemCGST = (itemSubtotal * cgstRate) / 100;
+            var itemSGST = (itemSubtotal * sgstRate) / 100;
+            
+            totalAmount += itemSubtotal;
+            totalCGST += itemCGST;
+            totalSGST += itemSGST;
+    
+            // Update individual item price display
+            var priceElement = document.getElementById(`price-${uniqueItemId}`);
+            if (priceElement) {
+                priceElement.innerText = `₹${itemSubtotal.toFixed(2)}`;
+            }
         }
-
-        var gstAmount = totalAmount * 0.18;
-        var grandTotal = totalAmount + gstAmount;
-
-        document.getElementById('totalAmount').innerText = `Total: ₹${totalAmount.toFixed(2)}`;
-        document.getElementById('gstAmount').innerText = `GST (18%): ₹${gstAmount.toFixed(2)}`;
-        document.getElementById('grandTotal').innerText = `Grand Total: ₹${grandTotal.toFixed(2)}`;
+    
+        var grandTotal = totalAmount + totalCGST + totalSGST;
+    
+        // Update display of totals
+        totalAmountElem.innerText = `Subtotal: ₹${totalAmount.toFixed(2)}`;
+        cgstAmountElem.innerText = `CGST: ₹${totalCGST.toFixed(2)}`;
+        sgstAmountElem.innerText = `SGST: ₹${totalSGST.toFixed(2)}`;
+        grandTotalElem.innerText = `Grand Total: ₹${grandTotal.toFixed(2)}`;
     }
+    
 
     function restoreSelectedItems() {
         var selectedItemsData = JSON.parse(localStorage.getItem('selectedItemsData')) || [];
@@ -1606,5 +1650,18 @@ document.addEventListener('DOMContentLoaded', () => {
         dineInOption.addEventListener('click', handleDineInOption);
         dineInOption.addEventListener('dblclick', handleDineInOption); // Add double-click event listener
     }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Find and click the first category link by default if no category is selected
+    const selectedCategoryId = new URLSearchParams(window.location.search).get('category');
+    if (!selectedCategoryId) {
+        const firstCategoryLink = document.querySelector('.category-link');
+        if (firstCategoryLink) {
+            firstCategoryLink.click();
+        }
+    }
+
+    // ...existing code...
 });
 ;

@@ -187,6 +187,8 @@ def inventory(request):
                     'price': str(item.price),
                     'image': item.image.url if item.image else '',
                     'has_customization': item.has_customization,
+                    'cgst': str(item.cgst),  # Add CGST
+                    'sgst': str(item.sgst),  # Add SGST
                     'customization_options': []
                 }
                 if item.has_customization:
