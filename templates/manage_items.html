@@ -322,7 +322,7 @@
                             </div>
                             <div class="text-sm text-gray-400 mb-4">{{ option.category.name }}</div>
                             <div class="flex gap-2 justify-end">
-                                <button onclick="editCustomization({{ option.id }})" 
+                                <button onclick="editCustomization('{{ option.id }}')" 
                                         class="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 rounded transition-colors">
                                     <i class="fas fa-edit"></i>
                                 </button>
@@ -558,6 +558,129 @@
                 </button>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Add Customization Modal -->
+<div id="addCustomizationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-gray-800 rounded-lg p-6 w-full max-w-md transform transition-all scale-95 opacity-0">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-white">Add New Customization</h3>
+            <button onclick="closeAddCustomizationModal()" class="text-gray-400 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        
+        <form id="addCustomizationForm" method="POST" class="space-y-4">
+            {% csrf_token %}
+            <div>
+                <label class="block text-sm font-medium text-gray-400 mb-2">Customization Name*</label>
+                <input type="text" 
+                       name="name" 
+                       required
+                       class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-400 mb-2">Price (₹)*</label>
+                <input type="number" 
+                       name="price" 
+                       required
+                       step="0.01"
+                       min="0"
+                       class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-400 mb-2">Category*</label>
+                <select name="category" 
+                        required
+                        class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                    <option value="">Select Category</option>
+                    {% for category in customization_categories %}
+                        <option value="{{ category.id }}">{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <input type="hidden" name="form_type" value="customization">
+
+            <div class="flex justify-end space-x-3 mt-6">
+                <button type="button" 
+                        onclick="closeAddCustomizationModal()"
+                        class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-white">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-white">
+                    Add Customization
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Customization Modal -->
+<div id="editCustomizationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-gray-800 rounded-lg p-6 w-full max-w-md transform transition-all scale-95 opacity-0">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-white">Edit Customization</h3>
+            <button onclick="closeEditCustomizationModal()" class="text-gray-400 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        
+        <form id="editCustomizationForm" method="POST" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="customization">
+            <input type="hidden" name="id">
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-400 mb-2">Customization Name*</label>
+                <input type="text" 
+                       name="name" 
+                       required
+                       class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-400 mb-2">Price (₹)*</label>
+                <input type="number" 
+                       name="price" 
+                       required
+                       step="0.01"
+                       min="0"
+                       class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-gray-400 mb-2">Category*</label>
+                <select name="category" 
+                        required
+                        class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                    <option value="">Select Category</option>
+                    {% for category in customization_categories %}
+                        <option value="{{ category.id }}">{{ category.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-6">
+                <button type="button" 
+                        onclick="closeEditCustomizationModal()"
+                        class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-white">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-white">
+                    Update Customization
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 

@@ -1055,37 +1055,72 @@ def manage_items(request):
             form_type = request.POST.get('form_type')
             
             if form_type == 'category':
-                # Handle category creation
                 name = request.POST.get('name')
                 if not name:
-                    return JsonResponse({
-                        'status': 'error',
-                        'message': 'Category name is required'
-                    }, status=400)
-                    
-                category = Category.objects.create(name=name)
+                    return JsonResponse({'status': 'error', 'message': 'Category name is required'})
                 
+                category = Category.objects.create(name=name)
                 return JsonResponse({
                     'status': 'success',
                     'message': 'Category added successfully',
-                    'category': {
-                        'id': category.id,
-                        'name': category.name
-                    }
+                    'category': {'id': category.id, 'name': category.name}
                 })
                 
+            elif form_type == 'customization':
+                # Get form data
+                name = request.POST.get('name')
+                price = request.POST.get('price')
+                category_id = request.POST.get('category')
+                
+                # Validate required fields
+                if not all([name, price, category_id]):
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'Name, price and category are required'
+                    })
+                
+                try:
+                    # Get the category instance
+                    category = CustomizationCategory.objects.get(id=category_id)
+                    
+                    # Create the customization option
+                    customization = CustomizationOption.objects.create(
+                        name=name,
+                        price=price,
+                        category=category
+                    )
+                    
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': 'Customization added successfully',
+                        'customization': {
+                            'id': customization.id,
+                            'name': customization.name,
+                            'price': str(customization.price),
+                            'category': category.name
+                        }
+                    })
+                    
+                except CustomizationCategory.DoesNotExist:
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'Invalid category selected'
+                    })
+                except Exception as e:
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': str(e)
+                    })
+                
             elif form_type == 'main_items':
-                # Existing item creation code
-                data = request.POST
-                image = request.FILES.get('image')
-                
-                # Rest of your existing item creation code...
-                
+                # ... existing main items handling code ...
+                pass
+
             else:
                 return JsonResponse({
                     'status': 'error',
                     'message': 'Invalid form type'
-                }, status=400)
+                })
 
         except Exception as e:
             print(f"Error processing request: {str(e)}")
@@ -2227,5 +2262,29 @@ def get_item_details(request, item_id):
         })
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
+@csrf_exempt
+def get_customization(request, customization_id):
+    try:
+        customization = get_object_or_404(CustomizationOption, id=customization_id)
+        return JsonResponse({
+            'status': 'success',
+            'customization': {
+                'id': customization.id,
+                'name': customization.name,
+                'price': str(customization.price),
+                'category_id': customization.category.id
+            }
+        })
+    except CustomizationOption.DoesNotExist:
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Customization not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
 
 

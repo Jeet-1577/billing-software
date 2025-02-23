@@ -176,7 +176,63 @@ function deleteCategory(categoryId) {
 
 // Customization management functions
 function editCustomization(customizationId) {
-    // Implementation for editing customization
+    if (!customizationId) {
+        console.error('No customization ID provided');
+        showToast('Error: Invalid customization ID', 'error');
+        return;
+    }
+
+    // Show loading spinner or indicator if needed
+    showToast('Loading...', 'info');
+
+    fetch(`/manage-items/get-customization/${customizationId}/`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success' && data.customization) {
+                const form = document.getElementById('editCustomizationForm');
+                if (!form) {
+                    throw new Error('Edit form not found');
+                }
+
+                // Set form values
+                form.querySelector('input[name="id"]').value = data.customization.id;
+                form.querySelector('input[name="name"]').value = data.customization.name;
+                form.querySelector('input[name="price"]').value = data.customization.price;
+                form.querySelector('select[name="category"]').value = data.customization.category_id;
+
+                // Show modal
+                const modal = document.getElementById('editCustomizationModal');
+                const content = modal.querySelector('.transform');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                setTimeout(() => {
+                    content.classList.remove('scale-95', 'opacity-0');
+                    content.classList.add('scale-100', 'opacity-100');
+                }, 10);
+            } else {
+                throw new Error(data.message || 'Invalid response format');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error loading customization details: ' + error.message, 'error');
+        });
+}
+
+function showEditCustomizationModal() {
+    const modal = document.getElementById('editCustomizationModal');
+    const content = modal.querySelector('.transform');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setTimeout(() => {
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+    }, 10);
 }
 
 function deleteCustomization(customizationId) {
@@ -435,6 +491,90 @@ function deleteCategory(categoryId) {
     }
 }
 
+// Customization Modal Functions
+function showAddCustomizationModal() {
+    const modal = document.getElementById('addCustomizationModal');
+    const content = modal.querySelector('.transform');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setTimeout(() => {
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+    }, 10);
+}
+
+function closeAddCustomizationModal() {
+    const modal = document.getElementById('addCustomizationModal');
+    const content = modal.querySelector('.transform');
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+    }, 300);
+}
+
+function showEditCustomizationModal(customizationId) {
+    fetch(`/manage-items/get-customization/${customizationId}/`)
+        .then(response => response.json())
+        .then(data => {
+            const form = document.getElementById('editCustomizationForm');
+            form.querySelector('input[name="id"]').value = data.id;
+            form.querySelector('input[name="name"]').value = data.name;
+            form.querySelector('input[name="price"]').value = data.price;
+            form.querySelector('select[name="category"]').value = data.category_id;
+
+            const modal = document.getElementById('editCustomizationModal');
+            const content = modal.querySelector('.transform');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error loading customization details', 'error');
+        });
+}
+
+function closeEditCustomizationModal() {
+    const modal = document.getElementById('editCustomizationModal');
+    const content = modal.querySelector('.transform');
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+    }, 300);
+}
+
+function deleteCustomization(customizationId) {
+    if (confirm('Are you sure you want to delete this customization?')) {
+        fetch(`/manage-items/delete/customization/${customizationId}/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast('Customization deleted successfully', 'success');
+                window.location.reload();
+            } else {
+                showToast(data.message || 'Error deleting customization', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error deleting customization', 'error');
+        });
+    }
+}
+
 // Event Listeners
 document.addEventListener('DOMContentLoaded', function() {
     // Restore last active section or use URL parameter
@@ -653,6 +793,73 @@ document.addEventListener('DOMContentLoaded', function() {
             } catch (error) {
                 console.error('Error:', error);
                 showToast('Error updating category', 'error');
+            }
+        });
+    }
+
+    // Add customization form submission handler
+    const addCustomizationForm = document.getElementById('addCustomizationForm');
+    if (addCustomizationForm) {
+        addCustomizationForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            try {
+                const response = await fetch('/manage-items/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showToast('Customization added successfully', 'success');
+                    closeAddCustomizationModal();
+                    window.location.reload();
+                } else {
+                    showToast(data.message || 'Error adding customization', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Error adding customization', 'error');
+            }
+        });
+    }
+
+    // Edit customization form submission handler
+    const editCustomizationForm = document.getElementById('editCustomizationForm');
+    if (editCustomizationForm) {
+        editCustomizationForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            formData.append('form_type', 'customization');
+            
+            try {
+                const response = await fetch('/manage-items/update/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showToast('Customization updated successfully', 'success');
+                    closeEditCustomizationModal();
+                    window.location.reload();
+                } else {
+                    showToast(data.message || 'Error updating customization', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Error updating customization', 'error');
             }
         });
     }
