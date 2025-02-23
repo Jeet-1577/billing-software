@@ -41,7 +41,6 @@ from django.core.mail import EmailMessage
 import pdfkit  # You'll need to pip install pdfkit and install wkhtmltopdf
 from django.views.decorators.http import require_http_methods
 from django.core.files.storage import default_storage
-from django.core.files.storage import FileSystemStorage
 
 logger = logging.getLogger(__name__)
 
@@ -1049,71 +1048,47 @@ def release_table_order(request):
 @csrf_exempt
 def manage_items(request):
     if request.method == 'POST':
-        form_type = request.POST.get('form_type')
-        name = request.POST.get('name')
-
-        if not form_type or not name:
-            messages.error(request, 'Form type and name are required')
-            return JsonResponse({'status': 'error', 'message': 'Form type and name are required'})
-
         try:
-            if form_type == 'category':
-                # Create a new category
-                category = Category.objects.create(
-                    name=name,
-                )
-                messages.success(request, 'Category added successfully!')
-                return JsonResponse({'status': 'success', 'message': 'Category added successfully'})
+            data = request.POST
+            image = request.FILES.get('image')
+            
+            # Create new item
+            item = Item.objects.create(
+                name=data.get('name'),
+                category_id=data.get('category'),
+                price=data.get('price'),
+                cost=data.get('cost', 0),
+                short_code=data.get('short_code', ''),
+                cgst=data.get('cgst', 9),
+                sgst=data.get('sgst', 9),
+                has_customization=data.get('has_customization') == 'on',
+                image=image
+            )
 
-            elif form_type == 'customization':
-                # Create a new customization option
-                category_id = request.POST.get('customization_category')
-                price = request.POST.get('price')
-                if not category_id or not price:
-                    return JsonResponse({'status': 'error', 'message': 'Category and price are required for customization'})
+            # Handle customizations if present
+            if data.get('has_customization') == 'on' and data.get('customization_options'):
+                customization_ids = json.loads(data.get('customization_options', '[]'))
+                item.customization_options.set(customization_ids)
 
-                category = CustomizationCategory.objects.get(id=category_id)
-                CustomizationOption.objects.create(
-                    name=name,
-                    price=price,
-                    category=category
-                )
-                messages.success(request, 'Customization option added successfully!')
-                return JsonResponse({'status': 'success', 'message': 'Customization added successfully'})
-
-            elif form_type == 'main_items':
-                # Create a new menu item
-                category_id = request.POST.get('category')
-                price = request.POST.get('price')
-                short_code = request.POST.get('short_code')
-                has_customization = request.POST.get('has_customization') == 'on'
-                image = request.FILES.get('image')
-
-                if not category_id or not price:
-                    return JsonResponse({'status': 'error', 'message': 'Category and price are required for items'})
-
-                category = Category.objects.get(id=category_id)
-                item = Item.objects.create(
-                    name=name,
-                    category=category,
-                    price=price,
-                    short_code=short_code,
-                    has_customization=has_customization,
-                    image=image
-                )
-
-                # Handle customization options if enabled
-                if (has_customization):
-                    customization_options = request.POST.getlist('customization_options')
-                    if customization_options:
-                        item.customization_options.set(customization_options)
-
-                messages.success(request, 'Item added successfully!')
-                return JsonResponse({'status': 'success', 'message': 'Item added successfully'})
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Item added successfully',
+                'item': {
+                    'id': item.id,
+                    'name': item.name,
+                    'price': str(item.price),
+                    'image_url': item.get_image_url(),
+                    'has_customization': item.has_customization,
+                    'category': str(item.category)
+                }
+            })
 
         except Exception as e:
-            messages.error(request, f'Error: {str(e)}')
-            return JsonResponse({'status': 'error', 'message': str(e)})
+            print(f"Error adding item: {str(e)}")
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=500)
 
     # Prepare categories data for JavaScript
     categories_data = list(Category.objects.values('id', 'name'))
@@ -2220,150 +2195,5 @@ def remove_table(request, table_id):
         except Exception as e:
             return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
     return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
-
-@login_required
-def manage_items(request):
-    context = {
-        'categories': Category.objects.all().order_by('name'),
-        'items': Item.objects.all().select_related('category'),
-        'customization_options': CustomizationOption.objects.all().select_related('category'),
-        'customization_categories': CustomizationCategory.objects.all(),
-    }
-    return render(request, 'manage_items.html', context)
-
-@require_POST
-def item_action(request):
-    action = request.POST.get('action')
-    try:
-        if (action == 'add'):
-            name = request.POST.get('name')
-            category_id = request.POST.get('category')
-            price = request.POST.get('price')
-            cost = request.POST.get('cost', 0)
-            image = request.FILES.get('image')
-            
-            item = Item.objects.create(
-                name=name,
-                category_id=category_id,
-                price=price,
-                cost=cost,
-                image=image if image else None
-            )
-            return JsonResponse({'status': 'success', 'item': {
-                'id': item.id,
-                'name': item.name,
-                'price': str(item.price)
-            }})
-            
-        elif (action == 'edit'):
-            item_id = request.POST.get('item_id')
-            item = Item.objects.get(id=item_id)
-            item.name = request.POST.get('name', item.name)
-            item.category_id = request.POST.get('category', item.category_id)
-            item.price = request.POST.get('price', item.price)
-            item.cost = request.POST.get('cost', item.cost)
-            
-            if 'image' in request.FILES:
-                item.image = request.FILES['image']
-            
-            item.save()
-            return JsonResponse({'status': 'success'})
-            
-        elif (action == 'delete'):
-            item_id = request.POST.get('item_id')
-            Item.objects.filter(id=item_id).delete()
-            return JsonResponse({'status': 'success'})
-    
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
-
-@require_POST
-def category_action(request):
-    action = request.POST.get('action')
-    try:
-        if (action == 'add'):
-            name = request.POST.get('name')
-            category = Category.objects.create(name=name)
-            return JsonResponse({'status': 'success', 'category': {
-                'id': category.id,
-                'name': category.name
-            }})
-            
-        elif (action == 'edit'):
-            category_id = request.POST.get('category_id')
-            name = request.POST.get('name')
-            Category.objects.filter(id=category_id).update(name=name)
-            return JsonResponse({'status': 'success'})
-            
-        elif (action == 'delete'):
-            category_id = request.POST.get('category_id')
-            Category.objects.filter(id=category_id).delete()
-            return JsonResponse({'status': 'success'})
-    
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
-
-@require_POST
-def customization_action(request):
-    action = request.POST.get('action')
-    try:
-        if (action == 'add'):
-            name = request.POST.get('name')
-            price = request.POST.get('price')
-            category_id = request.POST.get('category')
-            
-            option = CustomizationOption.objects.create(
-                name=name,
-                price=price,
-                category_id=category_id
-            )
-            return JsonResponse({'status': 'success', 'option': {
-                'id': option.id,
-                'name': option.name,
-                'price': str(option.price)
-            }})
-            
-        elif (action == 'edit'):
-            option_id = request.POST.get('option_id')
-            option = CustomizationOption.objects.get(id=option_id)
-            option.name = request.POST.get('name', option.name)
-            option.price = request.POST.get('price', option.price)
-            option.category_id = request.POST.get('category', option.category_id)
-            option.save()
-            return JsonResponse({'status': 'success'})
-            
-        elif (action == 'delete'):
-            option_id = request.POST.get('option_id')
-            CustomizationOption.objects.filter(id=option_id).delete()
-            return JsonResponse({'status': 'success'})
-    
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
-
-@require_POST
-def customization_category_action(request):
-    action = request.POST.get('action')
-    try:
-        if (action == 'add'):
-            name = request.POST.get('name')
-            category = CustomizationCategory.objects.create(name=name)
-            return JsonResponse({'status': 'success', 'category': {
-                'id': category.id,
-                'name': category.name
-            }})
-            
-        elif (action == 'edit'):
-            category_id = request.POST.get('category_id')
-            name = request.POST.get('name')
-            CustomizationCategory.objects.filter(id=category_id).update(name=name)
-            return JsonResponse({'status': 'success'})
-            
-        elif (action == 'delete'):
-            category_id = request.POST.get('category_id')
-            CustomizationCategory.objects.filter(id=category_id).delete()
-            return JsonResponse({'status': 'success'})
-    
-    except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
 
 

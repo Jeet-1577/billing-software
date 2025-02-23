@@ -226,34 +226,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add Item form submission
     const addItemForm = document.getElementById('addItemForm');
     if (addItemForm) {
-        addItemForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            formData.append('form_type', 'main_items');
-
-            // Add selected customization options
-            const selectedOptions = Array.from(document.querySelectorAll('.customization-checkbox:checked'))
-                .map(checkbox => checkbox.value);
-            formData.append('customization_options', JSON.stringify(selectedOptions));
-
-            fetch('/manage-items/', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    closeAddItemModal();
-                    location.reload();
-                } else {
-                    alert('Error: ' + data.message);
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while adding the item.');
-            });
-        });
+        // Remove any existing event listeners
+        addItemForm.removeEventListener('submit', handleFormSubmit);
+        // Add new event listener
+        addItemForm.addEventListener('submit', handleFormSubmit);
     }
 
     // Search functionality
@@ -281,6 +257,60 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Separate the form submission handler function
+async function handleFormSubmit(e) {
+    e.preventDefault();
+    
+    // Get the submit button and disable it immediately
+    const submitButton = this.querySelector('button[type="submit"]');
+    if (submitButton.disabled) {
+        return; // Prevent double submission
+    }
+    submitButton.disabled = true;
+    
+    try {
+        const formData = new FormData(this);
+        
+        // Get selected customization options
+        if (formData.get('has_customization') === 'on') {
+            const selectedOptions = Array.from(document.querySelectorAll('.customization-checkbox:checked'))
+                .map(checkbox => checkbox.value);
+            formData.append('customization_options', JSON.stringify(selectedOptions));
+        }
+
+        const response = await fetch('/manage-items/', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        });
+
+        const data = await response.json();
+        console.log('Response data:', data);
+
+        if (data.status === 'success') {
+            showToast('Item added successfully', 'success');
+            closeAddItemModal();
+            // Use a small timeout before reloading to ensure the modal is closed
+            setTimeout(() => {
+                window.location.reload();
+            }, 300);
+        } else {
+            showToast(data.message || 'Error adding item', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Error adding item. Please try again.', 'error');
+    } finally {
+        // Re-enable the submit button after a short delay
+        setTimeout(() => {
+            submitButton.disabled = false;
+        }, 1000);
+    }
+}
 
 // Utility functions
 function debounce(func, wait) {
