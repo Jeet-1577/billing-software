@@ -2211,4 +2211,32 @@ def remove_table(request, table_id):
             return JsonResponse({'status': 'failed', 'error': str(e)}, status=400)
     return JsonResponse({'status': 'failed', 'error': 'Invalid request method'}, status=405)
 
+@csrf_exempt
+def get_item_details(request, item_id):
+    try:
+        item = get_object_or_404(Item, id=item_id)
+        return JsonResponse({
+            'id': item.id,
+            'name': item.name,
+            'category': item.category.name,
+            'category_id': item.category.id,
+            'price': str(item.price),
+            'short_code': item.short_code,
+            'cgst': str(item.cgst),
+            'sgst': str(item.sgst),
+            'image_url': item.get_image_url(),
+            'has_customization': item.has_customization,
+            'customization_options': [
+                {
+                    'id': opt.id,
+                    'name': opt.name,
+                    'price': str(opt.price)
+                }
+                for opt in item.customization_options.all()
+            ],
+            'created_at': item.created_at.isoformat()
+        })
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+
 

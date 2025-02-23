@@ -84,3 +84,7 @@ urlpatterns += [
     path('security/logout-all/', views.logout_all_sessions, name='logout_all_sessions'),
     path('security/info/', views.get_security_info, name='security_info'),
 ]
+
+urlpatterns += [
+    path('manage-items/get/<int:item_id>/', views.get_item_details, name='get_item_details'),
+]

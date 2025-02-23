@@ -54,25 +54,95 @@ function previewImage(input) {
 }
 
 // Item management functions
+let currentCustomizations = [];
+
 function editItem(itemId) {
-    // Fetch item details and show edit modal
     fetch(`/manage-items/get/${itemId}/`)
         .then(response => response.json())
         .then(data => {
-            // Populate edit form with item data
-            // Show edit modal
+            // Populate form with item data
+            document.getElementById('editItemId').value = itemId;
+            document.getElementById('editItemName').value = data.name;
+            document.getElementById('editItemCategory').value = data.category_id;
+            document.getElementById('editItemPrice').value = data.price;
+            document.getElementById('editItemShortCode').value = data.short_code || '';
+
+            // Show modal
+            const modal = document.getElementById('editItemModal');
+            const content = modal.querySelector('.transform');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error loading item details', 'error');
+        });
+}
+
+function closeEditItemModal() {
+    const modal = document.getElementById('editItemModal');
+    const content = modal.querySelector('.transform');
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+    }, 300);
 }
 
 function viewItem(itemId) {
-    // Fetch and show item details in a modal
-    fetch(`/manage-items/view/${itemId}/`)
+    fetch(`/manage-items/get/${itemId}/`)
         .then(response => response.json())
         .then(data => {
-            // Show item details modal
+            // Populate modal with item data
+            document.getElementById('viewItemImage').src = data.image_url || '/static/images/default-item.png';
+            document.getElementById('viewItemName').textContent = data.name;
+            document.getElementById('viewItemCategory').textContent = data.category;
+            document.getElementById('viewItemPrice').textContent = `₹${data.price}`;
+            document.getElementById('viewItemShortCode').textContent = data.short_code || 'N/A';
+            document.getElementById('viewItemGST').textContent = `CGST: ${data.cgst}% | SGST: ${data.sgst}%`;
+            document.getElementById('viewItemDate').textContent = new Date(data.created_at).toLocaleDateString();
+
+            // Handle customizations button
+            const customizationsButton = document.getElementById('viewItemCustomizationsButton');
+            if (data.has_customization && data.customization_options?.length > 0) {
+                currentCustomizations = data.customization_options;
+                customizationsButton.classList.remove('hidden');
+                document.getElementById('viewItemCustomizationsCount').textContent = data.customization_options.length;
+            } else {
+                customizationsButton.classList.add('hidden');
+                currentCustomizations = [];
+            }
+
+            // Show modal
+            const modal = document.getElementById('viewItemModal');
+            const content = modal.querySelector('.transform');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error loading item details', 'error');
+        });
+}
+
+function closeViewItemModal() {
+    const modal = document.getElementById('viewItemModal');
+    const content = modal.querySelector('.transform');
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+    }, 300);
 }
 
 function deleteItem(itemId) {
@@ -227,6 +297,39 @@ function confirmCustomizations() {
     closeCustomizationModal();
 }
 
+function showItemCustomizations() {
+    // Populate and show customizations modal
+    const customizationsList = document.getElementById('customizationsList');
+    customizationsList.innerHTML = currentCustomizations.map(opt => `
+        <div class="bg-gray-700 rounded-lg p-4">
+            <div class="flex justify-between items-center">
+                <span class="text-white font-medium">${opt.name}</span>
+                <span class="text-emerald-400">+₹${opt.price}</span>
+            </div>
+        </div>
+    `).join('');
+
+    const modal = document.getElementById('customizationsModal');
+    const content = modal.querySelector('.transform');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setTimeout(() => {
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+    }, 10);
+}
+
+function closeCustomizationsModal() {
+    const modal = document.getElementById('customizationsModal');
+    const content = modal.querySelector('.transform');
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+    }, 300);
+}
+
 // Event Listeners
 document.addEventListener('DOMContentLoaded', function() {
     // Restore last active section or use URL parameter
@@ -276,6 +379,39 @@ document.addEventListener('DOMContentLoaded', function() {
     if (sortFilter) {
         sortFilter.addEventListener('change', function() {
             // Implement sorting
+        });
+    }
+
+    // Add edit form submission handler
+    const editItemForm = document.getElementById('editItemForm');
+    if (editItemForm) {
+        editItemForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            formData.append('form_type', 'main_items');
+
+            try {
+                const response = await fetch('/manage-items/update/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                });
+
+                const data = await response.json();
+                if (data.status === 'success') {
+                    showToast('Item updated successfully', 'success');
+                    closeEditItemModal();
+                    window.location.reload();
+                } else {
+                    showToast(data.message || 'Error updating item', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Error updating item', 'error');
+            }
         });
     }
 });

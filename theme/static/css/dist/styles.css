@@ -1270,6 +1270,10 @@ select {
   width: 100%;
 }
 
+.w-48 {
+  width: 12rem;
+}
+
 .min-w-\[600px\] {
   min-width: 600px;
 }
@@ -1300,6 +1304,10 @@ select {
 
 .max-w-screen-2xl {
   max-width: 1536px;
+}
+
+.max-w-xl {
+  max-width: 36rem;
 }
 
 .flex-1 {
