@@ -357,6 +357,29 @@ function sortItems(sortType) {
     items.forEach(item => itemsContainer.appendChild(item));
 }
 
+// Category Modal Functions
+function showAddCategoryModal() {
+    const modal = document.getElementById('addCategoryModal');
+    const content = modal.querySelector('.transform');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setTimeout(() => {
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+    }, 10);
+}
+
+function closeAddCategoryModal() {
+    const modal = document.getElementById('addCategoryModal');
+    const content = modal.querySelector('.transform');
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+    }, 300);
+}
+
 // Event Listeners
 document.addEventListener('DOMContentLoaded', function() {
     // Restore last active section or use URL parameter
@@ -507,6 +530,39 @@ document.addEventListener('DOMContentLoaded', function() {
             } catch (error) {
                 console.error('Error:', error);
                 showToast('Error updating item', 'error');
+            }
+        });
+    }
+
+    // Category form submission handler
+    const addCategoryForm = document.getElementById('addCategoryForm');
+    if (addCategoryForm) {
+        addCategoryForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            try {
+                const response = await fetch('/manage-items/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showToast('Category added successfully', 'success');
+                    closeAddCategoryModal();
+                    window.location.reload();
+                } else {
+                    showToast(data.message || 'Error adding category', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Error adding category', 'error');
             }
         });
     }

@@ -1050,56 +1050,45 @@ def manage_items(request):
     if request.method == 'POST':
         try:
             # Add a print statement to debug
-            print("Processing item creation request")
+            print("Processing request with form type:", request.POST.get('form_type'))
             
-            # Get form data
-            data = request.POST
-            image = request.FILES.get('image')
+            form_type = request.POST.get('form_type')
             
-            # Check if item already exists
-            if Item.objects.filter(name=data.get('name'), category_id=data.get('category')).exists():
+            if form_type == 'category':
+                # Handle category creation
+                name = request.POST.get('name')
+                if not name:
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'Category name is required'
+                    }, status=400)
+                    
+                category = Category.objects.create(name=name)
+                
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Category added successfully',
+                    'category': {
+                        'id': category.id,
+                        'name': category.name
+                    }
+                })
+                
+            elif form_type == 'main_items':
+                # Existing item creation code
+                data = request.POST
+                image = request.FILES.get('image')
+                
+                # Rest of your existing item creation code...
+                
+            else:
                 return JsonResponse({
                     'status': 'error',
-                    'message': 'Item already exists'
+                    'message': 'Invalid form type'
                 }, status=400)
 
-            # Create new item
-            item = Item.objects.create(
-                name=data.get('name'),
-                category_id=data.get('category'),
-                price=data.get('price'),
-                cost=data.get('cost', 0),
-                short_code=data.get('short_code', ''),
-                cgst=data.get('cgst', 9),
-                sgst=data.get('sgst', 9),
-                has_customization=data.get('has_customization') == 'on',
-                image=image
-            )
-
-            # Handle customizations if present
-            if data.get('has_customization') == 'on' and data.get('customization_options'):
-                try:
-                    customization_ids = json.loads(data.get('customization_options', '[]'))
-                    item.customization_options.set(customization_ids)
-                except json.JSONDecodeError:
-                    print("Invalid customization options format")
-
-            print(f"Item created successfully: {item.name}")
-            return JsonResponse({
-                'status': 'success',
-                'message': 'Item added successfully',
-                'item': {
-                    'id': item.id,
-                    'name': item.name,
-                    'price': str(item.price),
-                    'image_url': item.get_image_url(),
-                    'has_customization': item.has_customization,
-                    'category': str(item.category)
-                }
-            })
-
         except Exception as e:
-            print(f"Error adding item: {str(e)}")
+            print(f"Error processing request: {str(e)}")
             return JsonResponse({
                 'status': 'error',
                 'message': str(e)

@@ -38,7 +38,7 @@
                     <div class="px-3 py-2 text-sm font-semibold text-gray-400 uppercase tracking-wider">
                         Overview
                     </div>
-                    <button data-section="dashboard" onclick="showSection('dashboard')" 
+                    <button onclick="showSection('dashboard')" 
                             class="w-full flex items-center text-left px-3 py-2 rounded-lg mb-1 hover:bg-gray-700 transition-colors group">
                         <i class="fas fa-chart-pie mr-3 text-blue-500 group-hover:text-blue-400"></i>
                         <span>Dashboard</span>
@@ -50,22 +50,22 @@
                     <div class="px-3 py-2 text-sm font-semibold text-gray-400 uppercase tracking-wider">
                         Inventory
                     </div>
-                    <button data-section="items" onclick="showSection('items')" 
+                    <button onclick="showSection('items')" 
                             class="w-full flex items-center text-left px-3 py-2 rounded-lg mb-1 hover:bg-gray-700 transition-colors group">
                         <i class="fas fa-box-open mr-3 text-green-500 group-hover:text-green-400"></i>
                         <span>Items</span>
                     </button>
-                    <button data-section="categories" onclick="showSection('categories')" 
+                    <button onclick="showSection('categories')" 
                             class="w-full flex items-center text-left px-3 py-2 rounded-lg mb-1 hover:bg-gray-700 transition-colors group">
                         <i class="fas fa-tags mr-3 text-yellow-500 group-hover:text-yellow-400"></i>
                         <span>Categories</span>
                     </button>
-                    <button data-section="customizations" onclick="showSection('customizations')" 
+                    <button onclick="showSection('customizations')" 
                             class="w-full flex items-center text-left px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors group">
                         <i class="fas fa-sliders-h mr-3 text-purple-500 group-hover:text-purple-400"></i>
                         <span>Customizations</span>
                     </button>
-                    <button data-section="customization-categories" onclick="showSection('customization-categories')" 
+                    <button onclick="showSection('customization-categories')" 
                             class="w-full flex items-center text-left px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors group">
                         <i class="fas fa-list-alt mr-3 text-indigo-500 group-hover:text-indigo-400"></i>
                         <span>Customization Categories</span>
@@ -77,7 +77,7 @@
                     <div class="px-3 py-2 text-sm font-semibold text-gray-400 uppercase tracking-wider">
                         Settings
                     </div>
-                    <button data-section="settings" onclick="showSection('settings')" 
+                    <button onclick="showSection('settings')" 
                             class="w-full flex items-center text-left px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors group">
                         <i class="fas fa-cog mr-3 text-gray-500 group-hover:text-gray-400"></i>
                         <span>Preferences</span>
@@ -561,126 +561,40 @@
     </div>
 </div>
 
-<!-- View Item Modal -->
-<div id="viewItemModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-gray-800 rounded-lg p-6 w-full max-w-xl transform transition-all scale-95 opacity-0">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-semibold text-white">Item Details</h3>
-            <button onclick="closeViewItemModal()" class="text-gray-400 hover:text-white">
-                <i class="fas fa-times"></i>
+<!-- Category Add Modal -->
+<div id="addCategoryModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-gray-800 rounded-lg p-6 w-full max-w-md transform transition-all scale-95 opacity-0">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-white">Add New Category</h3>
+            <button onclick="closeAddCategoryModal()" class="text-gray-400 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
             </button>
         </div>
-        <div class="space-y-4" id="viewItemContent">
-            <div class="flex items-center justify-center mb-6">
-                <img id="viewItemImage" src="" alt="Item Image" class="w-48 h-48 object-cover rounded-lg">
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <!-- Existing fields -->
-                <div>
-                    <label class="text-sm text-gray-400">Name</label>
-                    <p id="viewItemName" class="text-white font-medium"></p>
-                </div>
-                <div>
-                    <label class="text-sm text-gray-400">Category</label>
-                    <p id="viewItemCategory" class="text-white"></p>
-                </div>
-                <div>
-                    <label class="text-sm text-gray-400">Price</label>
-                    <p id="viewItemPrice" class="text-emerald-400 font-medium"></p>
-                </div>
-                <div>
-                    <label class="text-sm text-gray-400">Short Code</label>
-                    <p id="viewItemShortCode" class="text-white"></p>
-                </div>
-                <div>
-                    <label class="text-sm text-gray-400">GST</label>
-                    <p id="viewItemGST" class="text-white"></p>
-                </div>
-                <div>
-                    <label class="text-sm text-gray-400">Created At</label>
-                    <p id="viewItemDate" class="text-white"></p>
-                </div>
-            </div>
-            <!-- Add Customizations Button -->
-            <div id="viewItemCustomizationsButton" class="hidden mt-4">
-                <button onclick="showItemCustomizations()" 
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2">
-                    <i class="fas fa-list-ul"></i>
-                    View Customizations
-                    <span id="viewItemCustomizationsCount" class="bg-blue-500 px-2 py-0.5 rounded-full text-xs"></span>
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Customizations Modal -->
-<div id="customizationsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-[60]">
-    <div class="bg-gray-800 rounded-lg p-6 w-full max-w-xl transform transition-all scale-95 opacity-0">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-semibold text-white">Available Customizations</h3>
-            <button onclick="closeCustomizationsModal()" class="text-gray-400 hover:text-white">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <div class="max-h-[60vh] overflow-y-auto">
-            <div id="customizationsList" class="space-y-3"></div>
-        </div>
-        <div class="mt-6 pt-4 border-t border-gray-700 flex justify-end">
-            <button onclick="closeCustomizationsModal()" 
-                    class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-white">
-                Close
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Edit Item Modal -->
-<div id="editItemModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-gray-800 rounded-lg p-6 w-full max-w-2xl transform transition-all scale-95 opacity-0">
-        <div class="flex justify-between items-center mb-6">
-            <h3 class="text-xl font-semibold text-white">Edit Item</h3>
-            <button onclick="closeEditItemModal()" class="text-gray-400 hover:text-white">
-                <i class="fas fa-times"></i>
-            </button>
-        </div>
-        <form id="editItemForm" class="space-y-4">
+        
+        <form id="addCategoryForm" method="POST" class="space-y-4">
             {% csrf_token %}
-            <input type="hidden" id="editItemId" name="id">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-400 mb-2">Item Name*</label>
-                    <input type="text" id="editItemName" name="name" required
-                           class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-400 mb-2">Category*</label>
-                    <select id="editItemCategory" name="category" required
-                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
-                        {% for category in categories %}
-                            <option value="{{ category.id }}">{{ category.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-400 mb-2">Price (₹)*</label>
-                    <input type="number" id="editItemPrice" name="price" step="0.01" required
-                           class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-400 mb-2">Short Code</label>
-                    <input type="text" id="editItemShortCode" name="short_code"
-                           class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
-                </div>
+            <div>
+                <label for="categoryName" class="block text-sm font-medium text-gray-400 mb-2">Category Name*</label>
+                <input type="text" 
+                       id="categoryName"
+                       name="name" 
+                       required
+                       class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
             </div>
+
+            <input type="hidden" name="form_type" value="category">
+
             <div class="flex justify-end space-x-3 mt-6">
-                <button type="button" onclick="closeEditItemModal()"
-                        class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
+                <button type="button" 
+                        onclick="closeAddCategoryModal()"
+                        class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-white">
                     Cancel
                 </button>
                 <button type="submit"
-                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
-                    Save Changes
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-white">
+                    Add Category
                 </button>
             </div>
         </form>
