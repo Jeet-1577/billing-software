@@ -1667,4 +1667,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // ...existing code...
 });
-;
+
+function saveSettings() {
+    const settings = {
+        low_stock_threshold: document.getElementById('lowStockThreshold').value,
+        default_category: document.getElementById('defaultCategory').value,
+        auto_generate_sku: document.getElementById('autoGenerateSKU').checked,
+        include_tax: document.getElementById('includeTax').checked,
+        default_cgst: document.getElementById('defaultCGST').value,
+        default_sgst: document.getElementById('defaultSGST').value
+    };
+
+    fetch('/api/inventory/settings/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCsrfToken()
+        },
+        body: JSON.stringify(settings)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            showToast('Settings saved successfully', 'success');
+        } else {
+            showToast('Failed to save settings', 'error');
+        }
+    })
+    .catch(error => {
+        showToast('Error saving settings', 'error');
+        console.error('Error:', error);
+    });
+}
