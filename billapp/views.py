@@ -1049,9 +1049,20 @@ def release_table_order(request):
 def manage_items(request):
     if request.method == 'POST':
         try:
+            # Add a print statement to debug
+            print("Processing item creation request")
+            
+            # Get form data
             data = request.POST
             image = request.FILES.get('image')
             
+            # Check if item already exists
+            if Item.objects.filter(name=data.get('name'), category_id=data.get('category')).exists():
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Item already exists'
+                }, status=400)
+
             # Create new item
             item = Item.objects.create(
                 name=data.get('name'),
@@ -1067,9 +1078,13 @@ def manage_items(request):
 
             # Handle customizations if present
             if data.get('has_customization') == 'on' and data.get('customization_options'):
-                customization_ids = json.loads(data.get('customization_options', '[]'))
-                item.customization_options.set(customization_ids)
+                try:
+                    customization_ids = json.loads(data.get('customization_options', '[]'))
+                    item.customization_options.set(customization_ids)
+                except json.JSONDecodeError:
+                    print("Invalid customization options format")
 
+            print(f"Item created successfully: {item.name}")
             return JsonResponse({
                 'status': 'success',
                 'message': 'Item added successfully',

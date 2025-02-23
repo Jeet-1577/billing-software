@@ -226,12 +226,68 @@ document.addEventListener('DOMContentLoaded', function() {
     // Add Item form submission
     const addItemForm = document.getElementById('addItemForm');
     if (addItemForm) {
-        // Remove any existing event listeners
-        addItemForm.removeEventListener('submit', handleFormSubmit);
-        // Add new event listener
-        addItemForm.addEventListener('submit', handleFormSubmit);
-    }
+        // Remove the old event listener first
+        const newAddItemForm = addItemForm.cloneNode(true);
+        addItemForm.parentNode.replaceChild(newAddItemForm, addItemForm);
+        
+        // Add single event listener to the new form
+        newAddItemForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Get the submit button
+            const submitButton = this.querySelector('button[type="submit"]');
+            
+            // Check if the form is already being submitted
+            if (submitButton.disabled) {
+                console.log('Form submission in progress...');
+                return;
+            }
+            
+            // Disable the submit button
+            submitButton.disabled = true;
+            
+            try {
+                const formData = new FormData(this);
+                
+                const response = await fetch('/manage-items/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                });
 
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new TypeError("Received non-JSON response from server");
+                }
+
+                const data = await response.json();
+                console.log('Server response:', data);
+
+                if (data.status === 'success') {
+                    showToast('Item added successfully', 'success');
+                    closeAddItemModal();
+                    // Use timeout to ensure modal is closed before reload
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                } else {
+                    showToast(data.message || 'Error adding item', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Error adding item: ' + error.message, 'error');
+            } finally {
+                // Re-enable the submit button after 1 second
+                setTimeout(() => {
+                    submitButton.disabled = false;
+                }, 1000);
+            }
+        });
+    }
+    
     // Search functionality
     const searchInput = document.getElementById('globalSearch');
     if (searchInput) {
