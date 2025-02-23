@@ -1699,3 +1699,66 @@ function saveSettings() {
         console.error('Error:', error);
     });
 }
+
+// ...existing code...
+
+function showAddItemModal() {
+    const modal = document.getElementById('addItemModal');
+    const modalContent = modal.querySelector('.transform');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setTimeout(() => {
+        modalContent.classList.remove('scale-95', 'opacity-0');
+        modalContent.classList.add('scale-100', 'opacity-100');
+    }, 10);
+}
+
+function closeAddItemModal() {
+    const modal = document.getElementById('addItemModal');
+    const modalContent = modal.querySelector('.transform');
+    modalContent.classList.remove('scale-100', 'opacity-100');
+    modalContent.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+    }, 300);
+}
+
+// Image preview function
+function previewImage(input) {
+    const preview = document.getElementById('imagePreview');
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// Form submission handler
+document.getElementById('addItemForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    formData.append('form_type', 'main_items');
+
+    fetch('/manage-items/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            closeAddItemModal();
+            window.location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while adding the item.');
+    });
+});
+
+// ...existing code...

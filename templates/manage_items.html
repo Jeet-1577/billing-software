@@ -391,50 +391,173 @@
 <!-- Enhanced Modal Templates -->
 <div id="addItemModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
     <div class="bg-gray-800 rounded-lg p-6 w-full max-w-2xl transform transition-all scale-95 opacity-0">
-        <!-- Modal content -->
-    </div>
-</div>
-
-<!-- Add Category Modal Template -->
-<div id="addCategoryModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <!-- Modal content here -->
-</div>
-
-<!-- Add Customization Modal Template -->
-<div id="addCustomizationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <!-- Modal content here -->
-</div>
-
-<!-- Add this new modal template -->
-<div id="addCustomizationCategoryModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-gray-800 rounded-lg p-6 w-full max-w-md transform transition-all scale-95 opacity-0">
-        <div class="flex justify-between items-center mb-4">
-            <h3 class="text-lg font-semibold">Add Customization Category</h3>
-            <button onclick="closeCustomizationCategoryModal()" class="text-gray-400 hover:text-white">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-semibold text-white">Add New Item</h3>
+            <button onclick="closeAddItemModal()" class="text-gray-400 hover:text-white">
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        <form id="customizationCategoryForm" class="space-y-4">
-            <div>
-                <label class="block text-sm font-medium text-gray-400 mb-2">Category Name</label>
-                <input type="text" 
-                       id="categoryName" 
-                       name="name" 
-                       class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500"
-                       required>
+
+        <form id="addItemForm" class="space-y-4" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Item Name -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Item Name*</label>
+                    <input type="text" name="name" required
+                           class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+
+                <!-- Category -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Category*</label>
+                    <select name="category" required
+                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                        <option value="">Select Category</option>
+                        {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Price -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Price (₹)*</label>
+                    <input type="number" name="price" step="0.01" required min="0"
+                           class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+
+                <!-- Cost -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Cost (₹)</label>
+                    <input type="number" name="cost" step="0.01" min="0"
+                           class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+
+                <!-- Short Code -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Short Code</label>
+                    <input type="text" name="short_code"
+                           class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+
+                <!-- GST Rates -->
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">CGST %</label>
+                        <input type="number" name="cgst" step="0.01" min="0" value="9"
+                               class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">SGST %</label>
+                        <input type="number" name="sgst" step="0.01" min="0" value="9"
+                               class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
             </div>
-            <div class="flex justify-end gap-4">
-                <button type="button" 
-                        onclick="closeCustomizationCategoryModal()" 
+
+            <!-- Image Upload -->
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-400 mb-2">Item Image</label>
+                <div class="flex items-center space-x-4">
+                    <div class="relative w-32 h-32 border-2 border-dashed border-gray-600 rounded-lg overflow-hidden">
+                        <img id="imagePreview" src="/static/images/default-item.png" alt="Preview" 
+                             class="w-full h-full object-cover">
+                        <input type="file" name="image" accept="image/*" onchange="previewImage(this)"
+                               class="absolute inset-0 opacity-0 cursor-pointer">
+                    </div>
+                    <div class="text-sm text-gray-400">
+                        Click to upload or drag and drop<br>
+                        PNG, JPG up to 2MB
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customization Toggle -->
+            <div class="mt-4">
+                <label class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" name="has_customization" id="hasCustomization"
+                               class="rounded bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-500"
+                               onchange="toggleCustomizationButton()">
+                        <span class="text-sm font-medium text-gray-400">Enable Customizations</span>
+                    </div>
+                    <button type="button" id="customizationButton" 
+                            onclick="showCustomizationModal()"
+                            class="hidden px-3 py-1 bg-blue-500 hover:bg-blue-600 rounded-lg text-sm transition-colors">
+                        Select Options
+                        <span id="selectedOptionsCount" class="ml-2 px-1.5 py-0.5 bg-blue-600 rounded-full text-xs"></span>
+                    </button>
+                </label>
+            </div>
+
+            <!-- Submit Buttons -->
+            <div class="flex justify-end space-x-3 mt-6">
+                <button type="button" onclick="closeAddItemModal()"
                         class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
                     Cancel
                 </button>
-                <button type="submit" 
+                <button type="submit"
                         class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
-                    Add Category
+                    Add Item
                 </button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Add this new modal for customizations -->
+<div id="customizationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-[60]">
+    <div class="bg-gray-800 rounded-lg p-6 w-full max-w-2xl transform transition-all scale-95 opacity-0">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-semibold text-white">Select Customizations</h3>
+            <button onclick="closeCustomizationModal()" class="text-gray-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="max-h-[60vh] overflow-y-auto">
+            <div class="space-y-6">
+                {% for category in customization_categories %}
+                <div class="space-y-2">
+                    <h4 class="text-sm font-medium text-gray-300">{{ category.name }}</h4>
+                    <div class="grid grid-cols-2 gap-2">
+                        {% for option in category.options.all %}
+                        <label class="flex items-center justify-between p-2 bg-gray-700 rounded-lg hover:bg-gray-650 transition-colors cursor-pointer group">
+                            <div class="flex items-center">
+                                <input type="checkbox" 
+                                       name="customization_options" 
+                                       value="{{ option.id }}"
+                                       data-price="{{ option.price }}"
+                                       data-name="{{ option.name }}"
+                                       class="customization-checkbox rounded bg-gray-600 border-gray-500 text-blue-500 focus:ring-blue-500 mr-2"
+                                       onchange="updateCustomizationCount()">
+                                <span class="text-sm text-gray-300">{{ option.name }}</span>
+                            </div>
+                            <span class="text-xs text-emerald-400">+₹{{ option.price }}</span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="flex justify-between items-center mt-6 pt-4 border-t border-gray-700">
+            <div class="text-sm text-gray-400">
+                Selected: <span id="modalSelectedCount" class="font-medium text-blue-400">0</span> options
+            </div>
+            <div class="flex gap-3">
+                <button onclick="closeCustomizationModal()" 
+                        class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
+                    Cancel
+                </button>
+                <button onclick="confirmCustomizations()"
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
+                    Confirm Selection
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -444,24 +567,6 @@
 <!-- Include Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-<script>
-// Add your enhanced JavaScript functions here
-function showSection(sectionName) {
-    const sections = ['dashboard', 'items', 'categories', 'customizations', 'settings', 'customization-categories'];
-    sections.forEach(section => {
-        const element = document.getElementById(`${section}-section`);
-        if (element) {
-            element.classList.toggle('hidden', section !== sectionName);
-        }
-    });
-}
+<script src="{% static 'js/manage_items.js' %}"></script>
 
-// Show dashboard by default
-document.addEventListener('DOMContentLoaded', () => {
-    showSection('dashboard');
-});
-
-// Add more JavaScript functions for enhanced functionality
-// ...existing JavaScript...
-</script>
 {% endblock %}
