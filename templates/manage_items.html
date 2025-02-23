@@ -289,11 +289,11 @@
                         <div class="bg-gray-800 p-4 rounded-lg flex justify-between items-center">
                             <span class="text-lg">{{ category.name }}</span>
                             <div class="flex gap-2">
-                                <button onclick="editCategory({{ category.id }})" 
+                                <button onclick="showEditCategoryModal('{{ category.id }}', '{{ category.name }}')" 
                                         class="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 rounded transition-colors">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button onclick="deleteCategory({{ category.id }})" 
+                                <button onclick="deleteCategory('{{ category.id }}')"
                                         class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded transition-colors">
                                     <i class="fas fa-trash"></i>
                                 </button>
@@ -595,6 +595,46 @@
                 <button type="submit"
                         class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-white">
                     Add Category
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Category Modal -->
+<div id="editCategoryModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-gray-800 rounded-lg p-6 w-full max-w-md transform transition-all scale-95 opacity-0">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-medium text-white">Edit Category</h3>
+            <button onclick="closeEditCategoryModal()" class="text-gray-400 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        
+        <form id="editCategoryForm" method="POST" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="form_type" value="category">
+            <input type="hidden" name="id">
+            
+            <div>
+                <label for="editCategoryName" class="block text-sm font-medium text-gray-400 mb-2">Category Name*</label>
+                <input type="text" 
+                       name="name" 
+                       required
+                       class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-6">
+                <button type="button" 
+                        onclick="closeEditCategoryModal()"
+                        class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-white">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-white">
+                    Update Category
                 </button>
             </div>
         </form>

@@ -380,6 +380,61 @@ function closeAddCategoryModal() {
     }, 300);
 }
 
+// Add this new function
+function showEditCategoryModal(categoryId, categoryName) {
+    const modal = document.getElementById('editCategoryModal');
+    const form = document.getElementById('editCategoryForm');
+    
+    // Set form values
+    form.querySelector('input[name="id"]').value = categoryId;
+    form.querySelector('input[name="name"]').value = categoryName;
+    
+    // Show modal
+    const content = modal.querySelector('.transform');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setTimeout(() => {
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+    }, 10);
+}
+
+function closeEditCategoryModal() {
+    const modal = document.getElementById('editCategoryModal');
+    const content = modal.querySelector('.transform');
+    content.classList.remove('scale-100', 'opacity-100');
+    content.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+    }, 300);
+}
+
+function deleteCategory(categoryId) {
+    if (confirm('Are you sure you want to delete this category? All items in this category will be affected.')) {
+        fetch(`/manage-items/delete/category/${categoryId}/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                showToast('Category deleted successfully', 'success');
+                window.location.reload();
+            } else {
+                showToast(data.message || 'Error deleting category', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error deleting category', 'error');
+        });
+    }
+}
+
 // Event Listeners
 document.addEventListener('DOMContentLoaded', function() {
     // Restore last active section or use URL parameter
@@ -563,6 +618,41 @@ document.addEventListener('DOMContentLoaded', function() {
             } catch (error) {
                 console.error('Error:', error);
                 showToast('Error adding category', 'error');
+            }
+        });
+    }
+
+    // Edit category form submission handler
+    const editCategoryForm = document.getElementById('editCategoryForm');
+    if (editCategoryForm) {
+        editCategoryForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            formData.append('form_type', 'category');
+            
+            try {
+                const response = await fetch('/manage-items/update/', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (data.status === 'success') {
+                    showToast('Category updated successfully', 'success');
+                    closeEditCategoryModal();
+                    window.location.reload();
+                } else {
+                    showToast(data.message || 'Error updating category', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Error updating category', 'error');
             }
         });
     }

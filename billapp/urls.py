@@ -58,33 +58,3 @@ urlpatterns += [
     path('reports/financial/pdf/', views.generate_pdf_report, name='generate_pdf_report'),
     path('reports/financial/share/', views.share_report, name='share_report'),
 ]
-
-urlpatterns += [
-    path('add-owner/', views.add_owner, name='add_owner'),
-    path('add-employee/', views.add_employee, name='add_employee'),
-    path('edit-owner/<int:owner_id>/', views.edit_owner, name='edit_owner'),
-    path('edit-employee/<int:employee_id>/', views.edit_employee, name='edit_employee'),
-    path('delete-owner/<int:owner_id>/', views.delete_owner, name='delete_owner'),
-    path('delete-employee/<int:employee_id>/', views.delete_employee, name='delete_employee'),
-]
-
-urlpatterns += [
-    path('api/owners/', views.manage_owners, name='manage_owners'),
-    path('api/owners/<int:owner_id>/', views.manage_owner, name='manage_owner'),
-    path('api/staff/', views.manage_staff, name='manage_staff'),
-    path('api/staff/<int:employee_id>/', views.manage_employee, name='manage_employee'),
-]
-
-urlpatterns += [
-    path('update-hotel-profile/', views.update_hotel_profile, name='update_hotel_profile'),
-    path('update-preferences/', views.update_preferences, name='update_preferences'),
-]
-
-urlpatterns += [
-    path('security/logout-all/', views.logout_all_sessions, name='logout_all_sessions'),
-    path('security/info/', views.get_security_info, name='security_info'),
-]
-
-urlpatterns += [
-    path('manage-items/get/<int:item_id>/', views.get_item_details, name='get_item_details'),
-]
