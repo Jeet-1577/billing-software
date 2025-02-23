@@ -1,4 +1,12 @@
 // Section visibility management
+function setCurrentSection(sectionName) {
+    localStorage.setItem('currentSection', sectionName);
+}
+
+function getCurrentSection() {
+    return localStorage.getItem('currentSection') || 'dashboard';
+}
+
 function showSection(sectionName) {
     const sections = ['dashboard', 'items', 'categories', 'customizations', 'settings', 'customization-categories'];
     sections.forEach(section => {
@@ -7,6 +15,7 @@ function showSection(sectionName) {
             element.classList.toggle('hidden', section !== sectionName);
         }
     });
+    setCurrentSection(sectionName); // Save current section
 }
 
 // Modal management functions
@@ -220,8 +229,19 @@ function confirmCustomizations() {
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', function() {
-    // Show dashboard by default
-    showSection('dashboard');
+    // Restore last active section or use URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const sectionParam = urlParams.get('section');
+    const lastSection = sectionParam || getCurrentSection();
+    showSection(lastSection || 'dashboard');
+
+    // Update the section buttons click handlers
+    document.querySelectorAll('[data-section]').forEach(button => {
+        button.addEventListener('click', () => {
+            const sectionName = button.getAttribute('data-section');
+            showSection(sectionName);
+        });
+    });
 
     // Add Item form submission
     const addItemForm = document.getElementById('addItemForm');
@@ -231,61 +251,7 @@ document.addEventListener('DOMContentLoaded', function() {
         addItemForm.parentNode.replaceChild(newAddItemForm, addItemForm);
         
         // Add single event listener to the new form
-        newAddItemForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            // Get the submit button
-            const submitButton = this.querySelector('button[type="submit"]');
-            
-            // Check if the form is already being submitted
-            if (submitButton.disabled) {
-                console.log('Form submission in progress...');
-                return;
-            }
-            
-            // Disable the submit button
-            submitButton.disabled = true;
-            
-            try {
-                const formData = new FormData(this);
-                
-                const response = await fetch('/manage-items/', {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-                    }
-                });
-
-                const contentType = response.headers.get('content-type');
-                if (!contentType || !contentType.includes('application/json')) {
-                    throw new TypeError("Received non-JSON response from server");
-                }
-
-                const data = await response.json();
-                console.log('Server response:', data);
-
-                if (data.status === 'success') {
-                    showToast('Item added successfully', 'success');
-                    closeAddItemModal();
-                    // Use timeout to ensure modal is closed before reload
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 500);
-                } else {
-                    showToast(data.message || 'Error adding item', 'error');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showToast('Error adding item: ' + error.message, 'error');
-            } finally {
-                // Re-enable the submit button after 1 second
-                setTimeout(() => {
-                    submitButton.disabled = false;
-                }, 1000);
-            }
-        });
+        newAddItemForm.addEventListener('submit', handleFormSubmit);
     }
     
     // Search functionality
@@ -318,7 +284,6 @@ document.addEventListener('DOMContentLoaded', function() {
 async function handleFormSubmit(e) {
     e.preventDefault();
     
-    // Get the submit button and disable it immediately
     const submitButton = this.querySelector('button[type="submit"]');
     if (submitButton.disabled) {
         return; // Prevent double submission
@@ -350,10 +315,12 @@ async function handleFormSubmit(e) {
         if (data.status === 'success') {
             showToast('Item added successfully', 'success');
             closeAddItemModal();
-            // Use a small timeout before reloading to ensure the modal is closed
-            setTimeout(() => {
-                window.location.reload();
-            }, 300);
+            
+            // Store the current section before reload
+            const currentSection = getCurrentSection();
+            
+            // Reload and restore section
+            window.location.href = window.location.pathname + '?section=' + currentSection;
         } else {
             showToast(data.message || 'Error adding item', 'error');
         }

@@ -38,7 +38,7 @@
                     <div class="px-3 py-2 text-sm font-semibold text-gray-400 uppercase tracking-wider">
                         Overview
                     </div>
-                    <button onclick="showSection('dashboard')" 
+                    <button data-section="dashboard" onclick="showSection('dashboard')" 
                             class="w-full flex items-center text-left px-3 py-2 rounded-lg mb-1 hover:bg-gray-700 transition-colors group">
                         <i class="fas fa-chart-pie mr-3 text-blue-500 group-hover:text-blue-400"></i>
                         <span>Dashboard</span>
@@ -50,22 +50,22 @@
                     <div class="px-3 py-2 text-sm font-semibold text-gray-400 uppercase tracking-wider">
                         Inventory
                     </div>
-                    <button onclick="showSection('items')" 
+                    <button data-section="items" onclick="showSection('items')" 
                             class="w-full flex items-center text-left px-3 py-2 rounded-lg mb-1 hover:bg-gray-700 transition-colors group">
                         <i class="fas fa-box-open mr-3 text-green-500 group-hover:text-green-400"></i>
                         <span>Items</span>
                     </button>
-                    <button onclick="showSection('categories')" 
+                    <button data-section="categories" onclick="showSection('categories')" 
                             class="w-full flex items-center text-left px-3 py-2 rounded-lg mb-1 hover:bg-gray-700 transition-colors group">
                         <i class="fas fa-tags mr-3 text-yellow-500 group-hover:text-yellow-400"></i>
                         <span>Categories</span>
                     </button>
-                    <button onclick="showSection('customizations')" 
+                    <button data-section="customizations" onclick="showSection('customizations')" 
                             class="w-full flex items-center text-left px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors group">
                         <i class="fas fa-sliders-h mr-3 text-purple-500 group-hover:text-purple-400"></i>
                         <span>Customizations</span>
                     </button>
-                    <button onclick="showSection('customization-categories')" 
+                    <button data-section="customization-categories" onclick="showSection('customization-categories')" 
                             class="w-full flex items-center text-left px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors group">
                         <i class="fas fa-list-alt mr-3 text-indigo-500 group-hover:text-indigo-400"></i>
                         <span>Customization Categories</span>
@@ -77,7 +77,7 @@
                     <div class="px-3 py-2 text-sm font-semibold text-gray-400 uppercase tracking-wider">
                         Settings
                     </div>
-                    <button onclick="showSection('settings')" 
+                    <button data-section="settings" onclick="showSection('settings')" 
                             class="w-full flex items-center text-left px-3 py-2 rounded-lg hover:bg-gray-700 transition-colors group">
                         <i class="fas fa-cog mr-3 text-gray-500 group-hover:text-gray-400"></i>
                         <span>Preferences</span>
