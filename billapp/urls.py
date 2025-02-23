@@ -45,6 +45,7 @@ urlpatterns = [
     path('manage-items/update/', views.update_item, name='update_item'),
     path('manage-items/delete/<str:form_type>/<int:item_id>/', views.delete_item, name='delete_item'),
     path('manage-items/get-customization/<int:customization_id>/', views.get_customization, name='get-customization'),
+    path('manage-items/get/<int:item_id>/', views.get_item_details, name='get_item_details'),
 ]
 
 urlpatterns += [

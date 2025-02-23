@@ -1049,7 +1049,6 @@ def release_table_order(request):
 def manage_items(request):
     if request.method == 'POST':
         try:
-            # Add a print statement to debug
             print("Processing request with form type:", request.POST.get('form_type'))
             
             form_type = request.POST.get('form_type')
@@ -1112,9 +1111,60 @@ def manage_items(request):
                         'message': str(e)
                     })
                 
-            elif form_type == 'main_items':
-                # ... existing main items handling code ...
-                pass
+            elif form_type == 'main_items':  # Add this section
+                name = request.POST.get('name')
+                price = request.POST.get('price')
+                category_id = request.POST.get('category')
+                has_customization = request.POST.get('has_customization') == 'on'
+                short_code = request.POST.get('short_code', '')
+                cgst = request.POST.get('cgst', 9)  # Default to 9%
+                sgst = request.POST.get('sgst', 9)  # Default to 9%
+                cost = request.POST.get('cost', 0)  # Get cost if provided
+                
+                if not all([name, price, category_id]):
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': 'Name, price and category are required'
+                    })
+                
+                try:
+                    item = Item.objects.create(
+                        name=name,
+                        price=price,
+                        category_id=category_id,
+                        has_customization=has_customization,
+                        short_code=short_code,
+                        cgst=cgst,
+                        sgst=sgst,
+                        cost=cost
+                    )
+                    
+                    if 'image' in request.FILES:
+                        item.image = request.FILES['image']
+                        
+                    if has_customization and request.POST.get('customization_options'):
+                        options = json.loads(request.POST.get('customization_options'))
+                        item.customization_options.set(options)
+                        
+                    item.save()
+                    
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': 'Item added successfully',
+                        'item': {
+                            'id': item.id,
+                            'name': item.name,
+                            'price': str(item.price),
+                            'category': item.category.name,
+                            'image_url': item.get_image_url()
+                        }
+                    })
+                    
+                except Exception as e:
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': str(e)
+                    })
 
             else:
                 return JsonResponse({
@@ -2239,29 +2289,41 @@ def remove_table(request, table_id):
 def get_item_details(request, item_id):
     try:
         item = get_object_or_404(Item, id=item_id)
+        data = {
+            'status': 'success',
+            'item': {
+                'id': item.id,
+                'name': item.name,
+                'category_id': item.category.id,
+                'category': item.category.name,
+                'price': str(item.price),
+                'cost': str(item.cost),
+                'short_code': item.short_code or '',
+                'cgst': str(item.cgst),
+                'sgst': str(item.sgst),
+                'has_customization': item.has_customization,
+                'image_url': item.get_image_url(),
+                'created_at': item.created_at.isoformat(),
+                'customization_options': [
+                    {
+                        'id': opt.id,
+                        'name': opt.name,
+                        'price': str(opt.price)
+                    } for opt in item.customization_options.all()
+                ]
+            }
+        }
+        return JsonResponse(data)
+    except Item.DoesNotExist:
         return JsonResponse({
-            'id': item.id,
-            'name': item.name,
-            'category': item.category.name,
-            'category_id': item.category.id,
-            'price': str(item.price),
-            'short_code': item.short_code,
-            'cgst': str(item.cgst),
-            'sgst': str(item.sgst),
-            'image_url': item.get_image_url(),
-            'has_customization': item.has_customization,
-            'customization_options': [
-                {
-                    'id': opt.id,
-                    'name': opt.name,
-                    'price': str(opt.price)
-                }
-                for opt in item.customization_options.all()
-            ],
-            'created_at': item.created_at.isoformat()
-        })
+            'status': 'error',
+            'message': 'Item not found'
+        }, status=404)
     except Exception as e:
-        return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
 
 @csrf_exempt
 def get_customization(request, customization_id):

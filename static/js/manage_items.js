@@ -58,28 +58,43 @@ let currentCustomizations = [];
 
 function editItem(itemId) {
     fetch(`/manage-items/get/${itemId}/`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
         .then(data => {
-            // Populate form with item data
-            document.getElementById('editItemId').value = itemId;
-            document.getElementById('editItemName').value = data.name;
-            document.getElementById('editItemCategory').value = data.category_id;
-            document.getElementById('editItemPrice').value = data.price;
-            document.getElementById('editItemShortCode').value = data.short_code || '';
+            if (data.status === 'success' && data.item) {
+                const item = data.item;
+                // Populate form with item data
+                document.getElementById('editItemForm').querySelector('input[name="id"]').value = item.id;
+                document.getElementById('editItemForm').querySelector('input[name="name"]').value = item.name;
+                document.getElementById('editItemForm').querySelector('select[name="category"]').value = item.category_id;
+                document.getElementById('editItemForm').querySelector('input[name="price"]').value = item.price;
+                document.getElementById('editItemForm').querySelector('input[name="cost"]').value = item.cost;
+                document.getElementById('editItemForm').querySelector('input[name="short_code"]').value = item.short_code;
+                document.getElementById('editItemForm').querySelector('input[name="cgst"]').value = item.cgst;
+                document.getElementById('editItemForm').querySelector('input[name="sgst"]').value = item.sgst;
 
-            // Show modal
-            const modal = document.getElementById('editItemModal');
-            const content = modal.querySelector('.transform');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            setTimeout(() => {
-                content.classList.remove('scale-95', 'opacity-0');
-                content.classList.add('scale-100', 'opacity-100');
-            }, 10);
+                // Handle customizations
+                const hasCustomizationCheckbox = document.getElementById('editItemForm').querySelector('input[name="has_customization"]');
+                hasCustomizationCheckbox.checked = item.has_customization;
+
+                // Show modal
+                const modal = document.getElementById('editItemModal');
+                const content = modal.querySelector('.transform');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                setTimeout(() => {
+                    content.classList.remove('scale-95', 'opacity-0');
+                    content.classList.add('scale-100', 'opacity-100');
+                }, 10);
+            } else {
+                throw new Error(data.message || 'Failed to load item details');
+            }
         })
         .catch(error => {
             console.error('Error:', error);
-            showToast('Error loading item details', 'error');
+            showToast('Error loading item details: ' + error.message, 'error');
         });
 }
 
@@ -96,41 +111,54 @@ function closeEditItemModal() {
 
 function viewItem(itemId) {
     fetch(`/manage-items/get/${itemId}/`)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) throw new Error('Network response was not ok');
+            return response.json();
+        })
         .then(data => {
-            // Populate modal with item data
-            document.getElementById('viewItemImage').src = data.image_url || '/static/images/default-item.png';
-            document.getElementById('viewItemName').textContent = data.name;
-            document.getElementById('viewItemCategory').textContent = data.category;
-            document.getElementById('viewItemPrice').textContent = `₹${data.price}`;
-            document.getElementById('viewItemShortCode').textContent = data.short_code || 'N/A';
-            document.getElementById('viewItemGST').textContent = `CGST: ${data.cgst}% | SGST: ${data.sgst}%`;
-            document.getElementById('viewItemDate').textContent = new Date(data.created_at).toLocaleDateString();
+            if (data.status === 'success' && data.item) {
+                const item = data.item;
+                
+                // Populate basic item details
+                document.getElementById('viewItemImage').src = item.image_url || '/static/images/default-item.png';
+                document.getElementById('viewItemName').textContent = item.name;
+                document.getElementById('viewItemCategory').textContent = item.category;
+                document.getElementById('viewItemPrice').textContent = `₹${item.price}`;
+                document.getElementById('viewItemShortCode').textContent = item.short_code || 'N/A';
+                document.getElementById('viewItemGST').textContent = `CGST: ${item.cgst}% | SGST: ${item.sgst}%`;
+                document.getElementById('viewItemDate').textContent = new Date(item.created_at).toLocaleDateString();
 
-            // Handle customizations button
-            const customizationsButton = document.getElementById('viewItemCustomizationsButton');
-            if (data.has_customization && data.customization_options?.length > 0) {
-                currentCustomizations = data.customization_options;
-                customizationsButton.classList.remove('hidden');
-                document.getElementById('viewItemCustomizationsCount').textContent = data.customization_options.length;
+                // Handle customizations visibility
+                const wrapper = document.getElementById('viewItemCustomizationsWrapper');
+                const button = document.getElementById('viewItemCustomizationsButton');
+                
+                // Store customizations for later use
+                currentCustomizations = item.customization_options || [];
+                
+                // Show/hide customizations section based on item properties
+                if (item.has_customization && currentCustomizations.length > 0) {
+                    wrapper.classList.remove('hidden');
+                    document.getElementById('viewItemCustomizationsCount').textContent = currentCustomizations.length;
+                } else {
+                    wrapper.classList.add('hidden');
+                }
+
+                // Show modal
+                const modal = document.getElementById('viewItemModal');
+                const content = modal.querySelector('.transform');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                setTimeout(() => {
+                    content.classList.remove('scale-95', 'opacity-0');
+                    content.classList.add('scale-100', 'opacity-100');
+                }, 10);
             } else {
-                customizationsButton.classList.add('hidden');
-                currentCustomizations = [];
+                throw new Error(data.message || 'Failed to load item details');
             }
-
-            // Show modal
-            const modal = document.getElementById('viewItemModal');
-            const content = modal.querySelector('.transform');
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            setTimeout(() => {
-                content.classList.remove('scale-95', 'opacity-0');
-                content.classList.add('scale-100', 'opacity-100');
-            }, 10);
         })
         .catch(error => {
             console.error('Error:', error);
-            showToast('Error loading item details', 'error');
+            showToast('Error loading item details: ' + error.message, 'error');
         });
 }
 
@@ -354,19 +382,29 @@ function confirmCustomizations() {
 }
 
 function showItemCustomizations() {
-    // Populate and show customizations modal
-    const customizationsList = document.getElementById('customizationsList');
-    customizationsList.innerHTML = currentCustomizations.map(opt => `
-        <div class="bg-gray-700 rounded-lg p-4">
+    const modal = document.getElementById('customizationsListModal');
+    const content = modal.querySelector('.transform');
+    const list = document.getElementById('customizationsList');
+
+    if (!modal || !content || !list) {
+        console.error('Required modal elements not found');
+        return;
+    }
+
+    // Clear previous content
+    list.innerHTML = currentCustomizations.map(opt => `
+        <div class="py-3 first:pt-0 last:pb-0 border-b border-gray-700 last:border-0">
             <div class="flex justify-between items-center">
-                <span class="text-white font-medium">${opt.name}</span>
+                <div>
+                    <span class="text-white font-medium">${opt.name}</span>
+                    <span class="text-gray-400 text-sm ml-2">(${opt.category})</span>
+                </div>
                 <span class="text-emerald-400">+₹${opt.price}</span>
             </div>
         </div>
     `).join('');
 
-    const modal = document.getElementById('customizationsModal');
-    const content = modal.querySelector('.transform');
+    // Show modal with animation
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     setTimeout(() => {
@@ -375,9 +413,10 @@ function showItemCustomizations() {
     }, 10);
 }
 
-function closeCustomizationsModal() {
-    const modal = document.getElementById('customizationsModal');
+function closeItemCustomizations() {
+    const modal = document.getElementById('customizationsListModal');
     const content = modal.querySelector('.transform');
+    
     content.classList.remove('scale-100', 'opacity-100');
     content.classList.add('scale-95', 'opacity-0');
     setTimeout(() => {
@@ -884,6 +923,7 @@ async function handleFormSubmit(e) {
     
     try {
         const formData = new FormData(this);
+        formData.append('form_type', 'main_items');  // Make sure this line is present
         
         // Get selected customization options
         if (formData.get('has_customization') === 'on') {

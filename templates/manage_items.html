@@ -400,6 +400,7 @@
 
         <form id="addItemForm" class="space-y-4" enctype="multipart/form-data">
             {% csrf_token %}
+            <input type="hidden" name="form_type" value="main_items">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Item Name -->
                 <div>
@@ -567,7 +568,7 @@
         <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-medium text-white">Add New Customization</h3>
             <button onclick="closeAddCustomizationModal()" class="text-gray-400 hover:text-white">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
@@ -628,7 +629,7 @@
         <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-medium text-white">Edit Customization</h3>
             <button onclick="closeEditCustomizationModal()" class="text-gray-400 hover:text-white">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
@@ -690,7 +691,7 @@
         <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-medium text-white">Add New Category</h3>
             <button onclick="closeAddCategoryModal()" class="text-gray-400 hover:text-white">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
@@ -730,7 +731,7 @@
         <div class="flex justify-between items-center mb-4">
             <h3 class="text-lg font-medium text-white">Edit Category</h3>
             <button onclick="closeEditCategoryModal()" class="text-gray-400 hover:text-white">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
             </button>
@@ -764,6 +765,170 @@
     </div>
 </div>
 
+<!-- Edit Item Modal -->
+<div id="editItemModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-gray-800 rounded-lg p-6 w-full max-w-2xl transform transition-all scale-95 opacity-0">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-semibold text-white">Edit Item</h3>
+            <button onclick="closeEditItemModal()" class="text-gray-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form id="editItemForm" class="space-y-4">
+            {% csrf_token %}
+            <input type="hidden" name="id">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Item Name*</label>
+                    <input type="text" name="name" required
+                           class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Category*</label>
+                    <select name="category" required
+                            class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                        {% for category in categories %}
+                            <option value="{{ category.id }}">{{ category.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Price (₹)*</label>
+                    <input type="number" name="price" step="0.01" required
+                           class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Cost (₹)</label>
+                    <input type="number" name="cost" step="0.01"
+                           class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Short Code</label>
+                    <input type="text" name="short_code"
+                           class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">CGST %</label>
+                        <input type="number" name="cgst" step="0.01" min="0"
+                               class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">SGST %</label>
+                        <input type="number" name="sgst" step="0.01" min="0"
+                               class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <label class="flex items-center">
+                    <input type="checkbox" name="has_customization"
+                           class="rounded bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-500">
+                    <span class="ml-2 text-sm text-gray-400">Enable Customizations</span>
+                </label>
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-6">
+                <button type="button" onclick="closeEditItemModal()"
+                        class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors">
+                    Update Item
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- View Item Modal -->
+<div id="viewItemModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-gray-800 rounded-lg p-6 w-full max-w-md transform transition-all scale-95 opacity-0">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-semibold text-white">Item Details</h3>
+            <button onclick="closeViewItemModal()" class="text-gray-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="space-y-4">
+            <!-- Image -->
+            <div class="relative h-48 rounded-lg overflow-hidden">
+                <img id="viewItemImage" class="w-full h-full object-cover" src="" alt="Item Image">
+            </div>
+
+            <!-- Details -->
+            <div class="space-y-3">
+                <div class="flex justify-between items-start">
+                    <h4 id="viewItemName" class="text-lg font-semibold"></h4>
+                    <span id="viewItemPrice" class="text-lg font-bold text-emerald-400"></span>
+                </div>
+
+                <div class="text-sm space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Category:</span>
+                        <span id="viewItemCategory" class="text-white"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Short Code:</span>
+                        <span id="viewItemShortCode" class="text-white"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">GST:</span>
+                        <span id="viewItemGST" class="text-white"></span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-400">Created:</span>
+                        <span id="viewItemDate" class="text-white"></span>
+                    </div>
+                </div>
+
+                <!-- Customizations Button -->
+                <div id="viewItemCustomizationsWrapper" class="hidden pt-3">
+                    <button id="viewItemCustomizationsButton" 
+                            onclick="showItemCustomizations()"
+                            class="w-full px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors flex items-center justify-center gap-2">
+                        <i class="fas fa-list-ul"></i>
+                        View Customizations
+                        <span id="viewItemCustomizationsCount" class="px-2 py-0.5 bg-purple-700 rounded-full text-xs"></span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Customizations List Modal -->
+<div id="customizationsListModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-[60]">
+    <div class="bg-gray-800 rounded-lg p-6 w-full max-w-md transform transition-all scale-95 opacity-0">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-semibold text-white">Available Customizations</h3>
+            <button onclick="closeItemCustomizations()" class="text-gray-400 hover:text-white">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="divide-y divide-gray-700" id="customizationsList">
+            <!-- Customizations will be inserted here by JavaScript -->
+        </div>
+
+        <div class="flex justify-end mt-6">
+            <button onclick="closeItemCustomizations()" 
+                    class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Toast Notifications Container -->
 <div id="toastContainer" class="fixed bottom-4 right-4 z-50"></div>
 
@@ -771,5 +936,14 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
 <script src="{% static 'js/manage_items.js' %}"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const addItemForm = document.getElementById('addItemForm');
+    if (addItemForm) {
+        addItemForm.addEventListener('submit', handleFormSubmit);
+    }
+});
+</script>
 
 {% endblock %}
