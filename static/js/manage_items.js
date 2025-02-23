@@ -384,13 +384,64 @@ document.addEventListener('DOMContentLoaded', function() {
         newAddItemForm.addEventListener('submit', handleFormSubmit);
     }
     
-    // Search functionality
+    // Search functionality - Updated implementation
     const searchInput = document.getElementById('globalSearch');
     if (searchInput) {
         searchInput.addEventListener('input', debounce(function() {
-            const searchQuery = this.value.toLowerCase();
-            // Implement search functionality
+            const searchQuery = this.value.toLowerCase().trim();
+            
+            // Only process search if we're in the items section
+            if (getCurrentSection() !== 'items') return;
+            
+            const itemsContainer = document.querySelector('#items-section .grid');
+            if (!itemsContainer) return;
+            
+            const items = Array.from(itemsContainer.children).filter(
+                item => !item.classList.contains('col-span-full')
+            );
+
+            let hasVisibleItems = false;
+
+            items.forEach(item => {
+                // Updated selectors to match your exact HTML structure
+                const itemName = item.querySelector('.line-clamp-1')?.textContent.toLowerCase() || '';
+                const shortCodeElement = item.querySelector('.fa-barcode')?.closest('.flex')?.textContent.trim().toLowerCase() || '';
+                const categoryName = item.querySelector('.truncate')?.textContent.toLowerCase() || '';
+
+                // Check if any field matches the search query
+                const matches = 
+                    itemName.includes(searchQuery) || 
+                    shortCodeElement.includes(searchQuery) || 
+                    categoryName.includes(searchQuery);
+
+                item.classList.toggle('hidden', !matches);
+                if (matches) hasVisibleItems = true;
+            });
+
+            // Handle empty state
+            const emptyState = itemsContainer.querySelector('.col-span-full') || 
+                             createEmptyStateElement(itemsContainer);
+
+            if (!hasVisibleItems && searchQuery !== '') {
+                emptyState.innerHTML = `
+                    <div class="col-span-full flex flex-col items-center justify-center py-12 text-gray-400">
+                        <i class="fas fa-search text-4xl mb-4"></i>
+                        <p class="text-lg">No items found matching "${searchQuery}"</p>
+                    </div>
+                `;
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.toggle('hidden', hasVisibleItems);
+            }
         }, 300));
+
+        // Add focus shortcut
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                e.preventDefault();
+                searchInput.focus();
+            }
+        });
     }
 
     // Category filter - Updated implementation
@@ -548,4 +599,12 @@ function showToast(message, type = 'success') {
         toast.classList.add('opacity-0');
         setTimeout(() => toast.remove(), 300);
     }, 3000);
+}
+
+// Helper function to create empty state element
+function createEmptyStateElement(container) {
+    const emptyState = document.createElement('div');
+    emptyState.className = 'col-span-full';
+    container.appendChild(emptyState);
+    return emptyState;
 }
