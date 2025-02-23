@@ -330,6 +330,33 @@ function closeCustomizationsModal() {
     }, 300);
 }
 
+// Add this new function
+function sortItems(sortType) {
+    const itemsContainer = document.querySelector('#items-section .grid');
+    const items = Array.from(itemsContainer.children);
+
+    items.sort((a, b) => {
+        if (sortType === 'name') {
+            const nameA = a.querySelector('h3').textContent.trim().toLowerCase();
+            const nameB = b.querySelector('h3').textContent.trim().toLowerCase();
+            return nameA.localeCompare(nameB);
+        } else if (sortType === 'price') {
+            const priceA = parseFloat(a.querySelector('.text-emerald-400').textContent.replace('₹', ''));
+            const priceB = parseFloat(b.querySelector('.text-emerald-400').textContent.replace('₹', ''));
+            return priceB - priceA; // Sort by price high to low
+        } else if (sortType === 'recent') {
+            const dateA = new Date(a.querySelector('.text-xs.text-gray-500').textContent);
+            const dateB = new Date(b.querySelector('.text-xs.text-gray-500').textContent);
+            return dateB - dateA; // Sort by date newest first
+        }
+        return 0;
+    });
+
+    // Clear and re-append sorted items
+    itemsContainer.innerHTML = '';
+    items.forEach(item => itemsContainer.appendChild(item));
+}
+
 // Event Listeners
 document.addEventListener('DOMContentLoaded', function() {
     // Restore last active section or use URL parameter
@@ -366,11 +393,28 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 300));
     }
 
-    // Category filter
+    // Category filter - Updated implementation
     const categoryFilter = document.getElementById('categoryFilter');
     if (categoryFilter) {
         categoryFilter.addEventListener('change', function() {
-            // Implement category filtering
+            const selectedCategory = this.value;
+            const itemsContainer = document.querySelector('#items-section .grid');
+            const items = Array.from(itemsContainer.children);
+
+            items.forEach(item => {
+                if (!item.classList.contains('col-span-full')) {  // Skip the empty state message
+                    const itemCategory = item.querySelector('.text-gray-400 .truncate')?.textContent;
+                    const shouldShow = !selectedCategory || getCategoryNameById(selectedCategory) === itemCategory;
+                    item.classList.toggle('hidden', !shouldShow);
+                }
+            });
+
+            // Show empty state if no items are visible
+            const visibleItems = items.filter(item => !item.classList.contains('hidden'));
+            const emptyState = itemsContainer.querySelector('.col-span-full');
+            if (emptyState) {
+                emptyState.classList.toggle('hidden', visibleItems.length > 0);
+            }
         });
     }
 
@@ -378,7 +422,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const sortFilter = document.getElementById('sortFilter');
     if (sortFilter) {
         sortFilter.addEventListener('change', function() {
-            // Implement sorting
+            const selectedSort = this.value;
+            sortItems(selectedSort);
         });
     }
 
@@ -415,6 +460,13 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Add this helper function to get category name from ID
+function getCategoryNameById(categoryId) {
+    const categorySelect = document.getElementById('categoryFilter');
+    const option = categorySelect.querySelector(`option[value="${categoryId}"]`);
+    return option ? option.textContent : '';
+}
 
 // Separate the form submission handler function
 async function handleFormSubmit(e) {
