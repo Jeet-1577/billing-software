@@ -158,26 +158,27 @@
             </div>
 
             <!-- Items Section -->
-            <div id="items-section" class="h-full">
-                <div class="p-6 border-b border-gray-700">
-                    <div class="flex justify-between items-center mb-6">
-                        <div class="flex items-center gap-4">
+            <div id="items-section" class="h-full flex flex-col"> <!-- Added flex flex-col -->
+                <!-- Header Controls -->
+                <div class="p-3 border-b border-gray-700 bg-gray-800 sticky top-0 z-10 flex-shrink-0"> <!-- Added flex-shrink-0 -->
+                    <div class="flex flex-wrap justify-between items-center gap-3">
+                        <div class="flex flex-wrap items-center gap-2">
                             <select id="categoryFilter" 
-                                    class="bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-blue-500">
+                                    class="bg-gray-700 border border-gray-600 text-white px-3 py-1.5 rounded-lg focus:outline-none focus:border-blue-500 text-sm">
                                 <option value="">All Categories</option>
                                 {% for category in categories %}
                                     <option value="{{ category.id }}">{{ category.name }}</option>
                                 {% endfor %}
                             </select>
                             <select id="sortFilter" 
-                                    class="bg-gray-700 border border-gray-600 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-blue-500">
+                                    class="bg-gray-700 border border-gray-600 text-white px-3 py-1.5 rounded-lg focus:outline-none focus:border-blue-500 text-sm">
                                 <option value="name">Sort by Name</option>
                                 <option value="price">Sort by Price</option>
                                 <option value="recent">Sort by Recent</option>
                             </select>
                         </div>
                         <button onclick="showAddItemModal()" 
-                                class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg transition-colors flex items-center">
+                                class="bg-blue-600 hover:bg-blue-700 px-4 py-1.5 rounded-lg transition-colors flex items-center text-sm">
                             <i class="fas fa-plus mr-2"></i>
                             Add New Item
                         </button>
@@ -185,50 +186,91 @@
                 </div>
 
                 <!-- Items Grid -->
-                <div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 overflow-y-auto h-[calc(100%-5rem)]">
-                    {% for item in items %}
-                    <div class="bg-gray-800 rounded-lg overflow-hidden shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 border border-gray-700">
-                        <div class="relative h-48 overflow-hidden group">
-                            <img src="{{ item.get_image_url }}" 
-                                 alt="{{ item.name }}" 
-                                 class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110">
-                            {% if item.has_customization %}
-                            <div class="absolute top-2 right-2 bg-purple-500 text-white px-2 py-1 rounded-full text-xs">
-                                Customizable
-                            </div>
-                            {% endif %}
-                        </div>
-                        <div class="p-4">
-                            <div class="flex justify-between items-start mb-2">
-                                <h3 class="text-lg font-semibold">{{ item.name }}</h3>
-                                <span class="text-green-500 font-semibold">₹{{ item.price }}</span>
-                            </div>
-                            <div class="flex items-center text-sm text-gray-400 mb-4">
-                                <i class="fas fa-tag mr-2"></i>
-                                <span>{{ item.category.name }}</span>
-                            </div>
-                            <div class="flex items-center justify-between pt-4 border-t border-gray-700">
-                                <span class="text-sm text-gray-400">
-                                    {% if item.short_code %}
-                                    Code: {{ item.short_code }}
+                <div class="flex-1 overflow-hidden">
+                    <div class="h-full p-3 overflow-y-auto">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 auto-rows-max">
+                            {% for item in items %}
+                            <div class="bg-gray-800 rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-700 group h-[220px]">
+                                <!-- Image Container -->
+                                <div class="relative h-[120px]">
+                                    <img src="{{ item.get_image_url }}" 
+                                         alt="{{ item.name }}" 
+                                         class="w-full h-full object-cover"
+                                         loading="lazy">
+                                    {% if item.has_customization %}
+                                    <div class="absolute top-2 right-2 bg-purple-500 bg-opacity-90 backdrop-blur-sm text-white px-2 py-0.5 rounded-full text-xs font-medium shadow-lg">
+                                        Custom
+                                    </div>
                                     {% endif %}
-                                </span>
-                                <div class="flex gap-2">
-                                    <button onclick="editItem({{ item.id }})" 
-                                            class="p-2 text-yellow-500 hover:bg-gray-700 rounded-full transition-colors"
-                                            title="Edit Item">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button onclick="deleteItem({{ item.id }})" 
-                                            class="p-2 text-red-500 hover:bg-gray-700 rounded-full transition-colors"
-                                            title="Delete Item">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+                                </div>
+
+                                <!-- Item Details -->
+                                <div class="p-3 flex flex-col justify-between h-[100px] relative">
+                                    <!-- Main Content -->
+                                    <div>
+                                        <div class="flex justify-between items-start gap-2">
+                                            <h3 class="text-sm font-semibold text-gray-100 line-clamp-1 hover:line-clamp-none transition-all">
+                                                {{ item.name }}
+                                            </h3>
+                                            <span class="text-emerald-400 font-medium text-sm whitespace-nowrap">
+                                                ₹{{ item.price }}
+                                            </span>
+                                        </div>
+                                        <div class="flex items-center gap-2 mt-1 text-xs text-gray-400">
+                                            <span class="flex items-center">
+                                                <i class="fas fa-tag mr-1 text-[10px] text-gray-500"></i>
+                                                <span class="truncate">{{ item.category.name }}</span>
+                                            </span>
+                                            {% if item.short_code %}
+                                            <span class="flex items-center text-gray-500">
+                                                •
+                                            </span>
+                                            <span class="flex items-center">
+                                                <i class="fas fa-barcode mr-1 text-[10px] text-gray-500"></i>
+                                                <span>{{ item.short_code }}</span>
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+
+                                    <!-- Actions Bar -->
+                                    <div class="flex items-center justify-between pt-2 border-t border-gray-700/50">
+                                        <span class="text-xs text-gray-500">{{ item.created_at|date:"M d, Y" }}</span>
+                                        <!-- Action Buttons -->
+                                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button onclick="editItem({{ item.id }})" 
+                                                    class="p-1.5 text-gray-400 hover:text-yellow-400 transition-colors rounded-lg hover:bg-yellow-400/10"
+                                                    title="Edit Item">
+                                                <i class="fas fa-pen text-xs"></i>
+                                            </button>
+                                            <button onclick="viewItem({{ item.id }})" 
+                                                    class="p-1.5 text-gray-400 hover:text-blue-400 transition-colors rounded-lg hover:bg-blue-400/10"
+                                                    title="View Details">
+                                                <i class="fas fa-eye text-xs"></i>
+                                            </button>
+                                            <button onclick="deleteItem({{ item.id }})" 
+                                                    class="p-1.5 text-gray-400 hover:text-red-400 transition-colors rounded-lg hover:bg-red-400/10"
+                                                    title="Delete Item">
+                                                <i class="fas fa-trash text-xs"></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+                            {% empty %}
+                            <div class="col-span-full flex flex-col items-center justify-center py-12 text-gray-400">
+                                <i class="fas fa-box-open text-4xl mb-4"></i>
+                                <p class="text-lg">No items found</p>
+                                <p class="text-sm mt-2">Add your first item to get started</p>
+                                <button onclick="showAddItemModal()" 
+                                        class="mt-4 bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg transition-colors">
+                                    <i class="fas fa-plus mr-2"></i>
+                                    Add New Item
+                                </button>
+                            </div>
+                            {% endfor %}
                         </div>
                     </div>
-                    {% endfor %}
                 </div>
             </div>
 
