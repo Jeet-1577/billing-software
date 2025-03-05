@@ -46,6 +46,7 @@ urlpatterns = [
     path('manage-items/delete/<str:form_type>/<int:item_id>/', views.delete_item, name='delete_item'),
     path('manage-items/get-customization/<int:customization_id>/', views.get_customization, name='get-customization'),
     path('manage-items/get/<int:item_id>/', views.get_item_details, name='get_item_details'),
+    path('api/submit-feedback/', views.submit_feedback, name='submit_feedback'),  # Update this URL pattern
 ]
 
 urlpatterns += [
@@ -59,6 +60,6 @@ urlpatterns += [
     path('reports/financial/export/', views.export_financial_report, name='export_financial_report'),
     path('reports/financial/pdf/', views.generate_pdf_report, name='generate_pdf_report'),
     path('reports/financial/share/', views.share_report, name='share_report'),
-    path('feedback/', views.feedback, name='feedback'),
+    path('feedback/', views.feedback_view, name='feedback'), # Changed name of the view
     path('submit-feedback/', views.submit_feedback, name='submit_feedback'),
 ]

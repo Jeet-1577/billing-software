@@ -301,6 +301,56 @@
             categoryGroup.appendChild(hiddenInput);
             handleRatingClick(Array.from(buttons), hiddenInput);
         });
+
+        // Update form submission handler
+        const feedbackForm = document.getElementById('feedbackForm');
+        feedbackForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+
+            // Find submit button and handle case where it might not exist
+            const submitBtn = document.querySelector('button[type="submit"][form="feedbackForm"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+            }
+
+            fetch('{% url "submit_feedback" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert(data.message);
+                if (data.status === 'success') {
+                    // Reset form and ratings
+                    feedbackForm.reset();
+                    document.querySelectorAll('.service-rating, .item-rating').forEach(btn => {
+                        btn.classList.remove('text-yellow-400');
+                        btn.classList.add('text-gray-400');
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error submitting feedback. Please try again.');
+            })
+            .finally(() => {
+                // Re-enable submit button if it exists
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                }
+            });
+        });
     });
 </script>
+
 {% endblock %}

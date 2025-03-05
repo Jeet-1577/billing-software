@@ -11,7 +11,10 @@ from .models import (
     CustomizationCategory,
     CustomizationOption,
     Hotel,  # Add this import
-    Owner   # Add this import too since it's used in profile view
+    Owner,  # Add this import too since it's used in profile view
+    Feedback,  # Add this import
+    ServiceRating,  # Add this import
+    ItemRating  # Add this import
 )
 from .forms import CategoryForm, ItemForm, EmployeeForm  # Update this line to only import existing forms
 from django.http import JsonResponse
@@ -22,13 +25,10 @@ from decimal import Decimal
 from django.db import transaction
 from django.db import models  # Ensure this import is present
 from django.template import loader
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_http_methods  # Add require_http_methods here
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth import authenticate
-from django.contrib.auth.decorators import login_required
-from django.db.models import Sum, Avg, Value, F, IntegerField, FloatField, DecimalField, Count  # Add Count here
-from django.db.models.functions import TruncDate, Coalesce, Cast, ExtractHour, TruncHour  # Add Cast and ExtractHour here
 import logging
 from django.contrib.auth.hashers import check_password
 from django.contrib import messages
@@ -2350,7 +2350,7 @@ def get_customization(request, customization_id):
         }, status=500)
 
 def feedback(request):
-    # Reduced categories list - removed 'value_for_money'
+    # // Reduced categories list - removed 'value_for_money'
     service_categories = [
         'food_quality',
         'service',
@@ -2369,50 +2369,106 @@ def feedback(request):
 @require_POST
 def submit_feedback(request):
     try:
-        # Get customer details
-        name = request.POST.get('name')
-        phone = request.POST.get('phone')
-        table_number = request.POST.get('table_number')
-        comments = request.POST.get('comments')
+        with transaction.atomic():
+            # Create feedback record
+            feedback = Feedback.objects.create(
+                name=request.POST.get('name'),
+                email=request.POST.get('email'),
+                phone=request.POST.get('phone'),
+                visit_type=request.POST.get('visit_type'),
+                comments=request.POST.get('comments', '')
+            )
 
-        # Create feedback entry
-        feedback = Feedback.objects.create(
-            name=name,
-            phone=phone,
-            table_number=table_number,
-            comments=comments
-        )
-
-        # Save item ratings
-        for key, value in request.POST.items():
-            if key.startswith('item_rating_'):
-                item_id = key.replace('item_rating_', '')
-                if value:  # Only save if rating was given
-                    ItemRating.objects.create(
+            # Handle service ratings
+            for category in ['food_quality', 'service', 'cleanliness']:
+                rating = request.POST.get(f'{category}_rating')
+                if rating and rating.isdigit():
+                    ServiceRating.objects.create(
                         feedback=feedback,
-                        item_id=item_id,
-                        rating=value
+                        category=category,
+                        rating=int(rating)
                     )
 
-        messages.success(request, 'Thank you for your feedback!')
-        return redirect('feedback')
+            # Handle item ratings
+            for key, value in request.POST.items():
+                if key.startswith('item_rating_') and value.isdigit():
+                    try:
+                        item_id = int(key.replace('item_rating_', ''))
+                        ItemRating.objects.create(
+                            feedback=feedback,
+                            item_id=item_id,
+                            rating=int(value)
+                        )
+                    except (ValueError, Item.DoesNotExist):
+                        continue
+
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Thank you for your feedback!'
+            })
 
     except Exception as e:
-        messages.error(request, 'An error occurred. Please try again.')
-        return redirect('feedback')
+        import traceback
+        print(f"Error submitting feedback: {str(e)}")
+        print(traceback.format_exc())  # Add this to get full error details
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Failed to submit feedback'
+        }, status=500)
 
+@csrf_exempt
+@transaction.atomic
 def submit_feedback(request):
-    if request.method == 'POST':
-        # Process the feedback submission
-        feedback_data = {
-            'rating': request.POST.get('rating'),
-            'category': request.POST.get('category'),
-            'subject': request.POST.get('subject'),
-            'message': request.POST.get('message'),
-        }
-        # Here you can add code to save the feedback to your database
-        messages.success(request, 'Thank you for your feedback!')
-        return redirect('feedback')
-    return redirect('feedback')
+    if not request.POST.get('name') or not request.POST.get('email'):
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Name and email are required'
+        }, status=400)
+
+    try:
+        with transaction.atomic():
+            # Create feedback record
+            feedback = Feedback.objects.create(
+                name=request.POST.get('name'),
+                email=request.POST.get('email'),
+                phone=request.POST.get('phone', ''),
+                visit_type=request.POST.get('visit_type', ''),
+                comments=request.POST.get('comments', '')
+            )
+
+            # Handle service ratings
+            for category in ['food_quality', 'service', 'cleanliness']:
+                rating = request.POST.get(f'{category}_rating')
+                if rating and rating.isdigit():
+                    ServiceRating.objects.create(
+                        feedback=feedback,
+                        category=category,
+                        rating=int(rating)
+                    )
+
+            # Handle item ratings
+            for key, value in request.POST.items():
+                if key.startswith('item_rating_') and value.isdigit():
+                    try:
+                        item_id = int(key.replace('item_rating_', ''))
+                        ItemRating.objects.create(
+                            feedback=feedback,
+                            item_id=item_id,
+                            rating=int(value)
+                        )
+                    except (ValueError, Item.DoesNotExist):
+                        continue
+
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Thank you for your feedback!'
+            })
+
+    except Exception as e:
+        print(f"Error submitting feedback: {str(e)}")  # For debugging
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Failed to submit feedback'
+        }, status=500)
 
 

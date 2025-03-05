@@ -308,22 +308,27 @@ class ConnectedDevice(models.Model):
 
 class Feedback(models.Model):
     name = models.CharField(max_length=100)
-    phone = models.CharField(max_length=20)
-    table_number = models.CharField(max_length=10)
-    comments = models.TextField(blank=True)
+    email = models.EmailField()
+    phone = models.CharField(max_length=15)
+    visit_type = models.CharField(max_length=20)  # dine_in, takeaway, delivery
+    comments = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Feedback from {self.name} - Table {self.table_number}"
+        return f"Feedback from {self.name} - {self.created_at.date()}"
+
+class ServiceRating(models.Model):
+    feedback = models.ForeignKey(Feedback, on_delete=models.CASCADE, related_name='service_ratings')
+    category = models.CharField(max_length=50)  # food_quality, service, cleanliness
+    rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
+
+    def __str__(self):
+        return f"{self.category}: {self.rating} stars"
 
 class ItemRating(models.Model):
-    feedback = models.ForeignKey(Feedback, on_delete=models.CASCADE)
+    feedback = models.ForeignKey(Feedback, on_delete=models.CASCADE, related_name='item_ratings')
     item = models.ForeignKey(Item, on_delete=models.CASCADE)
     rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = ['feedback', 'item']
 
     def __str__(self):
-        return f"{self.item.name} - {self.rating} stars"
+        return f"{self.item.name}: {self.rating} stars"
