@@ -305,3 +305,25 @@ class ConnectedDevice(models.Model):
 
     def __str__(self):
         return f"{self.user} - {self.device_name}"
+
+class Feedback(models.Model):
+    name = models.CharField(max_length=100)
+    phone = models.CharField(max_length=20)
+    table_number = models.CharField(max_length=10)
+    comments = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Feedback from {self.name} - Table {self.table_number}"
+
+class ItemRating(models.Model):
+    feedback = models.ForeignKey(Feedback, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['feedback', 'item']
+
+    def __str__(self):
+        return f"{self.item.name} - {self.rating} stars"

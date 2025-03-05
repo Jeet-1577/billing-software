@@ -59,4 +59,6 @@ urlpatterns += [
     path('reports/financial/export/', views.export_financial_report, name='export_financial_report'),
     path('reports/financial/pdf/', views.generate_pdf_report, name='generate_pdf_report'),
     path('reports/financial/share/', views.share_report, name='share_report'),
+    path('feedback/', views.feedback, name='feedback'),
+    path('submit-feedback/', views.submit_feedback, name='submit_feedback'),
 ]

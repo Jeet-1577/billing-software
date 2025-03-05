@@ -2349,4 +2349,70 @@ def get_customization(request, customization_id):
             'message': str(e)
         }, status=500)
 
+def feedback(request):
+    # Reduced categories list - removed 'value_for_money'
+    service_categories = [
+        'food_quality',
+        'service',
+        'cleanliness',
+    ]
+    
+    context = {
+        'items': Item.objects.select_related('category').all().order_by('category__name', 'name'),
+        'categories': [
+            {'id': cat, 'name': cat.replace('_', ' ').title()} 
+            for cat in service_categories
+        ]
+    }
+    return render(request, 'feedback.html', context)
+
+@require_POST
+def submit_feedback(request):
+    try:
+        # Get customer details
+        name = request.POST.get('name')
+        phone = request.POST.get('phone')
+        table_number = request.POST.get('table_number')
+        comments = request.POST.get('comments')
+
+        # Create feedback entry
+        feedback = Feedback.objects.create(
+            name=name,
+            phone=phone,
+            table_number=table_number,
+            comments=comments
+        )
+
+        # Save item ratings
+        for key, value in request.POST.items():
+            if key.startswith('item_rating_'):
+                item_id = key.replace('item_rating_', '')
+                if value:  # Only save if rating was given
+                    ItemRating.objects.create(
+                        feedback=feedback,
+                        item_id=item_id,
+                        rating=value
+                    )
+
+        messages.success(request, 'Thank you for your feedback!')
+        return redirect('feedback')
+
+    except Exception as e:
+        messages.error(request, 'An error occurred. Please try again.')
+        return redirect('feedback')
+
+def submit_feedback(request):
+    if request.method == 'POST':
+        # Process the feedback submission
+        feedback_data = {
+            'rating': request.POST.get('rating'),
+            'category': request.POST.get('category'),
+            'subject': request.POST.get('subject'),
+            'message': request.POST.get('message'),
+        }
+        # Here you can add code to save the feedback to your database
+        messages.success(request, 'Thank you for your feedback!')
+        return redirect('feedback')
+    return redirect('feedback')
+
 

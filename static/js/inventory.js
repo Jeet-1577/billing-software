@@ -61,15 +61,15 @@ document.addEventListener('DOMContentLoaded', function() {
     if (searchInput) {
         searchInput.addEventListener('input', function() {
             var searchQuery = searchInput.value.toLowerCase();
-            fetch(`/inventory/?search=${searchQuery}`, {
+            // Add &ajax=1 and X-Requested-With header
+            fetch(`/inventory/?search=${searchQuery}&ajax=1`, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
+            .then(response => response.json())
+            .then(data => {
+                itemsContainer.innerHTML = '';
                 return response.json();
             })
             .then(data => {
@@ -95,10 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     itemsContainer.appendChild(itemCube);
                 });
             })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while fetching items.');
-            });
+           
         });
 
         searchInput.addEventListener('keydown', function(event) {
@@ -586,7 +583,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     var customizations = item.hasAttribute('data-selected-customizations') ? JSON.parse(item.getAttribute('data-selected-customizations')) : [];
                     var totalPrice = item.getAttribute('data-total-price');
                     var uniqueItemId = item.getAttribute('data-unique-id');
-                    var quantity = document.getElementById(`quantity-${uniqueItemId}`).innerText;
+                    var quantityElement = document.getElementById(`quantity-${uniqueItemId}`);
+                    var quantity = quantityElement ? quantityElement.innerText : '1'; // Ensure quantity element exists
                     selectedItemsData.push({ itemId, customizations, totalPrice, uniqueItemId, quantity });
                 });
                 localStorage.setItem('selectedItemsData', JSON.stringify(selectedItemsData));
