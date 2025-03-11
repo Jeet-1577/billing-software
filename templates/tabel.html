@@ -621,10 +621,11 @@
         const statusClass = isCompleted ? 'text-green-500' : '';
         const borderClass = isCompleted ? 'border-green-500' : 'border-gray-500';
 
+        // Add data-status attribute to order-item div
         return `
         <label class="block">
             <input type="radio" name="selectedOrder" value="${tableOrder.table_order_id}" class="hidden peer" ${index === 0 ? 'checked' : ''}>
-            <div class="order-item bg-gray-700 border ${borderClass} rounded-lg p-4 mb-4 cursor-pointer peer-checked:border-4 peer-checked:border-blue-700" data-order-id="${tableOrder.table_order_id}">
+            <div class="order-item bg-gray-700 border ${borderClass} rounded-lg p-4 mb-4 cursor-pointer peer-checked:border-4 peer-checked:border-blue-700" data-order-id="${tableOrder.table_order_id}" data-status="${tableOrder.status}">
                 <h3 class="text-lg font-semibold text-white">Table Order ID: ${tableOrder.table_order_id}</h3>
                 <div class="flex justify-between mt-2">
                     <p class="text-gray-300"><span class="font-medium">Status:</span> <span class="order-status ${statusClass}">${tableOrder.status}</span></p>
@@ -1337,6 +1338,15 @@ function editTableOrder() {
     const orderElement = selectedOrder.closest('label').querySelector('.order-item');
     if (!orderElement) {
         alert('Could not find order details');
+        return;
+    }
+
+    // Check order status
+    const statusElement = orderElement.querySelector('.order-status');
+    const orderStatus = statusElement ? statusElement.textContent.trim().toLowerCase() : '';
+    
+    if (orderStatus !== 'active') {
+        alert('Only active orders can be edited. This order is marked as: ' + orderStatus);
         return;
     }
 
