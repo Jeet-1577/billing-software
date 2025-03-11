@@ -1,4 +1,40 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Check for table selection and edit mode
+    const selectedTable = localStorage.getItem('selectedTable');
+    const editMode = localStorage.getItem('editMode');
+    const editOrderData = localStorage.getItem('editOrderData');
+
+    if (selectedTable) {
+        // Update selected table display
+        const selectedTableElement = document.getElementById('selectedTable');
+        if (selectedTableElement) {
+            const tableNumber = selectedTable.split('-')[1];
+            selectedTableElement.textContent = `Table: ${tableNumber}`;
+        }
+
+        // Keep sidebar open
+        const selectionSidebar = document.getElementById('selectionSidebar');
+        if (selectionSidebar) {
+            selectionSidebar.classList.add('open');
+        }
+
+        // If we have edit order data, load it
+        if (editMode === 'true' && editOrderData) {
+            try {
+                const orderData = JSON.parse(editOrderData);
+                loadEditOrderToInventory(orderData);
+                // Only remove editMode flag after successful load
+                localStorage.removeItem('editMode');
+                localStorage.removeItem('editOrderData');
+            } catch (error) {
+                console.error('Failed to parse edit order data:', error);
+            }
+        }
+
+        // Don't remove selectedTable here anymore
+        // We'll remove it when the user explicitly closes the sidebar or navigates away
+    }
+
     // Clear selected table from localStorage on page refresh
     localStorage.removeItem('selectedTable');
     const selectedTableElement = document.getElementById('selectedTable');
@@ -1304,12 +1340,15 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function closeSidebar() {
-    selectionSidebar.classList.remove('open');
-    // Clear selected table on sidebar close
-    localStorage.removeItem('selectedTable');
-    const selectedTableElement = document.getElementById('selectedTable');
-    if (selectedTableElement) {
-        selectedTableElement.textContent = '';
+    const selectionSidebar = document.getElementById('selectionSidebar');
+    if (selectionSidebar) {
+        selectionSidebar.classList.remove('open');
+        // Only clear table selection when explicitly closing sidebar
+        localStorage.removeItem('selectedTable');
+        const selectedTableElement = document.getElementById('selectedTable');
+        if (selectedTableElement) {
+            selectedTableElement.textContent = '';
+        }
     }
 }
 
@@ -1760,3 +1799,72 @@ document.getElementById('addItemForm').addEventListener('submit', function(e) {
 });
 
 // ...existing code...
+
+document.addEventListener('DOMContentLoaded', function() {
+    // ...existing code...
+
+    // Check for edit order data first
+    const editOrderData = localStorage.getItem('editOrderData');
+    const isEditingOrder = localStorage.getItem('isEditingOrder') === 'true';
+
+    if (isEditingOrder && editOrderData) {
+        try {
+            const orderData = JSON.parse(editOrderData);
+            loadEditOrderToInventory(orderData);
+            // Clear the edit data after loading
+            localStorage.removeItem('editOrderData');
+            localStorage.removeItem('isEditingOrder');
+        } catch (error) {
+            console.error('Failed to parse edit order data:', error);
+        }
+    }
+
+    // ...existing code...
+});
+
+// Add this new function to handle loading edit order data
+function loadEditOrderToInventory(orderData) {
+    if (!orderData || !orderData.items) return;
+
+    orderData.items.forEach(item => {
+        // Find the matching item cube in the inventory
+        const itemElements = document.querySelectorAll('.item-cube');
+        const matchingItem = Array.from(itemElements).find(el => 
+            el.getAttribute('data-item-name') === item.name
+        );
+
+        if (matchingItem) {
+            // Set up the item with customizations if any
+            const uniqueId = `${matchingItem.getAttribute('data-item-id')}-${Date.now()}`;
+            matchingItem.classList.add('selected');
+            matchingItem.setAttribute('data-unique-id', uniqueId);
+            matchingItem.setAttribute('data-total-price', item.price);
+
+            if (item.customizations && item.customizations.length > 0) {
+                matchingItem.setAttribute('data-selected-customizations', 
+                    JSON.stringify(item.customizations)
+                );
+            }
+
+            // Create and set quantity tracker
+            const quantityDiv = document.createElement('div');
+            quantityDiv.id = `quantity-${uniqueId}`;
+            quantityDiv.classList.add('quantity-tracker');
+            quantityDiv.innerText = item.quantity;
+            matchingItem.appendChild(quantityDiv);
+        }
+    });
+
+    // Update the sidebar with the loaded items
+    updateSidebar();
+}
+
+// ...existing code...
+
+window.addEventListener('beforeunload', function() {
+    // Only clean up if not editing an order
+    if (localStorage.getItem('editMode') !== 'true') {
+        localStorage.removeItem('selectedTable');
+        localStorage.removeItem('editOrderData');
+    }
+});

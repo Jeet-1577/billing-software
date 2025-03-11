@@ -1326,6 +1326,41 @@ function removeTable(tableId) {
         });
     }
 }
+
+function editTableOrder() {
+    const selectedOrder = document.querySelector('input[name="selectedOrder"]:checked');
+    if (!selectedOrder) {
+        alert('Please select an order to edit');
+        return;
+    }
+
+    const orderElement = selectedOrder.closest('label').querySelector('.order-item');
+    if (!orderElement) {
+        alert('Could not find order details');
+        return;
+    }
+
+    // Get table number
+    const tableNumber = document.getElementById('tableNumber').textContent.split('Table Number: ')[1];
+    if (!tableNumber) {
+        alert('Could not find table number');
+        return;
+    }
+
+    // Store table info in localStorage
+    localStorage.setItem('selectedTable', `table-${tableNumber}`);
+    localStorage.setItem('editMode', 'true');
+    
+    // Get and store order data
+    const orderData = constructOrderData();
+    if (orderData) {
+        localStorage.setItem('editOrderData', JSON.stringify(orderData));
+    }
+
+    // Redirect to inventory page
+    window.location.href = '/inventory/';
+}
+
 </script>
 
 {% endblock %}
