@@ -564,32 +564,25 @@ document.addEventListener('DOMContentLoaded', function() {
         link.addEventListener('click', function(event) {
             event.preventDefault();
             var categoryId = this.getAttribute('data-category-id');
+
+            // Store the current selected items' IDs before updating
+            const currentSelectedItems = new Set(
+                Array.from(document.querySelectorAll('.item-cube.selected')).map(item => 
+                    item.getAttribute('data-item-id')
+                )
+            );
+
             fetch(`/inventory/?category=${categoryId}`, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
-                var selectedItemsData = [];
-                var selectedItems = document.querySelectorAll('.item-cube.selected');
-                selectedItems.forEach(item => {
-                    var itemId = item.getAttribute('data-item-id');
-                    var customizations = item.hasAttribute('data-selected-customizations') ? JSON.parse(item.getAttribute('data-selected-customizations')) : [];
-                    var totalPrice = item.getAttribute('data-total-price');
-                    var uniqueItemId = item.getAttribute('data-unique-id');
-                    var quantityElement = document.getElementById(`quantity-${uniqueItemId}`);
-                    var quantity = quantityElement ? quantityElement.innerText : '1'; // Ensure quantity element exists
-                    selectedItemsData.push({ itemId, customizations, totalPrice, uniqueItemId, quantity });
-                });
-                localStorage.setItem('selectedItemsData', JSON.stringify(selectedItemsData));
-
+                // Clear and update items container
                 itemsContainer.innerHTML = '';
+                
+                // Add new items but maintain selection state
                 data.items.forEach(function(item) {
                     var itemCube = document.createElement('div');
                     itemCube.classList.add('item-cube');
@@ -600,16 +593,37 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (item.has_customization) {
                         itemCube.setAttribute('data-customization-options', JSON.stringify(item.customization_options));
                     }
+                    
+                    // Check if this item was previously selected
+                    if (currentSelectedItems.has(item.id.toString())) {
+                        itemCube.classList.add('selected');
+                    }
+
                     itemCube.innerHTML = `
                         <h3 class="text-xl font-bold mb-2">${item.name}</h3>
                         <img src="${item.image}" alt="${item.name}">
-                    `;
+                    `;  
                     itemCube.addEventListener('click', function() {
                         selectItem(this);
                     });
                     itemsContainer.appendChild(itemCube);
                 });
-                restoreSelectedItems();
+
+                // Don't call updateSidebar() here as we want to preserve the current sidebar state
+                // Only restore quantities for existing selected items
+                document.querySelectorAll('.item-cube.selected').forEach(item => {
+                    const itemId = item.getAttribute('data-item-id');
+                    const uniqueItemId = item.getAttribute('data-unique-id') || `${itemId}-basic`;
+                    const existingQuantity = document.getElementById(`quantity-${uniqueItemId}`);
+                    
+                    if (!existingQuantity) {
+                        const quantityDiv = document.createElement('div');
+                        quantityDiv.id = `quantity-${uniqueItemId}`;
+                        quantityDiv.classList.add('quantity-tracker');
+                        quantityDiv.innerText = '1';
+                        item.appendChild(quantityDiv);
+                    }
+                });
             })
             .catch(error => {
                 console.error('Error:', error);
