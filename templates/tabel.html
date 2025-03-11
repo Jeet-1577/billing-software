@@ -1351,9 +1351,11 @@ function editTableOrder() {
     localStorage.setItem('selectedTable', `table-${tableNumber}`);
     localStorage.setItem('editMode', 'true');
     
-    // Get and store order data
+    // Get and store order data with table number
     const orderData = constructOrderData();
     if (orderData) {
+        // Add table_number to orderData
+        orderData.table_number = tableNumber;
         localStorage.setItem('editOrderData', JSON.stringify(orderData));
     }
 

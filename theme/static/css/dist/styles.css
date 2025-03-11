@@ -1023,10 +1023,6 @@ select {
   margin-top: 1.5rem;
 }
 
-.ml-auto {
-  margin-left: auto;
-}
-
 .line-clamp-1 {
   overflow: hidden;
   display: -webkit-box;
@@ -1298,10 +1294,6 @@ select {
   width: 100%;
 }
 
-.w-\[80\%\] {
-  width: 80%;
-}
-
 .min-w-\[600px\] {
   min-width: 600px;
 }
@@ -1336,10 +1328,6 @@ select {
 
 .max-w-screen-2xl {
   max-width: 1536px;
-}
-
-.max-w-\[600px\] {
-  max-width: 600px;
 }
 
 .flex-1 {

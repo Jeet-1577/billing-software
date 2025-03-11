@@ -35,13 +35,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // We'll remove it when the user explicitly closes the sidebar or navigates away
     }
 
-    // Clear selected table from localStorage on page refresh
-    localStorage.removeItem('selectedTable');
-    const selectedTableElement = document.getElementById('selectedTable');
-    if (selectedTableElement) {
-        selectedTableElement.innerText = '';
-    }
-
     const orderData = localStorage.getItem('orderData');
     if (orderData) {
         try {
@@ -267,6 +260,12 @@ document.addEventListener('DOMContentLoaded', function() {
             item.removeAttribute('data-unique-id');
         });
         updateSidebar();
+
+        // Check if all items are removed
+        const selectedItems = document.getElementsByClassName('item-cube selected');
+        if (selectedItems.length === 0) {
+            closeSidebar(); // Close sidebar if no items remaining
+        }
     };
 
     let currentItem = null;
@@ -1343,12 +1342,51 @@ function closeSidebar() {
     const selectionSidebar = document.getElementById('selectionSidebar');
     if (selectionSidebar) {
         selectionSidebar.classList.remove('open');
-        // Only clear table selection when explicitly closing sidebar
+        
+        // Clear all selected items
+        const selectedItems = document.getElementsByClassName('item-cube selected');
+        Array.from(selectedItems).forEach(item => {
+            item.classList.remove('selected');
+            item.removeAttribute('data-selected-customizations');
+            item.removeAttribute('data-total-price');
+            item.removeAttribute('data-unique-id');
+            
+            // Remove quantity tracker if it exists
+            const quantityTracker = item.querySelector('.quantity-tracker');
+            if (quantityTracker) {
+                quantityTracker.remove();
+            }
+        });
+
+        // Clear sidebar content
+        const selectedItemsList = document.getElementById('selectedItemsList');
+        if (selectedItemsList) {
+            selectedItemsList.innerHTML = '';
+        }
+
+        // Reset total amounts
+        const totalAmountElem = document.getElementById('totalAmount');
+        const cgstAmountElem = document.getElementById('cgstAmount');
+        const sgstAmountElem = document.getElementById('sgstAmount');
+        const grandTotalElem = document.getElementById('grandTotal');
+
+        if (totalAmountElem) totalAmountElem.innerText = 'Subtotal: ₹0.00';
+        if (cgstAmountElem) cgstAmountElem.innerText = 'CGST: ₹0.00';
+        if (sgstAmountElem) sgstAmountElem.innerText = 'SGST: ₹0.00';
+        if (grandTotalElem) grandTotalElem.innerText = 'Grand Total: ₹0.00';
+
+        // Clear table selection from both localStorage and display
         localStorage.removeItem('selectedTable');
         const selectedTableElement = document.getElementById('selectedTable');
         if (selectedTableElement) {
             selectedTableElement.textContent = '';
         }
+
+        // Clear radio selections
+        const orderTypeRadios = document.querySelectorAll('input[name="order_type"]');
+        const paymentTypeRadios = document.querySelectorAll('input[name="payment_type"]');
+        orderTypeRadios.forEach(radio => radio.checked = false);
+        paymentTypeRadios.forEach(radio => radio.checked = false);
     }
 }
 
@@ -1671,6 +1709,13 @@ function showTableSelectionPopup() {
                         }
                         document.body.removeChild(popup);
                     };
+                } else {
+                    // For booked tables, disable clicking and show message
+                    btn.style.cursor = 'not-allowed';
+                    btn.onclick = (e) => {
+                        e.preventDefault();
+                        alert('This table is currently occupied.');
+                    };
                 }
                 tableList.appendChild(btn);
             });
@@ -1855,7 +1900,6 @@ function loadEditOrderToInventory(orderData) {
         }
     });
 
-    // Update the sidebar with the loaded items
     updateSidebar();
 }
 
@@ -1868,3 +1912,51 @@ window.addEventListener('beforeunload', function() {
         localStorage.removeItem('editOrderData');
     }
 });
+
+function handleActiveTableSelection(table) {
+    // Fetch active orders for the table
+    fetch(`/api/table-order/${table.number}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success' && data.table_orders && data.table_orders.length > 0) {
+                // Get the active order
+                const activeOrder = data.table_orders.find(order => order.status === 'active');
+                if (activeOrder) {
+                    // Store table selection
+                    localStorage.setItem('selectedTable', `table-${table.number}`);
+                    const tableDisplay = document.getElementById('selectedTable');
+                    if (tableDisplay) {
+                        tableDisplay.textContent = `Table: ${table.number}`;
+                    }
+                    
+                    // Load order items to sidebar
+                    loadEditOrderToInventory({
+                        items: activeOrder.items,
+                        table_number: table.number
+                    });
+                }
+            }
+        })
+        .catch(error => console.error('Error:', error));
+}
+
+// Modify the table card click handler in showTableSelectionPopup function
+// Replace the existing btn.onclick assignment with this:
+if (!table.is_booked) {
+    btn.onclick = () => {
+        localStorage.setItem('selectedTable', `table-${table.number}`);
+        const tableDisplay = document.getElementById('selectedTable');
+        if (tableDisplay) {
+            tableDisplay.textContent = `Table: ${table.number}`;
+        }
+        document.body.removeChild(popup);
+    };
+} else {
+    // Allow selecting booked tables
+    btn.onclick = () => {
+        handleActiveTableSelection(table);
+        document.body.removeChild(popup);
+    };
+}
+
+// ...existing code...
