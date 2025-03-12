@@ -19,13 +19,9 @@ class EmployeeForm(forms.ModelForm):
 class OwnerForm(forms.ModelForm):
     class Meta:
         model = Owner
-        fields = ['name', 'email', 'phone', 'photo', 'address']
+        fields = ['owner_id', 'name', 'email', 'phone', 'photo', 'password']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-input'}),
-            'email': forms.EmailInput(attrs={'class': 'form-input'}),
-            'phone': forms.TextInput(attrs={'class': 'form-input'}),
-            'address': forms.Textarea(attrs={'class': 'form-textarea', 'rows': 3}),
-            'photo': forms.FileInput(attrs={'class': 'form-file-input'})
+            'password': forms.PasswordInput(attrs={'class': 'form-input'})
         }
 
 class HotelForm(forms.ModelForm):

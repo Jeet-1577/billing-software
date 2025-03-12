@@ -224,37 +224,53 @@ class TableOrder(models.Model):
 
 class KoOrder(models.Model):
     order_id = models.CharField(max_length=100, unique=True)
+    items = models.ManyToManyField('OrderItem', related_name='ko_orders')
     order_details = models.JSONField(default=dict)
-    items = models.ManyToManyField(OrderItem)
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
     gst_amount = models.DecimalField(max_digits=10, decimal_places=2)
     grand_total = models.DecimalField(max_digits=10, decimal_places=2)
     payment_type = models.CharField(max_length=50)
     order_type = models.CharField(max_length=50)
-    status = models.CharField(max_length=20, default='sent')
-    table_number = models.CharField(max_length=10, null=True, blank=True)  # Add table number field
-    time = models.TimeField(auto_now_add=True)
-    date = models.DateField(auto_now_add=True)
+    status = models.CharField(max_length=20, default='sent')  # Changed maxlength to max_length
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now_add=True)
+    table_number = models.CharField(max_length=50, null=True, blank=True)
 
     def __str__(self):
         return f"KoOrder {self.order_id} - ₹{self.grand_total}"
 
 class Owner(models.Model):
-    name = models.CharField(max_length=100)
-    email = models.EmailField(unique=True)
+    owner_id = models.CharField(max_length=100, unique=True, null=True, blank=True)  # Make nullable temporarily
+    name = models.CharField(max_length=255)
+    email = models.EmailField()
     phone = models.CharField(max_length=20)
-    photo = models.ImageField(upload_to='owners/', blank=True, null=True)
-    role = models.CharField(max_length=50, default='owner')
-    status = models.CharField(max_length=20, default='active')
-    address = models.TextField(blank=True, null=True)
-    joined_date = models.DateField(auto_now_add=True)
+    photo = models.ImageField(upload_to='owner_photos/', null=True, blank=True)
+    password = models.CharField(max_length=255, default='default123')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def save(self, *args, **kwargs):
+        if not self.owner_id:
+            # Get the highest existing owner_id
+            last_owner = Owner.objects.filter(
+                owner_id__startswith='OWN'
+            ).order_by('-owner_id').first()
+
+            if last_owner and last_owner.owner_id:
+                try:
+                    # Extract number and increment
+                    last_num = int(last_owner.owner_id[3:])
+                    self.owner_id = f'OWN{str(last_num + 1).zfill(3)}'
+                except (ValueError, IndexError):
+                    # If there's an error parsing the last owner_id, start fresh
+                    self.owner_id = 'OWN001'
+            else:
+                # If no existing owner_id found, start with OWN001
+                self.owner_id = 'OWN001'
+        
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return self.name
+        return f"{self.name} ({self.owner_id})"
 
 class Hotel(models.Model):
     name = models.CharField(max_length=100)
@@ -269,7 +285,7 @@ class Hotel(models.Model):
     email_notifications = models.BooleanField(default=True)
     two_factor_auth = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name
@@ -317,13 +333,13 @@ class Feedback(models.Model):
         return f"Feedback from {self.name} - Table {self.table_number}"
 
 class ItemRating(models.Model):
-    feedback = models.ForeignKey(Feedback, on_delete=models.CASCADE)
-    item = models.ForeignKey(Item, on_delete=models.CASCADE)
-    rating = models.IntegerField(choices=[(i, i) for i in range(1, 6)])
+    feedback = models.ForeignKey('Feedback', on_delete=models.CASCADE, related_name='item_ratings')
+    item = models.ForeignKey('Item', on_delete=models.CASCADE, related_name='ratings')
+    rating = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)])
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ['feedback', 'item']
+        unique_together = ('feedback', 'item')
 
     def __str__(self):
         return f"{self.item.name} - {self.rating} stars"
