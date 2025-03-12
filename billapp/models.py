@@ -117,15 +117,18 @@ class Employee(models.Model):
     aadhar = models.CharField(max_length=12, unique=True, default=generate_unique_aadhar)  # Provide a unique default value
     password = models.CharField(max_length=128)  # Password field
 
-    def save(self, *args, **kwargs):
-        if not self.aadhar:
-            self.aadhar = generate_unique_aadhar()
-        if self.password and not self.password.startswith('pbkdf2_'):
-            self.password = make_password(self.password)
-        super().save(*args, **kwargs)
+    def set_password(self, raw_password):
+        self.password = make_password(raw_password)
 
     def check_password(self, raw_password):
         return check_password(raw_password, self.password)
+
+    def save(self, *args, **kwargs):
+        if not self.aadhar:
+            self.aadhar = generate_unique_aadhar()
+        if self.password and not self.password.startswith(('pbkdf2_sha256$', 'bcrypt$', 'argon2')):
+            self.password = make_password(self.password)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.name} ({self.employee_id})"
@@ -248,6 +251,12 @@ class Owner(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def set_password(self, raw_password):
+        self.password = make_password(raw_password)
+
+    def check_password(self, raw_password):
+        return check_password(raw_password, self.password)
+
     def save(self, *args, **kwargs):
         if not self.owner_id:
             # Get the highest existing owner_id
@@ -267,6 +276,8 @@ class Owner(models.Model):
                 # If no existing owner_id found, start with OWN001
                 self.owner_id = 'OWN001'
         
+        if self.password and not self.password.startswith(('pbkdf2_sha256$', 'bcrypt$', 'argon2')):
+            self.password = make_password(self.password)
         super().save(*args, **kwargs)
 
     def __str__(self):

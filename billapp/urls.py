@@ -3,6 +3,8 @@ from . import views  # Updated import
 from .views import table_view, store_order, save_table_order, get_table_order_details  # Import necessary views
 
 urlpatterns = [
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
     path('', views.index, name='index'),
     path('profile/', views.profile, name='profile'),
     path('settings/', views.settings, name='settings'),
@@ -53,6 +55,10 @@ urlpatterns = [
     path('api/owners/add/', views.add_owner, name='add_owner'),
     path('api/owners/edit/<int:owner_id>/', views.edit_owner, name='edit_owner'),
     path('api/owners/delete/<int:owner_id>/', views.delete_owner, name='delete_owner'),
+
+    # Add authentication URLs
+    path('login/', views.login_view, name='login'),
+    path('logout/', views.logout_view, name='logout'),
 ]
 
 urlpatterns += [

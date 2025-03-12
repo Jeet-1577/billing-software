@@ -379,12 +379,12 @@
                 <a href="{% url 'tabel' %}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Table</a>
                 <form>
                     {% csrf_token %}
-                    <!-- ...existing form fields... -->
                     <button class="dark-button red ml-2" type="button" onclick="saveOrder()">Save Order</button>
                 </form>
                 <button class="dark-button red ml-2" id="sendButton">Send</button>
                 <button class="dark-button yellow ml-2" id="koButton">KO</button>
                 <a href="/feedback/" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors">Feedback</a>
+                <!-- Removed the Exit button from here -->
             </div>
         </nav>
 

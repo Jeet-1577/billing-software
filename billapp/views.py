@@ -2415,4 +2415,41 @@ def submit_feedback(request):
         return redirect('feedback')
     return redirect('feedback')
 
+def login_view(request):
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        password = request.POST.get('password')
+        
+        # Try to authenticate as owner
+        try:
+            owner = Owner.objects.get(owner_id=user_id)
+            if owner.check_password(password):
+                # Set session variables
+                request.session['user_type'] = 'owner'
+                request.session['user_id'] = owner.id
+                return redirect('index')
+        except Owner.DoesNotExist:
+            pass
+
+        # Try to authenticate as employee
+        try:
+            employee = Employee.objects.get(employee_id=user_id)
+            if employee.check_password(password):
+                # Set session variables
+                request.session['user_type'] = 'employee'
+                request.session['user_id'] = employee.id
+                return redirect('index')
+        except Employee.DoesNotExist:
+            pass
+
+        # If authentication failed
+        return render(request, 'auth/login.html', {'error': 'Invalid credentials'})
+
+    return render(request, 'auth/login.html')
+
+def logout_view(request):
+    request.session.flush()
+    return redirect('login')
+
+
 
