@@ -46,6 +46,13 @@ urlpatterns = [
     path('manage-items/delete/<str:form_type>/<int:item_id>/', views.delete_item, name='delete_item'),
     path('manage-items/get-customization/<int:customization_id>/', views.get_customization, name='get-customization'),
     path('manage-items/get/<int:item_id>/', views.get_item_details, name='get_item_details'),
+    
+    # Add these new URL patterns for owner management
+    path('api/owners/', views.manage_owners, name='manage_owners'),
+    path('api/owners/<int:owner_id>/', views.manage_owner, name='manage_owner'),
+    path('api/owners/add/', views.add_owner, name='add_owner'),
+    path('api/owners/edit/<int:owner_id>/', views.edit_owner, name='edit_owner'),
+    path('api/owners/delete/<int:owner_id>/', views.delete_owner, name='delete_owner'),
 ]
 
 urlpatterns += [

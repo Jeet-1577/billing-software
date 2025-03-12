@@ -282,16 +282,13 @@
         </div>
         <form id="ownerForm" class="p-4 space-y-4">
             {% csrf_token %}
-            <div class="mb-4">
-                <label for="ownerId" class="block text-sm font-medium text-gray-300">Owner ID</label>
-                <input type="text" id="ownerId" name="owner_id" required
-                       class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white">
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">Owner ID</label>
+                <input type="text" name="owner_id" autocomplete="off" class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
             </div>
-            
-            <div class="mb-4">
-                <label for="ownerPassword" class="block text-sm font-medium text-gray-300">Password</label>
-                <input type="password" id="ownerPassword" name="password" required
-                       class="mt-1 block w-full rounded-md bg-gray-700 border-gray-600 text-white">
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-1">Password</label>
+                <input type="password" name="password" autocomplete="new-password" class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-300 mb-1">Name</label>
@@ -433,14 +430,25 @@ document.getElementById('ownerForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const formData = new FormData(this);
     const ownerId = this.dataset.ownerId;
-    const url = ownerId ? `/api/owners/${ownerId}/` : '/api/owners/';
-    const method = ownerId ? 'PUT' : 'POST';
+    
+    // Choose the correct URL based on whether we're editing or adding
+    const url = ownerId ? 
+        `/api/owners/edit/${ownerId}/` : 
+        '/api/owners/add/';
 
     fetch(url, {
-        method: method,
-        body: formData
+        method: ownerId ? 'POST' : 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        }
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.status === 'success') {
             closeOwnerModal();
@@ -448,30 +456,41 @@ document.getElementById('ownerForm').addEventListener('submit', function(e) {
         } else {
             alert('Error: ' + data.message);
         }
-    });
-});
-
-document.getElementById('employeeForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const formData = new FormData(this);
-    const employeeId = this.dataset.employeeId;
-    const url = employeeId ? `/api/staff/${employeeId}/` : '/api/staff/';
-    const method = employeeId ? 'PUT' : 'POST';
-
-    fetch(url, {
-        method: method,
-        body: formData
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === 'success') {
-            closeEmployeeModal();
-            location.reload();
-        } else {
-            alert('Error: ' + data.message);
-        }
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to save owner details. Please try again.');
     });
 });
+
+// Update delete owner function
+function deleteOwner(ownerId) {
+    if (confirm('Are you sure you want to delete this owner?')) {
+        fetch(`/api/owners/delete/${ownerId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to delete owner. Please try again.');
+        });
+    }
+}
 
 // Add this JavaScript right after your existing event handlers
 
