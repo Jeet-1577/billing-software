@@ -79,10 +79,21 @@
         height: 70vh;
         margin-bottom: 50px;
     }
-    .book-button, .release-button, .clear-button{
+    .book-button, .release-button, .clear-button {
         position: absolute;
         top: 100px; /* Adjust this value based on the height of your navbar */
         background-color: #2563eb;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 1; /* Ensure it is behind the sidebar */
+    }
+
+    .neworder-button{
+        position: absolute;
+        top: 100px; /* Adjust this value based on the height of your navbar */
         color: white;
         padding: 10px 20px;
         border-radius: 5px;
@@ -110,6 +121,9 @@
     }
     .release-button {
         left: 100px; /* Position to the right of the book button */
+    }
+    .neworder-button {
+        left: 210px; /* Position after release button */
     }
     .clear-button{
         right: 40px;
@@ -418,6 +432,7 @@
 <div class="button-container">
     <button class="book-button" onclick="bookTable()">Book</button>
     <button class="release-button" onclick="releaseTable()">Release</button>
+    <button class="neworder-button bg-red-500 hover:bg-red-700 " onclick="goToNewOrder()">New Order</button>
     <button class="clear-button" onclick="clearTable()">Clear</button>
     <button id="manageTableBtn" class="bg-red-500 hover:bg-red-700 ">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1372,6 +1387,18 @@ function editTableOrder() {
     // Redirect to inventory page
     window.location.href = '/inventory/';
 }
+
+    // Add this new function for the New Order button
+    function goToNewOrder() {
+        // Clear any stored table data
+        localStorage.removeItem('selectedTable');
+        localStorage.removeItem('selectedTableId');
+        localStorage.removeItem('editOrderData');
+        localStorage.removeItem('editMode');
+        
+        // Redirect to inventory page
+        window.location.href = '/inventory/';
+    }
 
 </script>
 
