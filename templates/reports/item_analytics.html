@@ -1,179 +1,185 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load custom_filters %}
 
 {% block title %}Item Analytics{% endblock %}
 
 {% block content %}
-<!-- Main container with improved responsiveness -->
-<div class="p-4 md:p-6 space-y-4 md:space-y-6 max-w-screen-2xl mx-auto overflow-x-hidden">
-    {% if error %}
-    <div class="bg-red-500 text-white p-4 rounded-lg mb-6">
-        {{ error }}
-    </div>
-    {% else %}
-    <!-- Top Stats Cards with better mobile layout -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-        <div class="bg-gray-800 rounded-lg p-4 shadow-lg">
-            <h3 class="text-gray-400 text-sm font-semibold">Top Selling Item</h3>
-            <p class="text-2xl font-bold text-white mt-2">
-                {{ top_item.name|default:"No data" }}
-            </p>
-            <p class="text-blue-400">
-                {% if top_item %}
-                    {{ top_item.total_quantity }} units
-                {% else %}
-                    0 units
-                {% endif %}
-            </p>
-        </div>
-        
-        <div class="bg-gray-800 rounded-lg p-4 shadow-lg">
-            <h3 class="text-gray-400 text-sm font-semibold">Highest Revenue Item</h3>
-            <p class="text-2xl font-bold text-white mt-2">{{ highest_revenue_item.name|default:"No data" }}</p>
-            <p class="text-green-400">
-                {% if highest_revenue_item %}
-                    ₹{{ highest_revenue_item.total_revenue }}
-                {% else %}
-                    ₹0
-                {% endif %}
-            </p>
-        </div>
-
-        <div class="bg-gray-800 rounded-lg p-4 shadow-lg">
-            <h3 class="text-gray-400 text-sm font-semibold">Average Order Value</h3>
-            <p class="text-2xl font-bold text-white mt-2">₹{{ avg_order_value|default:"0" }}</p>
-        </div>
-
-        <div class="bg-gray-800 rounded-lg p-4 shadow-lg">
-            <h3 class="text-gray-400 text-sm font-semibold">Total Items Sold Today</h3>
-            <p class="text-2xl font-bold text-white mt-2">{{ today_items_sold|default:"0" }}</p>
+<div class="min-h-screen bg-gray-900 p-4 lg:p-6 max-h-screen overflow-y-auto">
+    <!-- Header Section - More Compact -->
+    <div class="mb-6">
+        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4">
+            <div>
+                <h1 class="text-2xl lg:text-3xl font-bold text-white">Item Analytics</h1>
+                <p class="text-sm text-gray-400">Track and analyze your menu performance</p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+                <!-- Time Range Selector -->
+                <div class="flex bg-gray-800 rounded-lg p-1 shadow-lg">
+                    <button class="px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 text-white">Today</button>
+                    <button class="px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-white">Week</button>
+                    <button class="px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-white">Month</button>
+                </div>
+                <!-- Export Button -->
+                <button class="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white text-sm rounded-lg hover:bg-gray-700 shadow-lg">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Export Report
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Modified Layout for Side-by-Side Display with Equal Width -->
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6 min-h-[500px] xl:h-[calc(100vh-280px)]">
-        <!-- Item Performance Analysis Table -->
-        <div class="bg-gray-800 rounded-lg p-3 md:p-4 shadow-lg overflow-hidden flex flex-col">
-            <h3 class="text-lg font-semibold text-white mb-2 md:mb-4">Item Performance Analysis</h3>
-            <div class="overflow-auto flex-grow" style="scrollbar-width: none; -ms-overflow-style: none;">
-                <style>
-                    .hidden-scrollbar::-webkit-scrollbar {
-                        display: none;
-                    }
-                    .hidden-scrollbar {
-                        -ms-overflow-style: none;  /* IE and Edge */
-                        scrollbar-width: none;  /* Firefox */
-                    }
-                    .center-text {
-                        text-align: center;
-                    }
-                </style>
-                <div class="min-w-[600px] xl:min-w-0 hidden-scrollbar">
-                    {% if items_analysis %}
-                        <table class="w-full text-gray-300 table-auto">
-                            <thead class="sticky top-0 bg-gray-800 z-10">
-                                <tr class="bg-gray-700">
-                                    <th class="px-3 py-2 text-left center-text">Item Name</th>
-                                    <th class="px-3 py-2 text-left center-text">Category</th>
-                                    <th class="px-3 py-2 text-right center-text">Total Sold</th>
-                                    <th class="px-3 py-2 text-right center-text">Revenue</th>
-                                    <th class="px-3 py-2 text-right center-text">Avg. Rating</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-700">
-                                {% for item in items_analysis %}
-                                <tr class="border-b border-gray-700">
-                                    <td class="px-4 py-2 center-text">{{ item.name }}</td>
-                                    <td class="px-4 py-2 center-text">{{ item.category }}</td>
-                                    <td class="px-4 py-2 center-text">{{ item.total_sold }}</td>
-                                    <td class="px-4 py-2 center-text">₹{{ item.revenue }}</td>
-                                    <td class="px-4 py-2 center-text">{{ item.avg_rating|floatformat:1 }}</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% else %}
-                        <p class="text-gray-400 text-center py-4">No analysis data available</p>
-                    {% endif %}
+    <!-- Main Content Area - Fixed Height with Scrolling -->
+    <div class="h-[calc(100vh-12rem)] overflow-y-auto hide-scrollbar">
+        <!-- Stats Grid - More Compact -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <!-- Stats Cards -->
+            <div class="bg-gray-800/80 backdrop-blur rounded-xl p-4 border border-gray-700/50">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-medium text-gray-400">Top Selling Item</h3>
+                    <span class="text-blue-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                    </span>
+                </div>
+                <p class="text-lg font-semibold text-white">{{ top_item.name|default:"No data" }}</p>
+                <p class="text-sm text-blue-400 mt-1">{{ top_item.total_quantity|default:"0" }} units</p>
+            </div>
+            <!-- Repeat for other stat cards -->
+            <!-- ... Add 4 metric cards here ... -->
+        </div>
+
+        <!-- Two Column Layout -->
+        <div class="grid lg:grid-cols-3 gap-6">
+            <!-- Left Column - Items Performance -->
+            <div class="lg:col-span-2 bg-gray-800/80 backdrop-blur rounded-xl border border-gray-700/50 overflow-hidden">
+                <div class="p-4 border-b border-gray-700/50">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-semibold text-white">Items Performance</h2>
+                        <div class="flex gap-2">
+                            <button class="px-3 py-1.5 text-xs font-medium rounded-lg bg-gray-700 text-white">Grid</button>
+                            <button class="px-3 py-1.5 text-xs font-medium text-gray-400 hover:text-white">List</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Items Grid -->
+                <div class="p-4">
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 max-h-[calc(100vh-24rem)] overflow-y-auto hide-scrollbar">
+                        {% for item in items_analysis %}
+                        <div class="bg-gray-700/30 rounded-xl p-4 border border-gray-600/20 hover:border-blue-500/30 transition-all duration-300">
+                            <div class="flex justify-between items-start mb-3">
+                                <h3 class="text-white font-medium truncate">{{ item.name }}</h3>
+                                <span class="text-xs px-2 py-1 rounded-full 
+                                    {% if item.trend > 0 %}bg-green-500/20 text-green-400
+                                    {% else %}bg-red-500/20 text-red-400{% endif %}">
+                                    {{ item.trend }}%
+                                </span>
+                            </div>
+                            <div class="space-y-2">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-400">Sales</span>
+                                    <span class="text-white">{{ item.total_sold }}</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-400">Revenue</span>
+                                    <span class="text-white">₹{{ item.revenue }}</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-400">Rating</span>
+                                    <span class="text-yellow-400">★ {{ item.avg_rating|floatformat:1 }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Analytics -->
+            <div class="space-y-6">
+                <!-- Category Performance -->
+                <div class="bg-gray-800/80 backdrop-blur rounded-xl border border-gray-700/50 p-4">
+                    <h3 class="text-lg font-semibold text-white mb-4">Category Performance</h3>
+                    <div class="space-y-4">
+                        {% for category in top_categories %}
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-300">{{ category.name }}</span>
+                                <span class="text-white">{{ category.revenue }}</span>
+                            </div>
+                            <div class="h-2 bg-gray-700 rounded-full overflow-hidden">
+                                <div class="h-full bg-blue-500 rounded-full" 
+                                     style="width: {{ category.percentage }}%"></div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Top Items Chart -->
+                <div class="bg-gray-800/80 backdrop-blur rounded-xl border border-gray-700/50 p-4">
+                    <h3 class="text-lg font-semibold text-white mb-4">Top Items</h3>
+                    <div class="h-[300px]">
+                        <canvas id="topItemsChart"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
-
-        <!-- Top Selling Items Chart - Increased size -->
-        <div class="bg-gray-800 rounded-lg p-3 md:p-4 shadow-lg flex flex-col">
-            <h3 class="text-lg font-semibold text-white mb-2 md:mb-4">Top Selling Items</h3>
-            <!-- Improved container with explicit canvas styling -->
-            <div class="flex-1 relative min-h-[500px] w-full">
-                <canvas id="topSellingItemsChart" style="width: 100%; height: 100%; display: block;"></canvas>
-            </div>
-        </div>
     </div>
-    {% endif %}
 </div>
+
+<!-- Add this style block -->
+<style>
+    .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .hide-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+</style>
 {% endblock %}
 
 {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-<style>
-    /* Additional styling to ensure canvas fills container */
-    canvas#topSellingItemsChart {
-        width: 100% !important;
-        height: 100% !important;
-        min-height: 450px;
-        max-height: 600px;
-    }
-</style>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("DOM loaded, testing simple chart...");
-    
-    // TESTING: Create a very simple test chart
-    try {
-        const ctx = document.getElementById('topSellingItemsChart');
-        
-        // Log canvas dimensions
-        console.log('Canvas dimensions:', {
-            width: ctx.width, 
-            height: ctx.height,
-            clientWidth: ctx.clientWidth,
-            clientHeight: ctx.clientHeight,
-            offsetWidth: ctx.offsetWidth,
-            offsetHeight: ctx.offsetHeight
-        });
-
-        // Create simple test data
-        const testLabels = ['Test 1', 'Test 2', 'Test 3', 'Test 4', 'Test 5'];
-        const testData = [12, 19, 3, 5, 2];
-        
-        console.log('Using test data:', {labels: testLabels, data: testData});
-        
-        // Create a simple pie chart
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Top Performers Chart
+        const ctx = document.getElementById('topPerformersChart').getContext('2d');
         new Chart(ctx, {
-            type: 'pie',
+            type: 'doughnut',
             data: {
-                labels: testLabels,
+                labels: {{ top_items_labels|safe }},
                 datasets: [{
-                    data: testData,
+                    data: {{ top_items_data|safe }},
                     backgroundColor: [
-                        'rgba(255, 99, 132, 0.8)',
-                        'rgba(54, 162, 235, 0.8)',
-                        'rgba(255, 206, 86, 0.8)',
-                        'rgba(75, 192, 192, 0.8)',
-                        'rgba(153, 102, 255, 0.8)'
-                    ],
-                    borderWidth: 1
+                        'rgba(59, 130, 246, 0.8)',
+                        'rgba(16, 185, 129, 0.8)',
+                        'rgba(249, 115, 22, 0.8)',
+                        'rgba(139, 92, 246, 0.8)',
+                        'rgba(236, 72, 153, 0.8)'
+                    ]
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: 'white',
+                            padding: 10
+                        }
+                    }
+                }
             }
         });
-        
-        console.log('Test chart created successfully');
-    } catch (error) {
-        console.error('Error creating test chart:', error);
-    }
-});
+    });
 </script>
 {% endblock %}
