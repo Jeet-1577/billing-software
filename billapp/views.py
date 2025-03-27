@@ -743,41 +743,56 @@ def save_table_order(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
+            print("Received table order data:", data)  # Debug log
             
-            # Get or create the table
             table_number = data.get('table_number')
             table = Table.objects.get_or_create(
                 number=table_number,
-                defaults={
-                    'is_booked': True,
-                    'is_active': True
-                }
+                defaults={'is_active': True}
             )[0]
-            
-            # Create the table order
-            table_order = TableOrder.objects.create(
-                table_order_id=data.get('table_order_id'),
-                table_number=table_number,  # Set table_number
-                table=table,  # Set table relationship
-                items=data.get('items', []),
-                subtotal=data.get('subtotal', 0),
-                gst_amount=data.get('gst_amount', 0),
-                grand_total=data.get('grand_total', 0),
-                payment_type=data.get('payment_type', 'CASH'),
-                order_type=data.get('order_type', 'DINE_IN'),
-                status=data.get('status', 'active'),
-                saved_time=timezone.now()
-            )
-            
+
+            # Check for existing active order for this table
+            existing_order = TableOrder.objects.filter(
+                table=table,
+                status='active'
+            ).first()
+
+            if existing_order:
+                # Update existing order
+                existing_order.items = data.get('items', [])
+                existing_order.subtotal = data.get('subtotal', 0)
+                existing_order.gst_amount = data.get('gst_amount', 0)
+                existing_order.grand_total = data.get('grand_total', 0)
+                existing_order.payment_type = data.get('payment_type', 'CASH')
+                existing_order.order_type = data.get('order_type', 'DINE_IN')
+                existing_order.save()
+                
+                print(f"Updated existing order: {existing_order.table_order_id}")
+                table_order = existing_order
+            else:
+                # Create new order
+                table_order = TableOrder.objects.create(
+                    table_order_id=data.get('table_order_id'),
+                    table_number=table_number,
+                    table=table,
+                    items=data.get('items', []),
+                    subtotal=data.get('subtotal', 0),
+                    gst_amount=data.get('gst_amount', 0),
+                    grand_total=data.get('grand_total', 0),
+                    payment_type=data.get('payment_type', 'CASH'),
+                    order_type=data.get('order_type', 'DINE_IN'),
+                    status='active',
+                    saved_time=timezone.now()
+                )
+                print(f"Created new order: {table_order.table_order_id}")
+
             # Update table status
             table.is_booked = True
             table.save()
 
-            print(f"Created table order: {table_order.table_order_id} for table: {table.number}")
-            
             return JsonResponse({
                 'status': 'success',
-                'message': 'Order saved successfully.',
+                'message': 'Order saved successfully',
                 'table_order_id': table_order.table_order_id,
                 'table_number': table.number
             })
@@ -788,9 +803,10 @@ def save_table_order(request):
                 'status': 'error',
                 'error': str(e)
             })
+            
     return JsonResponse({
         'status': 'error',
-        'error': 'Invalid request method.'
+        'error': 'Invalid request method'
     })
 
 @csrf_exempt
