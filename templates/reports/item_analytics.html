@@ -50,10 +50,10 @@
         </div>
     </div>
 
-    <!-- Modified Layout for Side-by-Side Display with Better Responsiveness -->
-    <div class="flex flex-col xl:flex-row gap-4 md:gap-6 min-h-[425px] xl:h-[calc(100vh-320px)]">
+    <!-- Modified Layout for Side-by-Side Display with Equal Width -->
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6 min-h-[500px] xl:h-[calc(100vh-280px)]">
         <!-- Item Performance Analysis Table -->
-        <div class="w-full xl:w-2/3 bg-gray-800 rounded-lg p-3 md:p-4 shadow-lg overflow-hidden flex flex-col">
+        <div class="bg-gray-800 rounded-lg p-3 md:p-4 shadow-lg overflow-hidden flex flex-col">
             <h3 class="text-lg font-semibold text-white mb-2 md:mb-4">Item Performance Analysis</h3>
             <div class="overflow-auto flex-grow" style="scrollbar-width: none; -ms-overflow-style: none;">
                 <style>
@@ -99,11 +99,12 @@
             </div>
         </div>
 
-        <!-- Top Selling Items Chart -->
-        <div class="w-full xl:w-1/3 bg-gray-800 rounded-lg p-3 md:p-4 shadow-lg">
+        <!-- Top Selling Items Chart - Increased size -->
+        <div class="bg-gray-800 rounded-lg p-3 md:p-4 shadow-lg flex flex-col">
             <h3 class="text-lg font-semibold text-white mb-2 md:mb-4">Top Selling Items</h3>
-            <div class="relative h-[280px]">
-                <canvas id="topSellingItemsChart"></canvas>
+            <!-- Improved container with explicit canvas styling -->
+            <div class="flex-1 relative min-h-[500px] w-full">
+                <canvas id="topSellingItemsChart" style="width: 100%; height: 100%; display: block;"></canvas>
             </div>
         </div>
     </div>
@@ -113,107 +114,66 @@
 
 {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<style>
+    /* Additional styling to ensure canvas fills container */
+    canvas#topSellingItemsChart {
+        width: 100% !important;
+        height: 100% !important;
+        min-height: 450px;
+        max-height: 600px;
+    }
+</style>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('topSellingItemsChart');
-    if (!ctx) {
-        console.error('Cannot find topSellingItemsChart canvas element');
-        return;
-    }
+    console.log("DOM loaded, testing simple chart...");
+    
+    // TESTING: Create a very simple test chart
+    try {
+        const ctx = document.getElementById('topSellingItemsChart');
+        
+        // Log canvas dimensions
+        console.log('Canvas dimensions:', {
+            width: ctx.width, 
+            height: ctx.height,
+            clientWidth: ctx.clientWidth,
+            clientHeight: ctx.clientHeight,
+            offsetWidth: ctx.offsetWidth,
+            offsetHeight: ctx.offsetHeight
+        });
 
-    const labels = {{ top_items_labels|safe }};
-    const data = {{ top_items_data|safe }};
-
-    console.log('Labels:', labels);
-    console.log('Data:', data);
-
-    if (labels.length === 0 || data.length === 0) {
-        console.warn('No data available for the chart');
-        return;
-    }
-
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Top Selling Items',
-                data: data,
-                backgroundColor: [
-                    'rgba(255, 99, 132, 0.2)',
-                    'rgba(54, 162, 235, 0.2)',
-                    'rgba(255, 206, 86, 0.2)',
-                    'rgba(75, 192, 192, 0.2)',
-                    'rgba(153, 102, 255, 0.2)'
-                ],
-                borderColor: [
-                    'rgba(255, 99, 132, 1)',
-                    'rgba(54, 162, 235, 1)',
-                    'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)',
-                    'rgba(153, 102, 255, 1)'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'top',
-                    labels: {
-                        color: 'rgba(255, 255, 255, 0.7)'
-                    }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(17, 24, 39, 0.9)',
-                    titleColor: 'rgba(255, 255, 255, 0.9)',
-                    bodyColor: 'rgba(255, 255, 255, 0.9)',
-                    padding: 12,
-                    displayColors: false,
-                    callbacks: {
-                        label: function(context) {
-                            return `${context.label}: ${context.raw}`;
-                        }
-                    }
-                }
+        // Create simple test data
+        const testLabels = ['Test 1', 'Test 2', 'Test 3', 'Test 4', 'Test 5'];
+        const testData = [12, 19, 3, 5, 2];
+        
+        console.log('Using test data:', {labels: testLabels, data: testData});
+        
+        // Create a simple pie chart
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: testLabels,
+                datasets: [{
+                    data: testData,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 206, 86, 0.8)',
+                        'rgba(75, 192, 192, 0.8)',
+                        'rgba(153, 102, 255, 0.8)'
+                    ],
+                    borderWidth: 1
+                }]
             },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)',
-                        drawBorder: false,
-                    },
-                    ticks: {
-                        color: 'rgba(255, 255, 255, 0.7)',
-                        font: {
-                            size: 10
-                        },
-                        padding: 8,
-                        maxTicksLimit: 5,
-                        callback: function(value) {
-                            return value + ' units';
-                        }
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    },
-                    ticks: {
-                        color: 'rgba(255, 255, 255, 0.7)',
-                        font: {
-                            size: 10
-                        },
-                        maxRotation: 45,
-                        minRotation: 45
-                    }
-                }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
             }
-        }
-    });
+        });
+        
+        console.log('Test chart created successfully');
+    } catch (error) {
+        console.error('Error creating test chart:', error);
+    }
 });
 </script>
 {% endblock %}
