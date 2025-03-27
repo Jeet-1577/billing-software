@@ -2420,31 +2420,43 @@ def login_view(request):
         user_id = request.POST.get('user_id')
         password = request.POST.get('password')
         
-        # Try to authenticate as owner
+        print(f"Login attempt - User ID: {user_id}")  # Debug log 
+        
         try:
-            owner = Owner.objects.get(owner_id=user_id)
-            if owner.check_password(password):
-                # Set session variables
-                request.session['user_type'] = 'owner'
-                request.session['user_id'] = owner.id
-                return redirect('index')
-        except Owner.DoesNotExist:
-            pass
-
-        # Try to authenticate as employee
-        try:
-            employee = Employee.objects.get(employee_id=user_id)
-            if employee.check_password(password):
-                # Set session variables
-                request.session['user_type'] = 'employee'
-                request.session['user_id'] = employee.id
-                return redirect('index')
-        except Employee.DoesNotExist:
-            pass
-
-        # If authentication failed
-        return render(request, 'auth/login.html', {'error': 'Invalid credentials'})
-
+            # First try to find an owner
+            owner = Owner.objects.filter(owner_id=user_id).first()
+            if owner:
+                print("Found owner, checking password")  # Debug log
+                if owner.check_password(password):
+                    print("Owner password verified")  # Debug log
+                    request.session['user_type'] = 'owner'
+                    request.session['user_id'] = owner.id
+                    return redirect('index')
+                else:
+                    print("Owner password mismatch")  # Debug log
+                    return render(request, 'auth/login.html', {'error': 'Invalid credentials'})
+            
+            # If no owner found, try to find an employee
+            employee = Employee.objects.filter(employee_id=user_id).first()
+            if employee:
+                print("Found employee, checking password")  # Debug log
+                if employee.check_password(password):
+                    print("Employee password verified")  # Debug log
+                    request.session['user_type'] = 'employee'
+                    request.session['user_id'] = employee.id
+                    return redirect('index')
+                else:
+                    print("Employee password mismatch")  # Debug log
+                    return render(request, 'auth/login.html', {'error': 'Invalid credentials'})
+            
+            # If neither owner nor employee found
+            print("No user found with provided ID")  # Debug log
+            return render(request, 'auth/login.html', {'error': 'Invalid credentials'})
+            
+        except Exception as e:
+            print(f"Login error: {str(e)}")  # Debug log
+            return render(request, 'auth/login.html', {'error': 'An error occurred during login'})
+    
     return render(request, 'auth/login.html')
 
 def logout_view(request):

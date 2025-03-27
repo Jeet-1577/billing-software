@@ -121,6 +121,7 @@ class Employee(models.Model):
         self.password = make_password(raw_password)
 
     def check_password(self, raw_password):
+        """Verify the employee's password"""
         return check_password(raw_password, self.password)
 
     def save(self, *args, **kwargs):
@@ -255,29 +256,26 @@ class Owner(models.Model):
         self.password = make_password(raw_password)
 
     def check_password(self, raw_password):
+        """Verify the owner's password"""
         return check_password(raw_password, self.password)
 
     def save(self, *args, **kwargs):
+        # Hash password if it's not already hashed
+        if self.password and not self.password.startswith(('pbkdf2_sha256$', 'bcrypt$', 'argon2')):
+            self.password = make_password(self.password)
+        
+        # Generate owner_id if not set
         if not self.owner_id:
-            # Get the highest existing owner_id
-            last_owner = Owner.objects.filter(
-                owner_id__startswith='OWN'
-            ).order_by('-owner_id').first()
-
+            last_owner = Owner.objects.order_by('-owner_id').first()
             if last_owner and last_owner.owner_id:
                 try:
-                    # Extract number and increment
                     last_num = int(last_owner.owner_id[3:])
                     self.owner_id = f'OWN{str(last_num + 1).zfill(3)}'
                 except (ValueError, IndexError):
-                    # If there's an error parsing the last owner_id, start fresh
                     self.owner_id = 'OWN001'
             else:
-                # If no existing owner_id found, start with OWN001
                 self.owner_id = 'OWN001'
         
-        if self.password and not self.password.startswith(('pbkdf2_sha256$', 'bcrypt$', 'argon2')):
-            self.password = make_password(self.password)
         super().save(*args, **kwargs)
 
     def __str__(self):
