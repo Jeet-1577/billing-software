@@ -22,13 +22,13 @@ from decimal import Decimal
 from django.db import transaction
 from django.db import models  # Ensure this import is present
 from django.template import loader
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_http_methods
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, Avg, Value, F, IntegerField, FloatField, DecimalField, Count  # Add Count here
-from django.db.models.functions import TruncDate, Coalesce, Cast, ExtractHour, TruncHour  # Add Cast and ExtractHour here
+from django.db.models.functions import TruncDate, Coalesce, Cast, ExtractHour, TruncHour, TruncDay, TruncMonth  # Add Cast, ExtractHour, TruncDay, TruncMonth here
 import logging
 from django.contrib.auth.hashers import check_password
 from django.contrib import messages
@@ -39,7 +39,6 @@ from django.template.loader import render_to_string
 import tempfile
 from django.core.mail import EmailMessage
 import pdfkit  # You'll need to pip install pdfkit and install wkhtmltopdf
-from django.views.decorators.http import require_http_methods
 from django.core.files.storage import default_storage
 
 logger = logging.getLogger(__name__)
@@ -1380,6 +1379,94 @@ def item_analytics(request):
             'top_items_labels': '[]',
             'top_items_data': '[]'
         })
+
+@require_http_methods(["GET"])
+def get_item_historical_sales(request, item_id):
+    try:
+        # Get first sale date
+        first_sale = OrderItem.objects.filter(item_id=item_id).order_by('created_at').first()
+        
+        # If no sales found, return empty dataset
+        if not first_sale:
+            return JsonResponse({
+                'status': 'success',
+                'data': {
+                    'type': 'daily',
+                    'data': [],
+                    'start_date': timezone.now().isoformat()
+                }
+            })
+
+        now = timezone.now()
+        first_date = first_sale.created_at
+        date_diff = (now - first_date).days
+
+        # Choose time frame based on date difference
+        if date_diff <= 7:  # Within a week
+            # Get hourly data
+            sales_data = OrderItem.objects.filter(
+                item_id=item_id,
+                created_at__gte=first_date
+            ).annotate(
+                hour=TruncHour('created_at')
+            ).values('hour').annotate(
+                total_sales=Sum('quantity')
+            ).order_by('hour')
+            
+            data_type = 'hourly'
+            date_key = 'hour'
+            
+        elif date_diff <= 30:  # Within a month
+            # Get daily data
+            sales_data = OrderItem.objects.filter(
+                item_id=item_id,
+                created_at__gte=first_date
+            ).annotate(
+                day=TruncDay('created_at')
+            ).values('day').annotate(
+                total_sales=Sum('quantity')
+            ).order_by('day')
+            
+            data_type = 'daily'
+            date_key = 'day'
+            
+        else:  # More than a month
+            # Get monthly data
+            sales_data = OrderItem.objects.filter(
+                item_id=item_id,
+                created_at__gte=first_date
+            ).annotate(
+                month=TruncMonth('created_at')
+            ).values('month').annotate(
+                total_sales=Sum('quantity')
+            ).order_by('month')
+            
+            data_type = 'monthly'
+            date_key = 'month'
+
+        # Format the data for the response
+        formatted_data = []
+        for entry in sales_data:
+            formatted_data.append({
+                date_key: entry[date_key].isoformat() if entry.get(date_key) else None,
+                'total_sales': entry['total_sales']
+            })
+
+        return JsonResponse({
+            'status': 'success',
+            'data': {
+                'type': data_type,
+                'data': formatted_data,
+                'start_date': first_date.isoformat()
+            }
+        })
+        
+    except Exception as e:
+        logging.error(f"Error in get_item_historical_sales: {str(e)}")
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=500)
 
 def customer_insights(request):
     # Get table usage stats
