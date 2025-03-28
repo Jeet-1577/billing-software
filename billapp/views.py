@@ -2479,5 +2479,33 @@ def logout_view(request):
     request.session.flush()
     return redirect('login')
 
+from django.http import JsonResponse
+from django.utils import timezone
+from datetime import timedelta
+
+def get_realtime_item_sales(request, item_id):
+    """Returns the real-time sales data for a specific item"""
+    try:
+        # Get sales for the last minute
+        now = timezone.now()
+        last_minute = now - timedelta(minutes=1)
+        
+        # Replace this with your actual sales calculation logic
+        sales_count = OrderItem.objects.filter(
+            item_id=item_id,
+            created_at__gte=last_minute
+        ).count()
+
+        return JsonResponse({
+            'status': 'success',
+            'sales': sales_count,
+            'timestamp': now.isoformat()
+        })
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'error': str(e)
+        }, status=400)
+
 
 

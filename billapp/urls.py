@@ -74,4 +74,5 @@ urlpatterns += [
     path('reports/financial/share/', views.share_report, name='share_report'),
     path('feedback/', views.feedback, name='feedback'),
     path('submit-feedback/', views.submit_feedback, name='submit_feedback'),
+    path('api/item-sales/<int:item_id>/realtime/', views.get_realtime_item_sales, name='realtime_item_sales'),
 ]

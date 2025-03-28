@@ -705,6 +705,10 @@
     }
 
     function closeItemModal() {
+        if (window.chartUpdateInterval) {
+            clearInterval(window.chartUpdateInterval);
+        }
+        
         const modal = document.getElementById('itemDetailsModal');
         const modalContainer = document.getElementById('modalContainer');
         
@@ -721,28 +725,29 @@
     function initializeItemPerformanceChart(itemData) {
         const ctx = document.getElementById('itemPerformanceChart').getContext('2d');
         
-        // Clear any existing chart
         if (window.itemChart) {
             window.itemChart.destroy();
         }
         
-        // Create gradient for the chart area
         const areaGradient = ctx.createLinearGradient(0, 0, 0, 300);
         areaGradient.addColorStop(0, 'rgba(59, 130, 246, 0.3)');
         areaGradient.addColorStop(1, 'rgba(59, 130, 246, 0.02)');
         
-        // Generate realistic sample data if not provided
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-        const salesHistory = itemData.sales_history || generateSampleData();
+        const initialLabels = Array.from({length: 10}, (_, i) => {
+            const d = new Date();
+            d.setMinutes(d.getMinutes() - (9 - i));
+            return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        });
         
-        // Create new chart with enhanced styling
+        const initialData = Array(10).fill(0);
+        
         window.itemChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: months,
+                labels: initialLabels,
                 datasets: [{
-                    label: 'Units Sold',
-                    data: salesHistory,
+                    label: 'Sales (Last 10 Minutes)',
+                    data: initialData,
                     borderColor: 'rgb(59, 130, 246)',
                     backgroundColor: areaGradient,
                     borderWidth: 2,
@@ -761,6 +766,10 @@
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: {
+                    duration: 750,
+                    easing: 'easeInOutQuart'
+                },
                 layout: {
                     padding: {
                         left: 5,
@@ -800,9 +809,7 @@
                         },
                         ticks: {
                             color: 'rgba(255, 255, 255, 0.7)',
-                            font: {
-                                size: 9
-                            },
+                            font: { size: 9 },
                             padding: 4,
                             maxTicksLimit: 5,
                             callback: function(value) {
@@ -811,36 +818,53 @@
                         }
                     },
                     x: {
-                        grid: {
-                            display: false
-                        },
+                        grid: { display: false },
                         ticks: {
                             color: 'rgba(255, 255, 255, 0.7)',
-                            font: {
-                                size: 9
-                            },
+                            font: { size: 9 },
                             maxRotation: 0,
                             maxTicksLimit: 6
                         }
-                    },
-                },
-                elements: {
-                    line: {
-                        borderJoinStyle: 'round'
                     }
                 }
             }
         });
+
+        startRealTimeUpdates(itemData.id);
     }
 
-    // Helper function to generate realistic sample data
-    function generateSampleData() {
-        // Generate some realistic looking data for the chart
-        const baseValue = Math.floor(Math.random() * 50) + 20;  // Base value between 20-70
-        return Array.from({length: 6}, () => {
-            // Add some variance to the base value
-            return Math.max(0, Math.floor(baseValue + (Math.random() * 40) - 20));
-        });
+    function startRealTimeUpdates(itemId) {
+        if (window.chartUpdateInterval) {
+            clearInterval(window.chartUpdateInterval);
+        }
+
+        window.chartUpdateInterval = setInterval(() => {
+            const now = new Date();
+            const newLabel = now.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+
+            fetch(`/api/item-sales/${itemId}/realtime/`)
+                .then(response => response.json())
+                .then(data => {
+                    const chart = window.itemChart;
+                    
+                    chart.data.labels.shift();
+                    chart.data.labels.push(newLabel);
+                    
+                    chart.data.datasets[0].data.shift();
+                    chart.data.datasets[0].data.push(data.sales);
+
+                    const lastIndex = chart.data.datasets[0].data.length - 1;
+                    chart.data.datasets[0].pointBackgroundColor = Array(lastIndex)
+                        .fill('rgb(96, 165, 250)')
+                        .concat(['rgb(34, 197, 94)']);
+                    
+                    chart.update('none');
+                })
+                .catch(error => console.error('Error fetching real-time data:', error));
+        }, 60000);
     }
 </script>
 {% endblock %}
