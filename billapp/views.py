@@ -1383,81 +1383,80 @@ def item_analytics(request):
 @require_http_methods(["GET"])
 def get_item_historical_sales(request, item_id):
     try:
-        # Get first sale date
-        first_sale = OrderItem.objects.filter(item_id=item_id).order_by('created_at').first()
+        # Check if a specific timeframe was requested
+        timeframe = request.GET.get('timeframe', 'auto')
         
-        # If no sales found, return empty dataset
-        if not first_sale:
-            return JsonResponse({
-                'status': 'success',
-                'data': {
-                    'type': 'daily',
-                    'data': [],
-                    'start_date': timezone.now().isoformat()
-                }
-            })
-
-        now = timezone.now()
-        first_date = first_sale.created_at
-        date_diff = (now - first_date).days
-
-        # Choose time frame based on date difference
-        if date_diff <= 7:  # Within a week
-            # Get hourly data
-            sales_data = OrderItem.objects.filter(
-                item_id=item_id,
-                created_at__gte=first_date
-            ).annotate(
-                hour=TruncHour('created_at')
-            ).values('hour').annotate(
-                total_sales=Sum('quantity')
-            ).order_by('hour')
-            
-            data_type = 'hourly'
-            date_key = 'hour'
-            
-        elif date_diff <= 30:  # Within a month
-            # Get daily data
-            sales_data = OrderItem.objects.filter(
-                item_id=item_id,
-                created_at__gte=first_date
-            ).annotate(
-                day=TruncDay('created_at')
-            ).values('day').annotate(
-                total_sales=Sum('quantity')
-            ).order_by('day')
-            
-            data_type = 'daily'
-            date_key = 'day'
-            
-        else:  # More than a month
-            # Get monthly data
-            sales_data = OrderItem.objects.filter(
-                item_id=item_id,
-                created_at__gte=first_date
-            ).annotate(
-                month=TruncMonth('created_at')
-            ).values('month').annotate(
-                total_sales=Sum('quantity')
-            ).order_by('month')
-            
-            data_type = 'monthly'
+        # Create date range for the query
+        end_date = timezone.now()
+        
+        if timeframe == 'monthly':
+            # For monthly view, get up to 12 months of data
+            start_date = end_date - timedelta(days=365)
+            date_trunc_function = TruncMonth
             date_key = 'month'
-
+        elif timeframe == 'daily':
+            # For daily view, get up to 30 days of data
+            start_date = end_date - timedelta(days=30)
+            date_trunc_function = TruncDay
+            date_key = 'day'
+        elif timeframe == 'hourly':
+            # For hourly view, get up to 24 hours of data
+            start_date = end_date - timedelta(days=1)
+            date_trunc_function = TruncHour
+            date_key = 'hour'
+        else:  # 'auto' - determine based on data availability
+            # First, check if we have any sales for this item
+            first_sale = OrderItem.objects.filter(item_id=item_id).order_by('created_at').first()
+            
+            if not first_sale:
+                return JsonResponse({
+                    'status': 'success',
+                    'data': {
+                        'type': 'monthly',
+                        'data': [],
+                        'start_date': timezone.now().isoformat()
+                    }
+                })
+            
+            start_date = first_sale.created_at
+            date_diff = (end_date - start_date).days
+            
+            # Choose time frame based on date difference
+            if date_diff <= 7:  # Within a week
+                date_trunc_function = TruncHour
+                date_key = 'hour'
+            elif date_diff <= 60:  # Within two months
+                date_trunc_function = TruncDay
+                date_key = 'day'
+            else:  # More than two months
+                date_trunc_function = TruncMonth
+                date_key = 'month'
+        
+        # Query the data with the appropriate date truncation
+        sales_data = OrderItem.objects.filter(
+            item_id=item_id,
+            created_at__gte=start_date,
+            created_at__lte=end_date
+        ).annotate(
+            date=date_trunc_function('created_at')
+        ).values('date').annotate(
+            total_sales=Sum('quantity')
+        ).order_by('date')
+        
         # Format the data for the response
         formatted_data = []
         for entry in sales_data:
             formatted_data.append({
-                date_key: entry[date_key].isoformat() if entry.get(date_key) else None,
+                date_key: entry['date'].isoformat() if entry.get('date') else None,
                 'total_sales': entry['total_sales']
             })
 
         return JsonResponse({
             'status': 'success',
             'data': {
-                'type': data_type,
+                'type': date_key,
                 'data': formatted_data,
-                'start_date': first_date.isoformat()
+                'start_date': start_date.isoformat()
             }
         })
         

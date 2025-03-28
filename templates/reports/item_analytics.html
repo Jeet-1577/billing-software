@@ -743,10 +743,10 @@
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
         ctx.textAlign = 'center';
-        ctx.fillText('Loading data...', ctx.canvas.width / 2, ctx.canvas.height / 2);
+        ctx.fillText('Loading monthly sales data...', ctx.canvas.width / 2, ctx.canvas.height / 2);
 
-        // Fetch historical sales data with proper item ID
-        fetch(`/api/item-historical-sales/${itemId}/`)
+        // Always fetch monthly data with the timeframe parameter
+        fetch(`/api/item-historical-sales/${itemId}/?timeframe=monthly`)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -754,70 +754,80 @@
                 return response.json();
             })
             .then(response => {
-                // Handle API response to create chart (use dummy data if empty)
+                // Handle API response to create chart
                 if (response.status === 'success') {
                     const history = response.data || {};
                     const data = history.data || [];
                     
-                    // If no data, use dummy data for demonstration
+                    // If no data, use consistent (non-random) dummy data
                     if (!data.length) {
-                        renderDummyChart(ctx, itemData);
+                        renderMonthlyDummyChart(ctx, itemData);
                         return;
                     }
                     
-                    // Format data based on type
+                    // Format data
                     const labels = [];
                     const salesData = [];
                     
                     data.forEach(entry => {
-                        let label;
-                        let dateValue;
-                        
-                        // Determine which date field to use based on the type
-                        if (history.type === 'hourly') {
-                            dateValue = entry.hour;
-                        } else if (history.type === 'daily') {
-                            dateValue = entry.day;
-                        } else {
-                            dateValue = entry.month;
-                        }
+                        let dateValue = entry.month || entry.date;
                         
                         if (dateValue) {
                             const date = new Date(dateValue);
-                            
-                            if (history.type === 'hourly') {
-                                label = date.toLocaleTimeString('en-US', {
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                });
-                            } else if (history.type === 'daily') {
-                                label = date.toLocaleDateString('en-US', {
-                                    month: 'short',
-                                    day: 'numeric'
-                                });
-                            } else {
-                                label = date.toLocaleDateString('en-US', {
-                                    month: 'short',
-                                    year: '2-digit'
-                                });
-                            }
+                            const label = date.toLocaleDateString('en-US', {
+                                month: 'short',
+                                year: '2-digit'
+                            });
                             
                             labels.push(label);
                             salesData.push(entry.total_sales);
                         }
                     });
                     
-                    createChart(ctx, labels, salesData, areaGradient, history.type);
+                    createChart(ctx, labels, salesData, areaGradient, 'Monthly');
                 } else {
-                    // If API returns error status, show dummy data
-                    renderDummyChart(ctx, itemData);
+                    // If API returns error status, show consistent dummy data
+                    renderMonthlyDummyChart(ctx, itemData);
                 }
             })
             .catch(error => {
                 console.error('Error fetching historical data:', error);
-                // On error, render dummy chart instead of error message
-                renderDummyChart(ctx, itemData);
+                // On error, render consistent dummy chart
+                renderMonthlyDummyChart(ctx, itemData);
             });
+    }
+
+    // Function to render consistent (non-random) dummy monthly chart
+    function renderMonthlyDummyChart(ctx, itemData) {
+        // Generate consistent monthly data based on the item's ID
+        const labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const currentMonth = new Date().getMonth(); // 0-11
+        const displayLabels = [];
+        const data = [];
+        
+        // Show last 6 months including current month
+        for (let i = 5; i >= 0; i--) {
+            const monthIndex = (currentMonth - i + 12) % 12; // Ensure it wraps around properly
+            displayLabels.push(labels[monthIndex]);
+            
+            // Use item.total_sold as a basis but make it deterministic instead of random
+            // We use the item ID and month to generate consistent values
+            const itemIdSeed = itemData.id ? parseInt(itemData.id) : 5;
+            const baseValue = itemData.total_sold ? Math.floor(itemData.total_sold / 6) : 5;
+            const monthFactor = (monthIndex + 1) / 3; // Different factor for each month
+            
+            // Generate a predictable value that varies by item ID and month but stays constant
+            const value = Math.max(1, Math.floor(baseValue * monthFactor * (1 + (itemIdSeed % 5) / 10)));
+            data.push(value);
+        }
+        
+        // Create gradient
+        const areaGradient = ctx.createLinearGradient(0, 0, 0, 300);
+        areaGradient.addColorStop(0, 'rgba(59, 130, 246, 0.3)');
+        areaGradient.addColorStop(1, 'rgba(59, 130, 246, 0.02)');
+        
+        // Create the chart with consistent monthly data
+        createChart(ctx, displayLabels, data, areaGradient, 'Monthly');
     }
 
     // Function to create a chart with real data
@@ -891,34 +901,6 @@
                 }
             }
         });
-    }
-
-    // Function to render a dummy chart when no data is available
-    function renderDummyChart(ctx, itemData) {
-        // Generate sample data for demonstration
-        const today = new Date();
-        const labels = [];
-        const data = [];
-        
-        // Create 7 days of sample data
-        for (let i = 6; i >= 0; i--) {
-            const date = new Date();
-            date.setDate(today.getDate() - i);
-            labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-            
-            // Generate random sales between 0-20 based on item's total_sold
-            const baseSales = itemData.total_sold ? Math.floor(itemData.total_sold / 7) : 5;
-            const randomVariation = Math.floor(Math.random() * 8) - 3; // -3 to +5
-            data.push(Math.max(0, baseSales + randomVariation));
-        }
-        
-        // Create gradient
-        const areaGradient = ctx.createLinearGradient(0, 0, 0, 300);
-        areaGradient.addColorStop(0, 'rgba(59, 130, 246, 0.3)');
-        areaGradient.addColorStop(1, 'rgba(59, 130, 246, 0.02)');
-        
-        // Create the chart with sample data
-        createChart(ctx, labels, data, areaGradient, 'daily');
     }
 </script>
 {% endblock %}
