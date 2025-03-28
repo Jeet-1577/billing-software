@@ -191,6 +191,20 @@
                 <div id="listView" class="hidden divide-y divide-gray-700/50">
                     {% for item in items_analysis %}
                     <div class="flex items-center py-4 hover:bg-gray-700/20 transition-colors rounded-lg px-4 group">
+                        <!-- Store the JSON data properly -->
+                        <script id="item-data-{{ forloop.counter }}" type="application/json">
+                            {
+                                "name": "{{ item.name }}",
+                                "category": "{{ item.category }}",
+                                "total_sold": {{ item.total_sold|default:0 }},
+                                "revenue": {{ item.revenue|default:0 }},
+                                "avg_rating": {{ item.avg_rating|default:"0"|floatformat:1 }},
+                                "trend": {{ item.trend|default:0 }},
+                                "performance_score": {{ item.performance_score|default:50 }},
+                                "sales_history": [10, 15, 8, 20, 12, 25]
+                            }
+                        </script>
+
                         <!-- Item Info Section -->
                         <div class="flex-1 min-w-0 flex items-center space-x-4">
                             <!-- Item Icon -->
@@ -239,8 +253,9 @@
                             </div>
                         </div>
 
-                        <!-- Action Button -->
-                        <button class="ml-8 p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700/50 transition-colors">
+                        <!-- Action Button - Fix the onclick function -->
+                        <button onclick="showItemDetails('item-data-{{ forloop.counter }}')" 
+                                class="ml-8 p-2 text-gray-400 hover:text-white rounded-lg hover:bg-gray-700/50 transition-colors">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                             </svg>
@@ -303,6 +318,113 @@
     </div>
 </div>
 
+<!-- Replace the modal markup with this optimized version -->
+<div id="itemDetailsModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden z-50 flex items-center justify-center">
+    <div class="fixed inset-0" onclick="closeItemModal()"></div>
+    <div id="modalContainer" 
+         class="w-[600px] bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-2xl border border-gray-700/50 overflow-hidden transition-all duration-300 scale-95 opacity-0">
+        <!-- Modal Header - Slightly reduced padding -->
+        <div class="bg-gradient-to-r from-gray-800/80 to-gray-900/80 backdrop-blur-sm px-3 py-2 border-b border-gray-700/50">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <!-- Item Icon -->
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-600/20 to-blue-800/20 flex items-center justify-center border border-blue-500/30">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-white" id="modalItemName"></h3>
+                        <p class="text-sm text-gray-400">Category: <span id="modalCategory" class="text-blue-400"></span></p>
+                    </div>
+                </div>
+                <button onclick="closeItemModal()" class="group p-2 rounded-lg hover:bg-gray-700/50 transition-colors">
+                    <svg class="w-5 h-5 text-gray-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Modal Content - Increased height -->
+        <div class="p-4 h-[560px]">
+            <!-- Stats Cards - Adjusted to 2x2 grid -->
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <!-- Sales Card -->
+                <div class="bg-gradient-to-br from-gray-700/50 to-gray-800/50 rounded-lg p-3 border border-gray-700/50 hover:border-blue-500/30 transition-colors group">
+                    <div class="flex justify-between items-start mb-1">
+                        <h4 class="text-xs font-medium text-gray-400 uppercase tracking-wider">Sales</h4>
+                        <div class="p-1 rounded-md bg-blue-500/10 text-blue-400">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-base font-semibold text-white" id="modalSales"></div>
+                </div>
+
+                <!-- Revenue Card -->
+                <div class="bg-gradient-to-br from-gray-700/50 to-gray-800/50 rounded-lg p-3 border border-gray-700/50 hover:border-green-500/30 transition-colors group">
+                    <div class="flex justify-between items-start mb-1">
+                        <h4 class="text-xs font-medium text-gray-400 uppercase tracking-wider">Revenue</h4>
+                        <div class="p-1 rounded-md bg-green-500/10 text-green-400">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-base font-semibold text-green-400" id="modalRevenue"></div>
+                </div>
+
+                <!-- Rating Card -->
+                <div class="bg-gradient-to-br from-gray-700/50 to-gray-800/50 rounded-lg p-3 border border-gray-700/50 hover:border-yellow-500/30 transition-colors group">
+                    <div class="flex justify-between items-start mb-1">
+                        <h4 class="text-xs font-medium text-gray-400 uppercase tracking-wider">Rating</h4>
+                        <div class="p-1 rounded-md bg-yellow-500/10 text-yellow-400">
+                            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-base font-semibold text-yellow-400" id="modalRating"></div>
+                </div>
+
+                <!-- Trend Card -->
+                <div class="bg-gradient-to-br from-gray-700/50 to-gray-800/50 rounded-lg p-3 border border-gray-700/50 hover:border-purple-500/30 transition-colors group">
+                    <div class="flex justify-between items-start mb-1">
+                        <h4 class="text-xs font-medium text-gray-400 uppercase tracking-wider">Trend</h4>
+                        <div class="p-1 rounded-md bg-purple-500/10 text-purple-400">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="text-base font-semibold" id="modalTrend"></div>
+                </div>
+            </div>
+
+            <!-- Performance Score - Adjusted padding -->
+            <div class="bg-gradient-to-br from-gray-700/40 to-gray-800/40 rounded-xl border border-gray-700/50 p-3 mb-4">
+                <div class="flex items-center justify-between mb-2">
+                    <h4 class="text-sm font-medium text-white flex items-center">Performance Score</h4>
+                    <div class="text-lg font-semibold text-blue-400" id="modalPerformance"></div>
+                </div>
+                <div class="h-2 bg-gray-700 rounded-full overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-blue-600 to-indigo-500 rounded-full transition-all duration-500" id="modalPerformanceBar"></div>
+                </div>
+            </div>
+
+            <!-- Performance Chart - Increased height -->
+            <div class="bg-gradient-to-br from-gray-700/40 to-gray-800/40 rounded-xl border border-gray-700/50 p-4">
+                <h4 class="text-sm font-medium text-white flex items-center mb-2">Sales Performance</h4>
+                <div class="h-[200px] bg-gray-800/30 rounded-lg p-4 border border-gray-700/30">
+                    <canvas id="itemPerformanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
     /* Enhanced Custom Scrollbar for Modern Look */
     .custom-scrollbar::-webkit-scrollbar {
@@ -332,6 +454,57 @@
     
     .bg-gray-800\/90:hover {
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Update modal container styles */
+    #modalContainer {
+        transform: scale(0.95);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+
+    #itemDetailsModal {
+        opacity: 0;
+    }
+
+    #itemDetailsModal.opacity-100 {
+        opacity: 1;
+    }
+
+    #modalContainer.scale-100 {
+        transform: scale(1);
+    }
+
+    /* Additional modal styles */
+    .modal-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    /* Add custom scrollbar for modal content */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: rgba(31, 41, 55, 0.5);
+        border-radius: 8px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: rgba(59, 130, 246, 0.5);
+        border-radius: 8px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: rgba(59, 130, 246, 0.7);
+    }
+
+    /* Add smooth transitions */
+    .transition-all {
+        transition-property: all;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 300ms;
     }
 </style>
 
@@ -463,6 +636,212 @@
             setActiveView(savedView === 'grid');
         }
     });
+
+    function showItemDetails(itemId) {
+        try {
+            console.log("Looking for element with ID:", itemId);
+            const scriptElement = document.getElementById(itemId);
+            
+            if (!scriptElement) {
+                console.error(`Item data element not found for ID: ${itemId}`);
+                return;
+            }
+            
+            let itemData;
+            try {
+                itemData = JSON.parse(scriptElement.textContent);
+            } catch (parseError) {
+                console.error("JSON parse error:", parseError);
+                console.log("Raw content:", scriptElement.textContent);
+                return;
+            }
+            
+            const modal = document.getElementById('itemDetailsModal');
+            const modalContainer = document.getElementById('modalContainer');
+            
+            // Update modal content with proper error handling
+            const updateElement = (id, value, prefix = '') => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.textContent = prefix + (value || 'N/A');
+                }
+            };
+
+            updateElement('modalItemName', itemData.name);
+            updateElement('modalSales', `${itemData.total_sold || 0} units`);
+            updateElement('modalRevenue', `₹${itemData.revenue || 0}`);
+            updateElement('modalRating', `${itemData.avg_rating || 0}`);
+            updateElement('modalCategory', itemData.category || 'N/A');
+            updateElement('modalPerformance', `${itemData.performance_score || 0}%`);
+            
+            // Update performance bar
+            const performanceBar = document.getElementById('modalPerformanceBar');
+            if (performanceBar) {
+                performanceBar.style.width = `${itemData.performance_score || 0}%`;
+            }
+            
+            // Set trend with color
+            const trendElement = document.getElementById('modalTrend');
+            if (trendElement) {
+                const trend = itemData.trend || 0;
+                trendElement.textContent = `${trend > 0 ? '+' : ''}${trend}%`;
+                trendElement.className = `text-lg font-semibold ${trend > 0 ? 'text-green-400' : 'text-red-400'}`;
+            }
+            
+            // Show modal with animation
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.add('opacity-100');
+                modalContainer.classList.remove('scale-95', 'opacity-0');
+                modalContainer.classList.add('scale-100', 'opacity-100');
+            }, 10);
+            
+            // Initialize performance chart
+            initializeItemPerformanceChart(itemData);
+
+        } catch (error) {
+            console.error('Error showing item details:', error);
+        }
+    }
+
+    function closeItemModal() {
+        const modal = document.getElementById('itemDetailsModal');
+        const modalContainer = document.getElementById('modalContainer');
+        
+        // Hide modal with animation
+        modalContainer.classList.remove('scale-100', 'opacity-100');
+        modalContainer.classList.add('scale-95', 'opacity-0');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('opacity-100');
+        }, 300);
+    }
+
+    function initializeItemPerformanceChart(itemData) {
+        const ctx = document.getElementById('itemPerformanceChart').getContext('2d');
+        
+        // Clear any existing chart
+        if (window.itemChart) {
+            window.itemChart.destroy();
+        }
+        
+        // Create gradient for the chart area
+        const areaGradient = ctx.createLinearGradient(0, 0, 0, 300);
+        areaGradient.addColorStop(0, 'rgba(59, 130, 246, 0.3)');
+        areaGradient.addColorStop(1, 'rgba(59, 130, 246, 0.02)');
+        
+        // Generate realistic sample data if not provided
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+        const salesHistory = itemData.sales_history || generateSampleData();
+        
+        // Create new chart with enhanced styling
+        window.itemChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'Units Sold',
+                    data: salesHistory,
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: areaGradient,
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: 'rgb(96, 165, 250)',
+                    pointBorderColor: 'rgb(30, 64, 175)',
+                    pointBorderWidth: 1,
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointHoverBackgroundColor: 'white',
+                    pointHoverBorderColor: 'rgb(59, 130, 246)',
+                    pointHoverBorderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                layout: {
+                    padding: {
+                        left: 5,
+                        right: 5,
+                        top: 5,
+                        bottom: 5
+                    }
+                },
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(17, 24, 39, 0.8)',
+                        titleColor: 'rgba(255, 255, 255, 1)',
+                        bodyColor: 'rgba(255, 255, 255, 0.8)',
+                        padding: 10,
+                        cornerRadius: 6,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return `Sales: ${context.parsed.y} units`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            font: {
+                                size: 9
+                            },
+                            padding: 4,
+                            maxTicksLimit: 5,
+                            callback: function(value) {
+                                return value + ' units';
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            font: {
+                                size: 9
+                            },
+                            maxRotation: 0,
+                            maxTicksLimit: 6
+                        }
+                    },
+                },
+                elements: {
+                    line: {
+                        borderJoinStyle: 'round'
+                    }
+                }
+            }
+        });
+    }
+
+    // Helper function to generate realistic sample data
+    function generateSampleData() {
+        // Generate some realistic looking data for the chart
+        const baseValue = Math.floor(Math.random() * 50) + 20;  // Base value between 20-70
+        return Array.from({length: 6}, () => {
+            // Add some variance to the base value
+            return Math.max(0, Math.floor(baseValue + (Math.random() * 40) - 20));
+        });
+    }
 </script>
 {% endblock %}
 {% endblock %}
