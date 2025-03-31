@@ -1317,6 +1317,9 @@ def item_analytics(request):
             revenue=Sum('total_price', output_field=decimal_output_field)
         ).order_by('-revenue')
         
+        # Calculate total items sold all time
+        total_items_sold_all_time = OrderItem.objects.count()
+        
         # Build enhanced items_analysis list with proper category names
         items_analysis = []
         for item_data in order_items:
@@ -1399,6 +1402,7 @@ def item_analytics(request):
             'items_analysis': items_analysis,
             'top_item': top_items_by_quantity.first(),
             'highest_revenue_item': top_items_by_revenue.first(),
+            'total_items_sold_all_time': total_items_sold_all_time,
             'avg_order_value': avg_order_value,
             'today_items_sold': today_items_sold,
             'today_items_revenue': today_items_revenue,

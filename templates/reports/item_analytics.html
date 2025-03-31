@@ -65,17 +65,17 @@
             </div>
         </div>
         
-        <!-- Average Order Value -->
+        <!-- Total Items Sold All Time -->
         <div class="bg-gray-800/90 backdrop-blur rounded-xl p-5 border border-gray-700/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:border-purple-500/30">
             <div class="flex justify-between items-start">
                 <div>
-                    <p class="text-gray-400 text-xs uppercase tracking-wide font-medium">Average Order Value</p>
-                    <h3 class="text-lg font-bold text-white mt-1">₹{{ avg_order_value|default:"0" }}</h3>
-                    <p class="text-purple-400 mt-1 text-sm font-medium">Per transaction</p>
+                    <p class="text-gray-400 text-xs uppercase tracking-wide font-medium">Total Items Sold</p>
+                    <h3 class="text-lg font-bold text-white mt-1">{{ total_items_sold_all_time|default:"0" }}</h3>
+                    <p class="text-purple-400 mt-1 text-sm font-medium">All time</p>
                 </div>
                 <div class="p-2.5 bg-purple-500/10 rounded-lg">
                     <svg class="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
                     </svg>
                 </div>
             </div>
@@ -267,7 +267,7 @@
                 </div>
                 
                 <!-- Chart Container - Adjusted height -->
-                <div class="h-[140px]">
+                <div class="h-[170px]">
                     <canvas id="topItemsChart" class="max-w-full"></canvas>
                 </div>
             </div>
@@ -518,6 +518,21 @@
         transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
         transition-duration: 300ms;
     }
+
+    /* Enhanced chart container styling */
+    #topItemsChart {
+        filter: drop-shadow(0px 4px 8px rgba(0, 0, 0, 0.2));
+    }
+    
+    /* For Chart.js tooltip animation */
+    @keyframes chartTooltipFade {
+        0% { opacity: 0; transform: translateY(4px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+    
+    .chart-tooltip {
+        animation: chartTooltipFade 0.25s ease forwards;
+    }
 </style>
 
 {% block extra_scripts %}
@@ -529,92 +544,160 @@
             const labels = {{ top_items_labels|safe|default:"['Item 1', 'Item 2', 'Item 3', 'Item 4', 'Item 5']" }};
             const data = {{ top_items_data|safe|default:"[5, 3, 2, 1, 1]" }};
             
-            // Enhanced gradient fills
-            const gradients = [];
-            const colors = [
-                [59, 130, 246],  // Blue
-                [16, 185, 129],  // Green
-                [249, 115, 22],  // Orange
-                [139, 92, 246],  // Purple
-                [236, 72, 153]   // Pink
+            // Modern color palette with vibrant gradients
+            const colorPalette = [
+                {main: '#3b82f6', light: '#60a5fa', dark: '#1d4ed8'}, // Blue
+                {main: '#f97316', light: '#fb923c', dark: '#c2410c'}, // Orange
+                {main: '#10b981', light: '#34d399', dark: '#047857'}, // Emerald
+                {main: '#8b5cf6', light: '#a78bfa', dark: '#6d28d9'}, // Violet
+                {main: '#ec4899', light: '#f472b6', dark: '#be185d'}, // Pink
+                {main: '#06b6d4', light: '#22d3ee', dark: '#0e7490'}, // Cyan
+                {main: '#f59e0b', light: '#fbbf24', dark: '#b45309'}, // Amber
+                {main: '#6366f1', light: '#818cf8', dark: '#4338ca'}  // Indigo
             ];
             
-            // Create more sophisticated gradients
-            for (let i = 0; i < Math.min(colors.length, labels.length); i++) {
-                const gradient = ctx.createLinearGradient(0, 0, 0, 200);
-                gradient.addColorStop(0, `rgba(${colors[i][0]}, ${colors[i][1]}, ${colors[i][2]}, 0.9)`);
-                gradient.addColorStop(1, `rgba(${colors[i][0]}, ${colors[i][1]}, ${colors[i][2]}, 0.2)`);
-                gradients.push(gradient);
+            // Generate beautiful gradients and colors
+            const backgroundColors = [];
+            const hoverBackgroundColors = [];
+            const borderColors = [];
+            
+            for (let i = 0; i < Math.min(labels.length, colorPalette.length); i++) {
+                const color = colorPalette[i % colorPalette.length];
+                
+                // Create gradient
+                const gradient = ctx.createLinearGradient(0, 0, 0, 150);
+                gradient.addColorStop(0, hexToRgba(color.light, 0.85));
+                gradient.addColorStop(1, hexToRgba(color.main, 0.65));
+                backgroundColors.push(gradient);
+                
+                // Hover state - more vibrant
+                hoverBackgroundColors.push(hexToRgba(color.light, 1.0));
+                
+                // Border colors
+                borderColors.push(hexToRgba(color.dark, 0.9));
             }
             
-            // Create the chart with enhanced options
+            // Create the chart with improved styling
             new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: labels,
                     datasets: [{
                         data: data,
-                        backgroundColor: gradients,
-                        borderColor: colors.map(c => `rgba(${c[0]}, ${c[1]}, ${c[2]}, 1)`),
-                        borderWidth: 2,
-                        hoverOffset: 8,
-                        borderRadius: 2
+                        backgroundColor: backgroundColors,
+                        hoverBackgroundColor: hoverBackgroundColors,
+                        borderColor: borderColors,
+                        borderWidth: 1.5,
+                        borderRadius: 4,
+                        spacing: 3,
+                        hoverOffset: 12,
+                        borderAlign: 'inner',
+                        offset: 3,
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: '75%',
+                    cutout: '68%', // Slightly thicker ring
+                    radius: '90%',
                     plugins: {
                         legend: {
                             position: 'right',
+                            align: 'center',
                             labels: {
                                 usePointStyle: true,
-                                color: 'rgba(255, 255, 255, 0.7)',
-                                padding: 15,
+                                pointStyle: 'rectRounded',
+                                padding: 16,
+                                color: 'rgba(255, 255, 255, 0.9)',
                                 font: {
-                                    size: 10
+                                    family: "'Inter', sans-serif",
+                                    size: 10,
+                                    weight: '500'
                                 },
-                                boxWidth: 8,
-                                boxHeight: 8,
+                                boxWidth: 10,
+                                boxHeight: 10,
+                                generateLabels: function(chart) {
+                                    const original = Chart.overrides.doughnut.plugins.legend.labels.generateLabels;
+                                    const labels = original.call(this, chart);
+                                    // Add item quantity to legend
+                                    labels.forEach((label, i) => {
+                                        if (data[i] !== undefined) {
+                                            label.text = `${label.text} (${data[i]})`;
+                                        }
+                                    });
+                                    return labels;
+                                }
                             },
-                            onClick: null // Disable legend click to avoid messing up small chart
+                            onClick: null // Disable legend click to avoid issues
                         },
                         tooltip: {
+                            enabled: true,
                             backgroundColor: 'rgba(17, 24, 39, 0.95)',
-                            titleColor: 'rgba(255, 255, 255, 1)',
+                            titleColor: '#ffffff',
+                            titleFont: {
+                                family: "'Inter', sans-serif",
+                                size: 13,
+                                weight: '600'
+                            },
                             bodyColor: 'rgba(255, 255, 255, 0.8)',
-                            padding: 10,
-                            boxPadding: 5,
+                            bodyFont: {
+                                family: "'Inter', sans-serif",
+                                size: 12
+                            },
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: true,
+                            boxPadding: 6,
                             usePointStyle: true,
-                            cornerRadius: 6,
-                            caretSize: 6,
                             callbacks: {
+                                title: function(tooltipItems) {
+                                    return `#${tooltipItems[0].dataIndex + 1}: ${tooltipItems[0].label}`;
+                                },
                                 label: function(context) {
                                     const value = context.raw;
                                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = Math.round((value / total) * 100);
-                                    return `${context.label}: ${value} units (${percentage}%)`;
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return [
+                                        `Sales: ${value} units`,
+                                        `Share: ${percentage}%`
+                                    ];
                                 }
                             }
                         }
                     },
-                    animation: {
-                        animateScale: true,
-                        animateRotate: true,
-                        duration: 1000,
-                        easing: 'easeOutQuart'
-                    },
                     layout: {
                         padding: {
-                            left: 10,
-                            right: 10,
-                            top: 0,
-                            bottom: 0
+                            top: 5,
+                            bottom: 5,
+                            left: 0,
+                            right: 10
                         }
+                    },
+                    animation: {
+                        animateRotate: true,
+                        animateScale: true,
+                        duration: 1000,
+                        delay: function(context) {
+                            return context.dataIndex * 100;
+                        },
+                        easing: 'easeOutCirc'
                     }
                 }
             });
+            
+            // Helper function for RGBA conversion
+            function hexToRgba(hex, opacity) {
+                // Remove # if present
+                hex = hex.replace('#', '');
+                
+                // Parse the hex values
+                const r = parseInt(hex.substring(0, 2), 16);
+                const g = parseInt(hex.substring(2, 4), 16);
+                const b = parseInt(hex.substring(4, 6), 16);
+                
+                // Return rgba value
+                return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+            }
             
         } catch (error) {
             console.error('Error initializing chart:', error);
