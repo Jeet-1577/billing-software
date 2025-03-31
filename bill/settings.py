@@ -156,8 +156,9 @@ if DEBUG:
         BASE_DIR / "static",
     ]
 else:
-    STATIC_ROOT = BASE_DIR / "static"
-
+    STATIC_ROOT = BASE_DIR / "staticfiles"
+    
+STATIC_ROOT = BASE_DIR / "staticfiles"
 # Cache busting
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
 

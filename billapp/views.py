@@ -1310,27 +1310,34 @@ def item_analytics(request):
     try:
         # Define output fields
         decimal_output_field = DecimalField(max_digits=10, decimal_places=2)
-        integer_output_field = IntegerField()
-        float_output_field = FloatField()
-        char_output_field = models.CharField(max_length=255)
-
-        # Get items analysis data with category aggregation
-        items_analysis = OrderItem.objects.values(
-            'name',
-            'item_details__category'  # Fetch category from item details
-        ).annotate(
-            category=Coalesce(
-                Cast('item_details__category', output_field=char_output_field),
-                Value('Uncategorized', output_field=char_output_field)
-            ),
+        
+        # First get basic sales data
+        order_items = OrderItem.objects.values('name').annotate(
             total_sold=Count('id'),
             revenue=Sum('total_price', output_field=decimal_output_field)
         ).order_by('-revenue')
-
-        # Convert QuerySet to list and add default rating
-        items_analysis = list(items_analysis)
-        for item in items_analysis:
-            item['avg_rating'] = 0.0  # Set default rating
+        
+        # Build enhanced items_analysis list with proper category names
+        items_analysis = []
+        for item_data in order_items:
+            # Try to find the matching Item to get its category
+            item_name = item_data['name']
+            matching_item = Item.objects.filter(name=item_name).select_related('category').first()
+            
+            category_name = 'Uncategorized'
+            if matching_item and matching_item.category:
+                category_name = matching_item.category.name
+            
+            # Create enhanced item data with proper category
+            enhanced_item = {
+                'name': item_name,
+                'category': category_name,
+                'total_sold': item_data['total_sold'],
+                'revenue': item_data['revenue'],
+                'avg_rating': 0.0  # Default rating
+            }
+            
+            items_analysis.append(enhanced_item)
 
         # Get top selling items
         top_items_by_quantity = OrderItem.objects.values('name').annotate(
@@ -1357,6 +1364,37 @@ def item_analytics(request):
         # Calculate average order value
         avg_order_value = float(today_items_revenue) / float(today_items_sold) if today_items_sold > 0 else 0
 
+        # Fetch all categories and calculate their metrics safely
+        categories = Category.objects.all()
+        
+        # Calculate metrics for each category
+        for category in categories:
+            # Get all item names from this category 
+            item_names = list(category.items.values_list('name', flat=True))
+            
+            # Count OrderItems with these names to calculate metrics
+            if item_names:
+                orders_count = OrderItem.objects.filter(name__in=item_names).count()
+                total_revenue = OrderItem.objects.filter(name__in=item_names).aggregate(
+                    total=Coalesce(Sum('total_price'), Value(Decimal('0'), output_field=decimal_output_field))
+                )['total']
+            else:
+                orders_count = 0
+                total_revenue = Decimal('0')
+                
+            # Attach these metrics to the category object
+            category.items_count = category.items.count()
+            category.total_orders = orders_count
+            category.total_revenue = total_revenue
+        
+        # Sort categories by total_orders
+        categories = sorted(categories, key=lambda c: c.total_orders, reverse=True)
+        
+        # Calculate performance percentage for categories
+        max_orders = max([cat.total_orders for cat in categories]) if categories else 1
+        for category in categories:
+            category.performance_percentage = (category.total_orders / max_orders * 100) if max_orders > 0 else 0
+
         context = {
             'items_analysis': items_analysis,
             'top_item': top_items_by_quantity.first(),
@@ -1366,6 +1404,7 @@ def item_analytics(request):
             'today_items_revenue': today_items_revenue,
             'top_items_labels': json.dumps([item['name'] for item in top_items_by_quantity]) if top_items_by_quantity else '[]',
             'top_items_data': json.dumps([float(item['total_quantity']) for item in top_items_by_quantity]) if top_items_by_quantity else '[]',
+            'categories': categories,
         }
         
         return render(request, 'reports/item_analytics.html', context)

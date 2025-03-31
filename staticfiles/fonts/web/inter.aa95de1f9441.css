@@ -1,0 +1,148 @@
+/* Variable fonts usage:
+:root { font-family: "Inter", sans-serif; }
+@supports (font-variation-settings: normal) {
+  :root { font-family: "InterVariable", sans-serif; font-optical-sizing: auto; }
+} */
+@font-face {
+  font-family: InterVariable;
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("InterVariable.2bf3d951bf9d.woff2") format("woff2");
+}
+@font-face {
+  font-family: InterVariable;
+  font-style: italic;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("InterVariable-Italic.8d1dc86da258.woff2") format("woff2");
+}
+
+/* static fonts */
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 100; font-display: swap; src: url("Inter-Thin.e23aa5c5566e.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: italic; font-weight: 100; font-display: swap; src: url("Inter-ThinItalic.99706887f842.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 200; font-display: swap; src: url("Inter-ExtraLight.cfd2100450be.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: italic; font-weight: 200; font-display: swap; src: url("Inter-ExtraLightItalic.30ceabd54ea6.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 300; font-display: swap; src: url("Inter-Light.07d4495483a0.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: italic; font-weight: 300; font-display: swap; src: url("Inter-LightItalic.468c8c811242.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 400; font-display: swap; src: url("Inter-Regular.3875f8357497.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: italic; font-weight: 400; font-display: swap; src: url("Inter-Italic.4cb9ee96ba4d.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 500; font-display: swap; src: url("Inter-Medium.7b7f3cfa2944.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: italic; font-weight: 500; font-display: swap; src: url("Inter-MediumItalic.385c61d047a7.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 600; font-display: swap; src: url("Inter-SemiBold.b72fa2728a8e.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: italic; font-weight: 600; font-display: swap; src: url("Inter-SemiBoldItalic.457dc51cf92f.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 700; font-display: swap; src: url("Inter-Bold.66894432e7ff.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: italic; font-weight: 700; font-display: swap; src: url("Inter-BoldItalic.8b4dd6acc4bb.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 800; font-display: swap; src: url("Inter-ExtraBold.f43eb79660ea.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: italic; font-weight: 800; font-display: swap; src: url("Inter-ExtraBoldItalic.19868d85deed.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 900; font-display: swap; src: url("Inter-Black.6f582b3956b8.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: italic; font-weight: 900; font-display: swap; src: url("Inter-BlackItalic.b3ba35b51d47.woff2") format("woff2"); }
+@font-face { font-family: "InterDisplay"; font-style: normal; font-weight: 100; font-display: swap; src: url("InterDisplay-Thin.d57cd873812a.woff2") format("woff2"); }
+@font-face { font-family: "InterDisplay"; font-style: italic; font-weight: 100; font-display: swap; src: url("InterDisplay-ThinItalic.afb61ba397e8.woff2") format("woff2"); }
+@font-face { font-family: "InterDisplay"; font-style: normal; font-weight: 200; font-display: swap; src: url("InterDisplay-ExtraLight.aff9c331a4c7.woff2") format("woff2"); }
+@font-face { font-family: "InterDisplay"; font-style: italic; font-weight: 200; font-display: swap; src: url("InterDisplay-ExtraLightItalic.4abee6076d2a.woff2") format("woff2"); }
+@font-face { font-family: "InterDisplay"; font-style: normal; font-weight: 300; font-display: swap; src: url("InterDisplay-Light.5aa9ac5c3bfa.woff2") format("woff2"); }
+@font-face { font-family: "InterDisplay"; font-style: italic; font-weight: 300; font-display: swap; src: url("InterDisplay-LightItalic.5afc6e30e90c.woff2") format("woff2"); }
+@font-face { font-family: "InterDisplay"; font-style: normal; font-weight: 400; font-display: swap; src: url("InterDisplay-Regular.e0236b70e490.woff2") format("woff2"); }
+@font-face { font-family: "InterDisplay"; font-style: italic; font-weight: 400; font-display: swap; src: url("InterDisplay-Italic.5653e8d89916.woff2") format("woff2"); }
+@font-face { font-family: "InterDisplay"; font-style: normal; font-weight: 500; font-display: swap; src: url("InterDisplay-Medium.2c7a1529ffe6.woff2") format("woff2"); }
+@font-face { font-family: "InterDisplay"; font-style: italic; font-weight: 500; font-display: swap; src: url("InterDisplay-MediumItalic.715c600440dc.woff2") format("woff2"); }
+@font-face { font-family: "InterDisplay"; font-style: normal; font-weight: 600; font-display: swap; src: url("InterDisplay-SemiBold.21835ce27dd9.woff2") format("woff2"); }
+@font-face { font-family: "InterDisplay"; font-style: italic; font-weight: 600; font-display: swap; src: url("InterDisplay-SemiBoldItalic.49e5c01ea723.woff2") format("woff2"); }
+@font-face { font-family: "InterDisplay"; font-style: normal; font-weight: 700; font-display: swap; src: url("InterDisplay-Bold.baf0f7874fdd.woff2") format("woff2"); }
+@font-face { font-family: "InterDisplay"; font-style: italic; font-weight: 700; font-display: swap; src: url("InterDisplay-BoldItalic.b8c1d5129fab.woff2") format("woff2"); }
+@font-face { font-family: "InterDisplay"; font-style: normal; font-weight: 800; font-display: swap; src: url("InterDisplay-ExtraBold.482fd9e0c4ce.woff2") format("woff2"); }
+@font-face { font-family: "InterDisplay"; font-style: italic; font-weight: 800; font-display: swap; src: url("InterDisplay-ExtraBoldItalic.34560c5f5aa3.woff2") format("woff2"); }
+@font-face { font-family: "InterDisplay"; font-style: normal; font-weight: 900; font-display: swap; src: url("InterDisplay-Black.2f27b37f5416.woff2") format("woff2"); }
+@font-face { font-family: "InterDisplay"; font-style: italic; font-weight: 900; font-display: swap; src: url("InterDisplay-BlackItalic.10db539ea2d3.woff2") format("woff2"); }
+
+@font-feature-values InterVariable {
+    @character-variant {
+        cv01: 1; cv02: 2; cv03: 3; cv04: 4; cv05: 5; cv06: 6; cv07: 7; cv08: 8;
+        cv09: 9; cv10: 10; cv11: 11; cv12: 12; cv13: 13;
+        alt-1:            1; /* Alternate one */
+        alt-3:            9; /* Flat-top three */
+        open-4:           2; /* Open four */
+        open-6:           3; /* Open six */
+        open-9:           4; /* Open nine */
+        lc-l-with-tail:   5; /* Lower-case L with tail */
+        simplified-u:     6; /* Simplified u */
+        alt-double-s:     7; /* Alternate German double s */
+        uc-i-with-serif:  8; /* Upper-case i with serif */
+        uc-g-with-spur:  10; /* Capital G with spur */
+        single-story-a:  11; /* Single-story a */
+        compact-lc-f:    12; /* Compact f */
+        compact-lc-t:    13; /* Compact t */
+    }
+    @styleset {
+        ss01: 1; ss02: 2; ss03: 3; ss04: 4; ss05: 5; ss06: 6; ss07: 7; ss08: 8;
+        open-digits: 1;                /* Open digits */
+        disambiguation: 2;             /* Disambiguation (with zero) */
+        disambiguation-except-zero: 4; /* Disambiguation (no zero) */
+        round-quotes-and-commas: 3;    /* Round quotes &amp; commas */
+        square-punctuation: 7;         /* Square punctuation */
+        square-quotes: 8;              /* Square quotes */
+        circled-characters: 5;         /* Circled characters */
+        squared-characters: 6;         /* Squared characters */
+    }
+}
+@font-feature-values Inter {
+    @character-variant {
+        cv01: 1; cv02: 2; cv03: 3; cv04: 4; cv05: 5; cv06: 6; cv07: 7; cv08: 8;
+        cv09: 9; cv10: 10; cv11: 11; cv12: 12; cv13: 13;
+        alt-1:            1; /* Alternate one */
+        alt-3:            9; /* Flat-top three */
+        open-4:           2; /* Open four */
+        open-6:           3; /* Open six */
+        open-9:           4; /* Open nine */
+        lc-l-with-tail:   5; /* Lower-case L with tail */
+        simplified-u:     6; /* Simplified u */
+        alt-double-s:     7; /* Alternate German double s */
+        uc-i-with-serif:  8; /* Upper-case i with serif */
+        uc-g-with-spur:  10; /* Capital G with spur */
+        single-story-a:  11; /* Single-story a */
+        compact-lc-f:    12; /* Compact f */
+        compact-lc-t:    13; /* Compact t */
+    }
+    @styleset {
+        ss01: 1; ss02: 2; ss03: 3; ss04: 4; ss05: 5; ss06: 6; ss07: 7; ss08: 8;
+        open-digits: 1;                /* Open digits */
+        disambiguation: 2;             /* Disambiguation (with zero) */
+        disambiguation-except-zero: 4; /* Disambiguation (no zero) */
+        round-quotes-and-commas: 3;    /* Round quotes &amp; commas */
+        square-punctuation: 7;         /* Square punctuation */
+        square-quotes: 8;              /* Square quotes */
+        circled-characters: 5;         /* Circled characters */
+        squared-characters: 6;         /* Squared characters */
+    }
+}
+@font-feature-values InterDisplay {
+    @character-variant {
+        cv01: 1; cv02: 2; cv03: 3; cv04: 4; cv05: 5; cv06: 6; cv07: 7; cv08: 8;
+        cv09: 9; cv10: 10; cv11: 11; cv12: 12; cv13: 13;
+        alt-1:            1; /* Alternate one */
+        alt-3:            9; /* Flat-top three */
+        open-4:           2; /* Open four */
+        open-6:           3; /* Open six */
+        open-9:           4; /* Open nine */
+        lc-l-with-tail:   5; /* Lower-case L with tail */
+        simplified-u:     6; /* Simplified u */
+        alt-double-s:     7; /* Alternate German double s */
+        uc-i-with-serif:  8; /* Upper-case i with serif */
+        uc-g-with-spur:  10; /* Capital G with spur */
+        single-story-a:  11; /* Single-story a */
+        compact-lc-f:    12; /* Compact f */
+        compact-lc-t:    13; /* Compact t */
+    }
+    @styleset {
+        ss01: 1; ss02: 2; ss03: 3; ss04: 4; ss05: 5; ss06: 6; ss07: 7; ss08: 8;
+        open-digits: 1;                /* Open digits */
+        disambiguation: 2;             /* Disambiguation (with zero) */
+        disambiguation-except-zero: 4; /* Disambiguation (no zero) */
+        round-quotes-and-commas: 3;    /* Round quotes &amp; commas */
+        square-punctuation: 7;         /* Square punctuation */
+        square-quotes: 8;              /* Square quotes */
+        circled-characters: 5;         /* Circled characters */
+        squared-characters: 6;         /* Squared characters */
+    }
+}

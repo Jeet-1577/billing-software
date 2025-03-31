@@ -1,3 +1,9 @@
-
-# ...existing lines...
+django
+psycopg2-binary
+django-browser-reload
+django-tailwind
 django-cors-headers
+django-crispy-forms
+Pillow
+pdfkit
+django-ninja
