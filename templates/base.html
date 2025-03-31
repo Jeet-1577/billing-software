@@ -817,5 +817,11 @@
     {% block scripts %}
     <!-- Additional scripts can be added by extending templates -->
     {% endblock %}
+    {% block extra_scripts %}
+    <!-- This block will be overridden by child templates -->
+    {% endblock %}
+
+    <!-- Add the fullscreen script here, after any other scripts -->
+    <script src="{% static 'js/fullscreen.js' %}"></script>
 </body>
 </html>
