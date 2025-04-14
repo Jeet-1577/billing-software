@@ -18,18 +18,16 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf.urls.static import static
 from django.conf import settings
-from billapp.api import api as main_api
 from billapp import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('billapp.urls')),  # Include app URLs
-    path('api/', include('billapp.urls')),  # Added this line to include billapp URLs under /api/
+    path('', include('billapp.urls')),  # Include app URLs at root level only
     path("__reload__/", include("django_browser_reload.urls")),
+    
+    # Keep these specific API endpoints
     path('api/add_table/', views.add_table, name='add_table'),
     path('api/remove_table/<int:table_id>/', views.remove_table, name='remove_table'),
-    # path('table_order/<int:table_id>/', views.get_table_order_details, name='get_table_order_details'),
-
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if settings.DEBUG:

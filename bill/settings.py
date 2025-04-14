@@ -58,14 +58,23 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    #added mauallly
+    
+    # Place browser reload middleware before our authentication middleware
     "django_browser_reload.middleware.BrowserReloadMiddleware",
-
-    "django_browser_reload.middleware.BrowserReloadMiddleware",
-
+    
+    # Other middleware
     'django.middleware.security.SecurityMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'corsheaders.middleware.CorsMiddleware',
+    
+    # Place our custom authentication middleware last
+    'billapp.middleware.AuthenticationMiddleware',  
+]
+
+# Add browser reload settings
+BROWSER_RELOAD_PATHS = [
+    'e:/billmaker/bill/templates',
+    'e:/billmaker/bill/static',
 ]
 
 # Add these settings
@@ -74,6 +83,12 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 
 CORS_ALLOW_ALL_ORIGINS = True
 # or use: CORS_ALLOWED_ORIGINS = ['https://rsms.me']
+
+# Authentication backends
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',  # Keep default backend
+    'billapp.auth.CustomAuthBackend',  # Add custom backend
+]
 
 ROOT_URLCONF = 'bill.urls'
 
@@ -185,4 +200,8 @@ EXPORT_REPORT_PATH = BASE_DIR / 'reports' / 'exports'
 # Media files configuration
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# Session settings
+SESSION_COOKIE_AGE = 86400  # 24 hours in seconds
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 

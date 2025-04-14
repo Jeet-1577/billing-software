@@ -128,6 +128,8 @@ def index(request):
         'peak_orders_count': peak_orders_count,
         'quiet_orders_count': quiet_orders_count,
         'current_hour': current_hour,
+        'user_type': request.session.get('user_type'),
+        'user_name': request.session.get('user_name'),
     }
     
     return render(request, 'home.html', context)
@@ -2561,51 +2563,57 @@ def submit_feedback(request):
     return redirect('feedback')
 
 def login_view(request):
+    """
+    Authenticate users from Employee and Owner models.
+    """
     if request.method == 'POST':
         user_id = request.POST.get('user_id')
         password = request.POST.get('password')
         
-        print(f"Login attempt - User ID: {user_id}")  # Debug log 
+        # Try to authenticate with custom authentication backend
+        from .auth import CustomAuthBackend
+        auth_backend = CustomAuthBackend()
+        user = auth_backend.authenticate(request, user_id=user_id, password=password)
         
-        try:
-            # First try to find an owner
-            owner = Owner.objects.filter(owner_id=user_id).first()
-            if owner:
-                print("Found owner, checking password")  # Debug log
-                if owner.check_password(password):
-                    print("Owner password verified")  # Debug log
-                    request.session['user_type'] = 'owner'
-                    request.session['user_id'] = owner.id
-                    return redirect('index')
-                else:
-                    print("Owner password mismatch")  # Debug log
-                    return render(request, 'auth/login.html', {'error': 'Invalid credentials'})
+        if user:
+            # Store user information in session
+            request.session['user_id'] = user.id
+            request.session['user_type'] = getattr(user, 'user_type', 'unknown')
+            request.session['user_name'] = user.name
             
-            # If no owner found, try to find an employee
-            employee = Employee.objects.filter(employee_id=user_id).first()
-            if employee:
-                print("Found employee, checking password")  # Debug log
-                if employee.check_password(password):
-                    print("Employee password verified")  # Debug log
-                    request.session['user_type'] = 'employee'
-                    request.session['user_id'] = employee.id
-                    return redirect('index')
-                else:
-                    print("Employee password mismatch")  # Debug log
-                    return render(request, 'auth/login.html', {'error': 'Invalid credentials'})
+            # Log the successful login
+            print(f"User {user_id} ({request.session['user_type']}) logged in successfully")
             
-            # If neither owner nor employee found
-            print("No user found with provided ID")  # Debug log
+            # Store additional data based on user type
+            if request.session['user_type'] == 'employee':
+                request.session['employee_id'] = user_id
+            elif request.session['user_type'] == 'owner':
+                request.session['owner_id'] = user_id
+            
+            # Redirect to home page after successful login
+            return redirect('index')
+        else:
+            # Authentication failed
             return render(request, 'auth/login.html', {'error': 'Invalid credentials'})
-            
-        except Exception as e:
-            print(f"Login error: {str(e)}")  # Debug log
-            return render(request, 'auth/login.html', {'error': 'An error occurred during login'})
     
+    # For GET requests, just show the login form
     return render(request, 'auth/login.html')
 
 def logout_view(request):
+    """
+    Log out the user by clearing their session.
+    """
+    # Save user type for logging
+    user_type = request.session.get('user_type', 'unknown')
+    user_id = request.session.get('user_id', 'unknown')
+    
+    # Clear all session data
     request.session.flush()
+    
+    # Log logout
+    print(f"User {user_id} ({user_type}) logged out")
+    
+    # Redirect to login page
     return redirect('login')
 
 from django.http import JsonResponse

@@ -243,43 +243,37 @@ class KoOrder(models.Model):
         return f"KoOrder {self.order_id} - ₹{self.grand_total}"
 
 class Owner(models.Model):
-    owner_id = models.CharField(max_length=100, unique=True, null=True, blank=True)  # Make nullable temporarily
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=100)
     email = models.EmailField()
-    phone = models.CharField(max_length=20)
-    photo = models.ImageField(upload_to='owner_photos/', null=True, blank=True)
-    password = models.CharField(max_length=255, default='default123')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def set_password(self, raw_password):
-        self.password = make_password(raw_password)
-
-    def check_password(self, raw_password):
-        """Verify the owner's password"""
-        return check_password(raw_password, self.password)
-
-    def save(self, *args, **kwargs):
-        # Hash password if it's not already hashed
-        if self.password and not self.password.startswith(('pbkdf2_sha256$', 'bcrypt$', 'argon2')):
-            self.password = make_password(self.password)
-        
-        # Generate owner_id if not set
-        if not self.owner_id:
-            last_owner = Owner.objects.order_by('-owner_id').first()
-            if last_owner and last_owner.owner_id:
-                try:
-                    last_num = int(last_owner.owner_id[3:])
-                    self.owner_id = f'OWN{str(last_num + 1).zfill(3)}'
-                except (ValueError, IndexError):
-                    self.owner_id = 'OWN001'
-            else:
-                self.owner_id = 'OWN001'
-        
-        super().save(*args, **kwargs)
-
+    phone = models.CharField(max_length=15)
+    photo = models.ImageField(upload_to='owners/', blank=True, null=True)
+    owner_id = models.CharField(max_length=50, unique=True, default='owner001')  # Add this field
+    password = models.CharField(max_length=128, default='')  # Add this field
+    
     def __str__(self):
-        return f"{self.name} ({self.owner_id})"
+        return self.name
+    
+    def check_password(self, raw_password):
+        """Check if the raw password matches the hashed password."""
+        from django.contrib.auth.hashers import check_password
+        return check_password(raw_password, self.password)
+    
+    def save(self, *args, **kwargs):
+        """Hash password before saving if it's changed."""
+        if self.id is None or not self._state.adding:
+            # Only hash if password has changed
+            try:
+                orig = Owner.objects.get(id=self.id)
+                if orig.password != self.password:
+                    self.set_password(self.password)
+            except Owner.DoesNotExist:
+                self.set_password(self.password)
+        super().save(*args, **kwargs)
+    
+    def set_password(self, raw_password):
+        """Hash the provided password."""
+        from django.contrib.auth.hashers import make_password
+        self.password = make_password(raw_password)
 
 class Hotel(models.Model):
     name = models.CharField(max_length=100)
