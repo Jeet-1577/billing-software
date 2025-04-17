@@ -8,7 +8,10 @@
   <img src="https://img.shields.io/badge/Frontend-HTML%2C%20Tailwind%20CSS%2C%20JavaScript-blue" />
   <img src="https://img.shields.io/badge/Responsive-Yes-brightgreen" />
   <img src="https://img.shields.io/badge/Printer%20Support-Thermal%20Ready-important" />
+  <img src="https://img.shields.io/badge/Database-PostgreSQL-blueviolet" />
+  <img src="https://img.shields.io/badge/Backend-Django-green" />
 </p>
+
 
 ---
 
