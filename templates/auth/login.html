@@ -7,95 +7,640 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/postprocessing/EffectComposer.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-            background-attachment: fixed;
+            background-color: #0f172a;
             height: 100vh;
             margin: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            overflow: hidden;
+            position: relative;
         }
-        .login-container {
-            animation: fadeIn 0.6s ease-out;
+        
+        #canvas-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -2;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
+        
+        .bg-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(56, 189, 248, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 75% 75%, rgba(124, 58, 237, 0.15) 0%, transparent 40%);
+            z-index: -1;
         }
-        .input-field {
+        
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.4;
+            z-index: -1;
+        }
+        
+        .blob-1 {
+            width: 500px;
+            height: 500px;
+            background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+            top: -250px;
+            left: -250px;
+            animation: float1 20s ease-in-out infinite alternate;
+        }
+        
+        .blob-2 {
+            width: 400px;
+            height: 400px;
+            background: linear-gradient(45deg, #1d4ed8, #4f46e5);
+            bottom: -200px;
+            right: -200px;
+            animation: float2 15s ease-in-out infinite alternate;
+        }
+        
+        .blob-3 {
+            width: 300px;
+            height: 300px;
+            background: linear-gradient(45deg, #6366f1, #a855f7);
+            top: 60%;
+            left: 25%;
+            animation: float3 25s ease-in-out infinite alternate;
+            opacity: 0.2;
+        }
+        
+        @keyframes float1 {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(50px, 50px) rotate(15deg); }
+        }
+        
+        @keyframes float2 {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            100% { transform: translate(-30px, -30px) rotate(-15deg); }
+        }
+        
+        @keyframes float3 {
+            0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+            50% { transform: translate(20px, -20px) scale(1.1) rotate(5deg); }
+            100% { transform: translate(-20px, 20px) scale(0.9) rotate(-5deg); }
+        }
+        
+        .login-card {
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 
+                0 50px 100px rgba(0, 0, 0, 0.3), 
+                0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+                0 0 30px rgba(0, 0, 0, 0.2) inset;
+        }
+        
+        .login-form {
+            position: relative;
+            z-index: 10;
+        }
+        
+        .input-wrapper {
+            position: relative;
             transition: all 0.3s ease;
         }
+        
+        .input-field {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
         .input-field:focus {
             border-color: #3B82F6;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+            background: rgba(15, 23, 42, 0.9);
         }
-        .btn-primary {
+        
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255, 255, 255, 0.5);
             transition: all 0.3s ease;
         }
+        
+        .input-field:focus + .input-icon {
+            color: rgba(59, 130, 246, 0.8);
+        }
+        
+        .btn-primary {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            z-index: 1;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: all 0.5s ease;
+            z-index: -1;
+        }
+        
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+        
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+            box-shadow: 0 10px 25px rgba(29, 78, 216, 0.5);
         }
+        
+        .welcome-title {
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            color: transparent;
+            display: inline-block;
+            position: relative;
+        }
+        
+        .welcome-title::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            width: 60px;
+            height: 2px;
+            transform: translateX(-50%);
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+        }
+        
+        .card-shine {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.05) 0%,
+                rgba(255, 255, 255, 0) 30%,
+                rgba(255, 255, 255, 0) 70%,
+                rgba(255, 255, 255, 0.05) 100%
+            );
+            z-index: -1;
+        }
+        
+        .floating-elements div {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 50%;
+        }
+        
         .error-message {
+            background: rgba(220, 38, 38, 0.2);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            backdrop-filter: blur(10px);
             animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
         }
+        
         @keyframes shake {
             10%, 90% { transform: translateX(-1px); }
             20%, 80% { transform: translateX(2px); }
             30%, 50%, 70% { transform: translateX(-4px); }
             40%, 60% { transform: translateX(4px); }
         }
+        
+        .animate-element {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        .logo-container {
+            position: relative;
+        }
+        
+        .logo-glow {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            filter: blur(15px);
+            background: rgba(59, 130, 246, 0.3);
+            z-index: -1;
+            opacity: 0;
+            animation: pulse 2s infinite alternate;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(0.9); opacity: 0.3; }
+            100% { transform: scale(1.1); opacity: 0.7; }
+        }
+        
+        .particle {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        
+        .loading-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Media Queries for better responsive design */
+        @media (max-width: 640px) {
+            .blob-1 {
+                width: 300px;
+                height: 300px;
+                top: -150px;
+                left: -150px;
+            }
+            
+            .blob-2 {
+                width: 250px;
+                height: 250px;
+                bottom: -125px;
+                right: -125px;
+            }
+            
+            .blob-3 {
+                width: 200px;
+                height: 200px;
+            }
+        }
     </style>
 </head>
-<body>
-    <div class="login-container bg-white dark:bg-gray-800 p-8 rounded-xl shadow-2xl w-full max-w-md">
-        <div class="text-center mb-8">
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">BillMaker</h1>
-            <p class="text-gray-600 dark:text-gray-400">Sign in to your account</p>
-        </div>
-        
-        {% if error %}
-        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6 error-message" role="alert">
-            <p>{{ error }}</p>
-        </div>
-        {% endif %}
-        
-        <form method="post" action="{% url 'login' %}" autocomplete="off">
-            {% csrf_token %}
-            <div class="mb-6">
-                <label for="user_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    User ID
-                </label>
-                <input type="text" name="user_id" id="user_id" required 
-                    class="input-field w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-white focus:outline-none"
-                    placeholder="Enter your employee or owner ID"
-                    autocomplete="off" value="">
+<body class="flex items-center justify-center">
+    <!-- Background elements -->
+    <div id="canvas-container"></div>
+    <div class="bg-pattern"></div>
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="floating-elements">
+        <div style="width: 50px; height: 50px; top: 10%; left: 20%; animation: float 8s ease-in-out infinite;"></div>
+        <div style="width: 30px; height: 30px; top: 30%; right: 20%; animation: float 10s ease-in-out infinite alternate;"></div>
+        <div style="width: 20px; height: 20px; bottom: 20%; left: 40%; animation: float 6s ease-in-out infinite alternate-reverse;"></div>
+    </div>
+    
+    <div class="max-w-md w-full px-6 animate-element" id="loginContainer">
+        <div class="login-card rounded-2xl overflow-hidden p-8 relative">
+            <div class="card-shine"></div>
+            
+            <!-- Logo and welcome text -->
+            <div class="text-center mb-8 animate-element">
+                <div class="logo-container inline-block mb-4 relative">
+                    <div class="logo-glow"></div>
+                    <svg class="w-14 h-14 mx-auto relative z-10" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="24" cy="24" r="20" fill="url(#paint0_linear)"/>
+                        <path d="M29 16H19C17.8954 16 17 16.8954 17 18V30C17 31.1046 17.8954 32 19 32H29C30.1046 32 31 31.1046 31 30V18C31 16.8954 30.1046 16 29 16Z" stroke="white" stroke-width="2"/>
+                        <path d="M17 21H31" stroke="white" stroke-width="2"/>
+                        <path d="M17 26H31" stroke="white" stroke-width="2"/>
+                        <path d="M22 21V32" stroke="white" stroke-width="2"/>
+                        <defs>
+                            <linearGradient id="paint0_linear" x1="8" y1="8" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+                                <stop stop-color="#3B82F6"/>
+                                <stop offset="1" stop-color="#1D4ED8"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-bold welcome-title mb-4">BillMaker</h1>
+                <p class="text-gray-400 text-sm max-w-xs mx-auto">Access your restaurant management dashboard</p>
             </div>
             
-            <div class="mb-8">
-                <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Password
-                </label>
-                <input type="password" name="password" id="password" required 
-                    class="input-field w-full px-4 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-white focus:outline-none"
-                    placeholder="Enter your password"
-                    autocomplete="new-password" value="">
+            {% if error %}
+            <div class="error-message rounded-lg p-4 mb-6 animate-element" role="alert">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-3 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <p class="text-red-300 text-sm">{{ error }}</p>
+                </div>
             </div>
+            {% endif %}
             
-            <button type="submit" class="btn-primary w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-                Sign In
-            </button>
-        </form>
+            <form method="post" action="{% url 'login' %}" autocomplete="off" class="login-form space-y-6" id="loginForm">
+                {% csrf_token %}
+                <div class="animate-element input-group">
+                    <label for="user_id" class="block text-sm font-medium text-gray-300 mb-2">
+                        User ID
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="text" name="user_id" id="user_id" required 
+                            class="input-field w-full pl-11 pr-4 py-3.5 rounded-lg text-white focus:outline-none" 
+                            placeholder="Enter your employee or owner ID"
+                            autocomplete="off" value="">
+                        <span class="input-icon">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                        </span>
+                        <div class="indicator absolute right-3 top-1/2 transform -translate-y-1/2"></div>
+                    </div>
+                </div>
+                
+                <div class="animate-element input-group">
+                    <label for="password" class="block text-sm font-medium text-gray-300 mb-2">
+                        Password
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="password" name="password" id="password" required 
+                            class="input-field w-full pl-11 pr-4 py-3.5 rounded-lg text-white focus:outline-none"
+                            placeholder="Enter your password"
+                            autocomplete="new-password" value="">
+                        <span class="input-icon">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                        </span>
+                        <div class="indicator absolute right-3 top-1/2 transform -translate-y-1/2"></div>
+                    </div>
+                </div>
+                
+                <div class="animate-element pt-2">
+                    <button type="submit" id="submitBtn" class="btn-primary w-full py-3.5 px-4 rounded-lg focus:outline-none font-medium text-white flex items-center justify-center group">
+                        <div id="loadingSpinner" class="loading-spinner"></div>
+                        <span class="login-text">Sign In</span>
+                        <svg class="w-5 h-5 ml-2 transition-transform duration-300 ease-out group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                        </svg>
+                    </button>
+                </div>
+            </form>
+            
+            <div class="mt-8 text-center text-gray-500 text-sm animate-element">
+                <p>Can't access your account? <span class="text-blue-400 hover:text-blue-300 transition cursor-pointer">Contact administrator</span></p>
+            </div>
+        </div>
         
-        <div class="mt-6 text-center">
-            <p class="text-sm text-gray-600 dark:text-gray-400">
-                Can't access your account? Contact your administrator.
-            </p>
+        <div class="text-center mt-6 text-gray-600 text-xs animate-element">
+            <div class="mb-2">
+                <span id="currentYear">2023</span> BillMaker. All rights reserved.
+            </div>
         </div>
     </div>
+    
+    <script>
+        // Set current year in footer
+        document.getElementById('currentYear').innerText = new Date().getFullYear();
+        
+        // GSAP Animation on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Clear any autofilled values
+            document.getElementById('user_id').value = '';
+            document.getElementById('password').value = '';
+            
+            // Setup Three.js background
+            initThreeJSBackground();
+            
+            // Animate elements
+            gsap.to('.blob-1', { opacity: 0.4, duration: 1.2, ease: 'power2.inOut' });
+            gsap.to('.blob-2', { opacity: 0.4, duration: 1.2, ease: 'power2.inOut', delay: 0.2 });
+            gsap.to('.blob-3', { opacity: 0.2, duration: 1.2, ease: 'power2.inOut', delay: 0.4 });
+            gsap.to('.logo-glow', { opacity: 0.7, duration: 1.5, ease: 'power2.inOut' });
+            
+            const elements = document.querySelectorAll('.animate-element');
+            gsap.fromTo(elements, 
+                { opacity: 0, y: 20 }, 
+                { opacity: 1, y: 0, stagger: 0.1, duration: 0.8, ease: 'power2.out', delay: 0.3 }
+            );
+            
+            // Card interaction - enhanced 3D effect
+            const loginCard = document.querySelector('.login-card');
+            const cardShine = document.querySelector('.card-shine');
+            
+            document.addEventListener('mousemove', (e) => {
+                const x = e.clientX / window.innerWidth;
+                const y = e.clientY / window.innerHeight;
+                
+                const rotateY = (x - 0.5) * 6; // Enhanced rotation
+                const rotateX = (y - 0.5) * -6; // Enhanced rotation
+                
+                gsap.to(loginCard, {
+                    rotateX: rotateX,
+                    rotateY: rotateY,
+                    transformPerspective: 1000,
+                    duration: 0.6,
+                    ease: "power1.out"
+                });
+                
+                gsap.to(cardShine, {
+                    opacity: Math.max(0.1, Math.min(0.3, x)),
+                    x: (x - 0.5) * 200,
+                    duration: 0.6,
+                    ease: "power1.out"
+                });
+            });
+            
+            loginCard.addEventListener('mouseleave', () => {
+                gsap.to(loginCard, { 
+                    rotateX: 0, 
+                    rotateY: 0, 
+                    duration: 0.8, 
+                    ease: 'power2.out' 
+                });
+                cardShine.style.opacity = 0.1;
+            });
+            
+            // Input field animations
+            const inputFields = document.querySelectorAll('.input-field');
+            inputFields.forEach(field => {
+                field.addEventListener('focus', () => {
+                    gsap.to(field, {
+                        scale: 1.02,
+                        duration: 0.2,
+                        ease: 'power1.out'
+                    });
+                });
+                
+                field.addEventListener('blur', () => {
+                    gsap.to(field, {
+                        scale: 1,
+                        duration: 0.2,
+                        ease: 'power1.out'
+                    });
+                });
+            });
+            
+            // Form submission animation
+            const loginForm = document.getElementById('loginForm');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const submitBtn = document.getElementById('submitBtn');
+            const loginText = document.querySelector('.login-text');
+            
+            loginForm.addEventListener('submit', (e) => {
+                // Show loading state
+                loadingSpinner.style.display = 'inline-block';
+                loginText.innerText = 'Signing In...';
+                submitBtn.disabled = true;
+                gsap.to(submitBtn, { opacity: 0.8, duration: 0.2 });
+                
+                // Add particle effect on click
+                createClickParticles(submitBtn.getBoundingClientRect());
+            });
+            
+            // Create particles on button click
+            function createClickParticles(rect) {
+                const centerX = rect.x + rect.width / 2;
+                const centerY = rect.y + rect.height / 2;
+                
+                for (let i = 0; i < 20; i++) {
+                    createParticle(centerX, centerY);
+                }
+            }
+            
+            function createParticle(x, y) {
+                const particle = document.createElement('span');
+                particle.classList.add('particle');
+                document.body.appendChild(particle);
+                
+                const size = Math.random() * 4 + 2;
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = Math.random() * 60 + 20;
+                const lifetime = Math.random() * 1000 + 500;
+                let opacity = 1;
+                
+                // Set initial position and style
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+                particle.style.opacity = opacity;
+                
+                // Random color from blue/purple palette
+                const colors = ['#3b82f6', '#6366f1', '#8b5cf6', '#a78bfa', '#60a5fa'];
+                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                // Calculate velocity components
+                const vx = Math.cos(angle) * velocity;
+                const vy = Math.sin(angle) * velocity;
+                
+                // Animation frame timestamp
+                let lastTime = performance.now();
+                
+                // Animate particle
+                function update(currentTime) {
+                    const deltaTime = (currentTime - lastTime) / 1000;
+                    lastTime = currentTime;
+                    
+                    // Update position
+                    const currentX = parseFloat(particle.style.left);
+                    const currentY = parseFloat(particle.style.top);
+                    
+                    particle.style.left = `${currentX + vx * deltaTime}px`;
+                    particle.style.top = `${currentY + vy * deltaTime}px`;
+                    
+                    // Fade out
+                    opacity -= deltaTime * 2;
+                    particle.style.opacity = Math.max(0, opacity);
+                    
+                    if (opacity > 0) {
+                        requestAnimationFrame(update);
+                    } else {
+                        particle.remove();
+                    }
+                }
+                
+                requestAnimationFrame(update);
+            }
+        });
+        
+        function initThreeJSBackground() {
+            const canvas = document.createElement('canvas');
+            document.getElementById('canvas-container').appendChild(canvas);
+            
+            const renderer = new THREE.WebGLRenderer({
+                canvas,
+                alpha: true,
+                antialias: true
+            });
+            
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            
+            const scene = new THREE.Scene();
+            
+            const camera = new THREE.PerspectiveCamera(
+                75,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            camera.position.z = 10;
+            
+            // Create stars
+            const particlesGeometry = new THREE.BufferGeometry();
+            const particlesCount = window.innerWidth < 768 ? 500 : 1000;
+            
+            const posArray = new Float32Array(particlesCount * 3);
+            
+            for (let i = 0; i < particlesCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 40;
+            }
+            
+            particlesGeometry.setAttribute(
+                'position',
+                new THREE.BufferAttribute(posArray, 3)
+            );
+            
+            // Create material for stars
+            const particlesMaterial = new THREE.PointsMaterial({
+                size: 0.05,
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.8,
+                sizeAttenuation: true
+            });
+            
+            // Create point cloud
+            const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+            scene.add(particlesMesh);
+            
+            // Animation
+            const animate = () => {
+                requestAnimationFrame(animate);
+                
+                particlesMesh.rotation.y += 0.0005;
+                particlesMesh.rotation.x += 0.0002;
+                
+                renderer.render(scene, camera);
+            };
+            
+            animate();
+            
+            // Handle resize
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+        }
+    </script>
 </body>
 </html>
