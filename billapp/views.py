@@ -2644,41 +2644,38 @@ def logout_view(request):
     return redirect('login')
 
 def get_login_activity(request):
-    """Get login activity for the current user"""
+    """Get login activity for all users"""
+    # Check if user is authenticated (either owner or employee)
     user_type = request.session.get('user_type')
-    
-    # Get user ID based on type
-    user_id = None
-    if user_type == 'employee':
-        user_id = request.session.get('employee_id')
-    elif user_type == 'owner':
-        user_id = request.session.get('owner_id')
-    
-    if not user_id:
+    if not user_type:
         return JsonResponse({'status': 'error', 'message': 'Not logged in'})
     
-    # Get last 20 login records for this user
-    activities = LoginRecord.objects.filter(
-        user_id=user_id,
-        user_type=user_type
-    ).order_by('-timestamp')[:20]
+    # Get full parameter to determine how many records to return
+    full = request.GET.get('full') == 'true'
+    limit = None if full else 20  # No limit for full history view
+    
+    # Get all login records without filtering by user_id
+    activities = LoginRecord.objects.all().order_by('-timestamp')
+    if limit:
+        activities = activities[:limit]
     
     activities_data = []
     for record in activities:
         # Get user name based on user_type and user_id
-        user_name = None
+        user_name = "Unknown User"
+        
         if record.user_type == 'employee':
             try:
                 employee = Employee.objects.get(employee_id=record.user_id)
                 user_name = employee.name
             except Employee.DoesNotExist:
-                user_name = "Unknown Employee"
-        else:
+                pass
+        elif record.user_type == 'owner':
             try:
                 owner = Owner.objects.get(owner_id=record.user_id)
                 user_name = owner.name
             except Owner.DoesNotExist:
-                user_name = "Unknown Owner"
+                pass
                 
         activities_data.append({
             'user_id': record.user_id,

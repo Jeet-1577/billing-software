@@ -554,7 +554,6 @@ function updatePreferences(preferences) {
 
 // Modify the loadLoginActivity function to show detailed error and loading state
 function loadLoginActivity() {
-    // Show loading state
     const tbody = document.getElementById('loginActivityTable');
     tbody.innerHTML = `
         <tr>
@@ -570,7 +569,6 @@ function loadLoginActivity() {
         </tr>
     `;
 
-    // Fetch login activity data
     fetch('/security/login-activity/')
         .then(response => {
             if (!response.ok) {
@@ -579,37 +577,23 @@ function loadLoginActivity() {
             return response.json();
         })
         .then(data => {
-            console.log('Login activity data:', data); // Debug log
-            if (data.status === 'success' && data.data && data.data.length > 0) {
-                // Get just the first 10 activities for the main table
-                const recentActivities = data.data.slice(0, 10);
-                updateActivityTable(recentActivities);
+            console.log('Received login activity data:', data); // Debug log
+            if (data.status === 'success' && Array.isArray(data.data)) {
+                updateActivityTable(data.data.slice(0, 10));
             } else {
-                console.warn('No activity data available');
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="px-6 py-4 text-center text-gray-400">
-                            <div class="flex flex-col items-center justify-center py-4">
-                                <svg class="w-12 h-12 text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                                <p>No recent login activity found</p>
-                            </div>
-                        </td>
-                    </tr>
-                `;
+                throw new Error('Invalid data format received');
             }
         })
         .catch(error => {
             console.error('Error loading activity:', error);
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="5" class="px-6 py-4 text-center text-gray-400">
+                    <td colspan="5" class="px-6 py-4 text-center text-red-400">
                         <div class="flex flex-col items-center justify-center py-4">
                             <svg class="w-12 h-12 text-red-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                            <p>Unable to load activity data</p>
+                            <p>Error loading activity data: ${error.message}</p>
                             <button onclick="loadLoginActivity()" class="mt-2 text-blue-400 hover:underline focus:outline-none">
                                 Try again
                             </button>
@@ -638,9 +622,21 @@ function updateActivityTable(activities) {
         `;
         return;
     }
-    
+
+    const formatTimestamp = (timestamp) => {
+        const date = new Date(timestamp);
+        return date.toLocaleString('en-US', { 
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+    };
+
     tbody.innerHTML = activities.map(activity => `
-        <tr class="hover:bg-gray-700">
+        <tr class="hover:bg-gray-700 transition-colors">
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
                 ${activity.user_id || 'Unknown'}
             </td>
@@ -655,15 +651,18 @@ function updateActivityTable(activities) {
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
                 <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                    ${activity.action === 'login' ? 'bg-green-900 text-green-300' : 'bg-blue-900 text-blue-300'}">
+                    ${activity.action === 'login' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}">
                     ${(activity.action || 'action').toUpperCase()}
                 </span>
             </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
-                ${activity.timestamp || 'Unknown Time'}
+                ${formatTimestamp(activity.timestamp)}
             </td>
         </tr>
     `).join('');
+
+    // Add debug logging
+    console.log('Rendered activities:', activities);
 }
 
 // Load activity when page loads
@@ -785,7 +784,7 @@ function updateFullHistoryTable(activities) {
             </td>
             <td class="px-6 py-4">
                 <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                    ${activity.action === 'login' ? 'bg-green-900 text-green-300' : 'bg-blue-900 text-blue-300'}">
+                    ${activity.action === 'login' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}">
                     ${activity.action.toUpperCase()}
                 </span>
             </td>
