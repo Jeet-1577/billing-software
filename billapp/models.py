@@ -247,8 +247,10 @@ class Owner(models.Model):
     email = models.EmailField()
     phone = models.CharField(max_length=15)
     photo = models.ImageField(upload_to='owners/', blank=True, null=True)
-    owner_id = models.CharField(max_length=50, unique=True, default='owner001')  # Add this field
-    password = models.CharField(max_length=128, default='')  # Add this field
+    owner_id = models.CharField(max_length=50, unique=True, default='owner001')
+    password = models.CharField(max_length=128, default='')
+    created_at = models.DateTimeField(auto_now_add=True)  # Add this line
+    updated_at = models.DateTimeField(auto_now=True)  # Add this for completeness
     
     def __str__(self):
         return self.name
