@@ -162,211 +162,129 @@
         
         <!-- Login Activity -->
         <div class="p-6 text-gray-300">
-            <h3 class="text-lg font-medium text-white mb-4">Recent Login Activity</h3>
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium text-white">Recent Login Activity</h3>
+                <button onclick="showFullLoginHistory()" class="px-4 py-2 bg-blue-600 text-sm text-white rounded hover:bg-blue-500 transition flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    View All
+                </button>
+            </div>
             
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-700">
-                    <thead class="bg-gray-700">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Action</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Time</th>
-                        </tr>
-                    </thead>
-                    <tbody id="loginActivityTable" class="bg-gray-800 divide-y divide-gray-700">
-                        <!-- Activity rows will be inserted here by JavaScript -->
-                    </tbody>
-                </table>
+                <div class="bg-gray-700 rounded-t-lg">
+                    <table class="min-w-full divide-y divide-gray-700">
+                        <thead>
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider w-[15%]">User ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider w-[25%]">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider w-[15%]">Type</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider w-[15%]">Action</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider w-[30%]">Time</th>
+                            </tr>
+                        </thead>
+                    </table>
+                </div>
+                <div class="activity-container max-h-[300px] overflow-y-auto custom-scrollbar bg-gray-800 rounded-b-lg">
+                    <table class="min-w-full divide-y divide-gray-700">
+                        <tbody id="loginActivityTable" class="divide-y divide-gray-700">
+                            <tr>
+                                <td colspan="5" class="px-6 py-4 text-center text-gray-400">
+                                    <div class="flex items-center justify-center">
+                                        <svg class="w-5 h-5 animate-spin mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                        Loading recent activity...
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </section>
 
-  </div>
-</div>
-
-<!-- Hotel Profile Modal -->
-<div id="hotelProfileModal" class="fixed inset-0 z-50 hidden">
-    <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-filter backdrop-blur-sm"></div>
-    
-    <!-- Modal Content -->
-    <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] bg-gray-800 rounded-lg shadow-2xl">
-        <!-- Modal Header -->
-        <div class="flex items-center justify-between p-4 border-b border-gray-700">
-            <h3 class="text-lg font-medium text-white">Hotel Profile</h3>
-            <button onclick="closeHotelProfileModal()" class="text-gray-400 hover:text-white">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-        </div>
+    <!-- Full Login History Modal - Redesigned -->
+    <div id="loginHistoryModal" class="fixed inset-0 z-50 hidden overflow-hidden">
+        <div class="fixed inset-0 bg-black bg-opacity-60 backdrop-filter backdrop-blur-sm transition-opacity"></div>
         
-        <form id="hotelProfileForm" class="p-4" enctype="multipart/form-data">
-            {% csrf_token %}
-            
-            <!-- Logo Section -->
-            <div class="flex items-center space-x-4 mb-4 p-3 bg-gray-700 rounded-lg">
-                <div class="relative group">
-                    {% if hotel.logo and hotel.logo.url %}
-                        <img id="currentLogo" src="{{ hotel.logo.url }}" alt="Hotel Logo" class="w-16 h-16 rounded object-cover">
-                    {% else %}
-                        <img id="currentLogo" src="{% static 'img/default-avatar.png' %}" alt="Default Logo" class="w-16 h-16 rounded object-cover">
-                    {% endif %}
-                    <label for="logoInput" class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 opacity-0 group-hover:opacity-100 rounded cursor-pointer">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                        </svg>
-                    </label>
-                    <input type="file" name="logo" id="logoInput" accept="image/*" class="hidden">
-                </div>
-                <div class="flex-1 text-sm text-gray-400">
-                    <p class="font-medium">Hotel Logo</p>
-                    <p class="text-xs">Recommended: 400x400px</p>
-                </div>
-            </div>
-
-            <!-- Form Fields -->
-            <div class="space-y-3">
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Hotel Name</label>
-                    <input type="text" name="name" value="{{ hotel.name }}" required
-                           class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Address</label>
-                    <textarea name="address" required rows="2"
-                            class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">{{ hotel.address }}</textarea>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
-                        <input type="email" name="email" value="{{ hotel.email }}" required
-                               class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-300 mb-1">Phone</label>
-                        <input type="text" name="phone" value="{{ hotel.phone }}" required
-                               class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
-                    </div>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">GSTIN</label>
-                    <input type="text" name="gstin" value="{{ hotel.gstin }}"
-                           class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
-                </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-700">
-                <button type="button" onclick="closeHotelProfileModal()"
-                        class="px-4 py-2 bg-gray-700 text-sm text-white rounded hover:bg-gray-600">
-                    Cancel
-                </button>
-                <button type="submit"
-                        class="px-4 py-2 bg-blue-600 text-sm text-white rounded hover:bg-blue-500 flex items-center">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        <!-- Modal Content - Reduced size and improved design -->
+        <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[80%] max-w-3xl bg-gray-800 rounded-xl shadow-2xl flex flex-col" style="max-height: 70vh;">
+            <!-- Modal Header - Simplified -->
+            <div class="px-4 py-3 border-b border-gray-700 bg-gray-800 rounded-t-xl flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    Save Changes
+                    <h3 class="text-lg font-medium text-white">Login History</h3>
+                </div>
+                <button onclick="closeLoginHistoryModal()" class="p-1 hover:bg-gray-700 rounded-full transition-colors">
+                    <svg class="w-5 h-5 text-gray-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                 </button>
             </div>
-        </form>
-    </div>
-</div>
-
-<!-- Owner Modal -->
-<div id="ownerModal" class="fixed inset-0 z-50 hidden">
-    <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-filter backdrop-blur-sm"></div>
-    <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] bg-gray-800 rounded-lg shadow-2xl">
-        <div class="flex items-center justify-between p-4 border-b border-gray-700">
-            <h3 class="text-lg font-medium text-white">Add New Owner</h3>
-            <button onclick="closeOwnerModal()" class="text-gray-400 hover:text-white">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-        </div>
-        <form id="ownerForm" class="p-4 space-y-4">
-            {% csrf_token %}
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-1">Owner ID</label>
-                <input type="text" name="owner_id" autocomplete="off" required class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-1">Password</label>
-                <input type="password" name="password" autocomplete="new-password" class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-1">Name</label>
-                <input type="text" name="name" required class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
-                <input type="email" name="email" required class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-1">Phone</label>
-                <input type="tel" name="phone" required class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-1">Photo</label>
-                <input type="file" name="photo" accept="image/*" class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
-            </div>
-            <div class="flex justify-end space-x-3 pt-4">
-                <button type="button" onclick="closeOwnerModal()" class="px-4 py-2 bg-gray-700 text-sm text-white rounded hover:bg-gray-600">Cancel</button>
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-sm text-white rounded hover:bg-blue-500">Save</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- Employee Modal -->
-<div id="employeeModal" class="fixed inset-0 z-50 hidden">
-    <div class="fixed inset-0 bg-black bg-opacity-50 backdrop-filter backdrop-blur-sm"></div>
-    <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] bg-gray-800 rounded-lg shadow-2xl">
-        <div class="flex items-center justify-between p-4 border-b border-gray-700">
-            <h3 class="text-lg font-medium text-white">Add New Employee</h3>
-            <button onclick="closeEmployeeModal()" class="text-gray-400 hover:text-white">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-        </div>
-        <form id="employeeForm" class="p-4 space-y-4">
-            {% csrf_token %}
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Employee ID</label>
-                    <input type="text" name="employee_id" required class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
+            
+            <!-- Table Container -->
+            <div class="flex-1 overflow-hidden">
+                <!-- Fixed Header -->
+                <div class="bg-gray-700 sticky top-0 z-10">
+                    <table class="min-w-full">
+                        <thead>
+                            <tr>
+                                <th class="px-4 py-2 text-xs font-medium text-gray-300 text-left w-[15%]">ID</th>
+                                <th class="px-4 py-2 text-xs font-medium text-gray-300 text-left w-[25%]">Name</th>
+                                <th class="px-4 py-2 text-xs font-medium text-gray-300 text-left w-[15%]">Type</th>
+                                <th class="px-4 py-2 text-xs font-medium text-gray-300 text-left w-[15%]">Action</th>
+                                <th class="px-4 py-2 text-xs font-medium text-gray-300 text-left w-[30%]">Time</th>
+                            </tr>
+                        </thead>
+                    </table>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-1">Name</label>
-                    <input type="text" name="name" required class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
+                
+                <!-- Scrollable Content -->
+                <div class="overflow-y-auto" style="max-height: calc(70vh - 8rem);">
+                    <table class="min-w-full">
+                        <tbody id="fullLoginHistoryTable" class="divide-y divide-gray-700">
+                            <tr>
+                                <td colspan="5" class="px-4 py-3 text-center text-gray-400">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <div class="w-8 h-8 mb-2">
+                                            <svg class="animate-spin" viewBox="0 0 24 24">
+                                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"/>
+                                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                                            </svg>
+                                        </div>
+                                        <p class="text-sm">Loading history...</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-1">Email</label>
-                <input type="email" name="email" required class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
+            
+            <!-- Modal Footer -->
+            <div class="px-4 py-3 border-t border-gray-700 flex items-center justify-between bg-gray-800 rounded-b-xl">
+                <span class="text-sm text-gray-400">
+                    <span id="historyCount">0</span> records found
+                </span>
+                <button onclick="refreshLoginHistory()" 
+                        class="inline-flex items-center px-3 py-1.5 bg-blue-600 text-sm text-white rounded-lg hover:bg-blue-500 transition-colors">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Refresh
+                </button>
             </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-1">Mobile Number</label>
-                <input type="tel" name="mobile_number" required class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-1">Address</label>
-                <textarea name="address" rows="2" class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm"></textarea>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-300 mb-1">Password</label>
-                <input type="password" name="password" required class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
-            </div>
-            <div class="flex justify-end space-x-3 pt-4">
-                <button type="button" onclick="closeEmployeeModal()" class="px-4 py-2 bg-gray-700 text-sm text-white rounded hover:bg-gray-600">Cancel</button>
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-sm text-white rounded hover:bg-blue-500">Save</button>
-            </div>
-        </form>
+        </div>
     </div>
+
+  </div>
 </div>
 
 <!-- Add this JavaScript section at the end of your template -->
@@ -571,76 +489,6 @@ document.getElementById('employeeForm').addEventListener('submit', function(e) {
     });
 });
 
-// Add this JavaScript right after your existing event handlers
-
-function editOwner(ownerId) {
-    // Get owner data from the DOM
-    const ownerCard = document.querySelector(`[data-owner-id="${ownerId}"]`);
-    const name = ownerCard.querySelector('.owner-name').textContent;
-    const email = ownerCard.querySelector('.owner-email').textContent;
-    const phone = ownerCard.querySelector('.owner-phone').textContent;
-    
-    // Update the owner modal with current data
-    document.querySelector('#ownerModal h3').textContent = 'Edit Owner';
-    document.querySelector('#ownerForm [name="name"]').value = name;
-    document.querySelector('#ownerForm [name="email"]').value = email;
-    document.querySelector('#ownerForm [name="phone"]').value = phone;
-    document.querySelector('#ownerForm').dataset.ownerId = ownerId;
-    
-    openOwnerModal();
-}
-
-function editEmployee(employeeId) {
-    // Get employee data from the DOM
-    const employeeCard = document.querySelector(`[data-employee-id="${employeeId}"]`);
-    const name = employeeCard.querySelector('.employee-name').textContent;
-    const email = employeeCard.querySelector('.employee-email').textContent;
-    const mobile = employeeCard.querySelector('.employee-mobile').textContent;
-    
-    // Update the employee modal with current data
-    document.querySelector('#employeeModal h3').textContent = 'Edit Employee';
-    document.querySelector('#employeeForm [name="name"]').value = name;
-    document.querySelector('#employeeForm [name="email"]').value = email;
-    document.querySelector('#employeeForm [name="mobile_number"]').value = mobile;
-    document.querySelector('#employeeForm').dataset.employeeId = employeeId;
-    
-    openEmployeeModal();
-}
-
-function deleteEmployee(employeeId) {
-    if (confirm('Are you sure you want to delete this employee?')) {
-        fetch(`/api/staff/${employeeId}/`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                'Content-Type': 'application/json'
-            }
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.status === 'success') {
-                // Remove the employee element from DOM
-                const employeeElement = document.querySelector(`[data-employee-id="${employeeId}"]`);
-                if (employeeElement) {
-                    employeeElement.remove();
-                }
-                alert('Employee deleted successfully!');
-            } else {
-                alert('Error: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Failed to delete employee. Please try again.');
-        });
-    }
-}
-
 // Add this after your existing JavaScript code
 
 // Handle email notifications toggle
@@ -704,31 +552,115 @@ function updatePreferences(preferences) {
 //     document.getElementById('language').value = "{{ hotel.language }}";
 // });
 
-// ...existing code...
-
+// Modify the loadLoginActivity function to show detailed error and loading state
 function loadLoginActivity() {
+    // Show loading state
+    const tbody = document.getElementById('loginActivityTable');
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="5" class="px-6 py-4 text-center text-gray-400">
+                <div class="flex items-center justify-center">
+                    <svg class="w-5 h-5 animate-spin mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Loading recent activity...
+                </div>
+            </td>
+        </tr>
+    `;
+
+    // Fetch login activity data
     fetch('/security/login-activity/')
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
         .then(data => {
-            if (data.status === 'success') {
-                updateActivityTable(data.data);
+            console.log('Login activity data:', data); // Debug log
+            if (data.status === 'success' && data.data && data.data.length > 0) {
+                // Get just the first 10 activities for the main table
+                const recentActivities = data.data.slice(0, 10);
+                updateActivityTable(recentActivities);
+            } else {
+                console.warn('No activity data available');
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-4 text-center text-gray-400">
+                            <div class="flex flex-col items-center justify-center py-4">
+                                <svg class="w-12 h-12 text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p>No recent login activity found</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
             }
         })
-        .catch(error => console.error('Error:', error));
+        .catch(error => {
+            console.error('Error loading activity:', error);
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-400">
+                        <div class="flex flex-col items-center justify-center py-4">
+                            <svg class="w-12 h-12 text-red-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p>Unable to load activity data</p>
+                            <button onclick="loadLoginActivity()" class="mt-2 text-blue-400 hover:underline focus:outline-none">
+                                Try again
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
 }
 
 function updateActivityTable(activities) {
     const tbody = document.getElementById('loginActivityTable');
+    
+    if (!activities || activities.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="px-6 py-4 text-center text-gray-400">
+                    <div class="flex flex-col items-center justify-center py-4">
+                        <svg class="w-12 h-12 text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p>No recent login activity found</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
     tbody.innerHTML = activities.map(activity => `
         <tr class="hover:bg-gray-700">
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                ${activity.user_id || 'Unknown'}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                ${activity.user_name || 'Unknown User'}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm">
+                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                    ${activity.user_type === 'employee' ? 'bg-purple-900 text-purple-300' : 'bg-indigo-900 text-indigo-300'}">
+                    ${(activity.user_type || 'user').toUpperCase()}
+                </span>
+            </td>
             <td class="px-6 py-4 whitespace-nowrap">
                 <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
                     ${activity.action === 'login' ? 'bg-green-900 text-green-300' : 'bg-blue-900 text-blue-300'}">
-                    ${activity.action.toUpperCase()}
+                    ${(activity.action || 'action').toUpperCase()}
                 </span>
             </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm">
-                ${activity.timestamp}
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                ${activity.timestamp || 'Unknown Time'}
             </td>
         </tr>
     `).join('');
@@ -739,6 +671,132 @@ document.addEventListener('DOMContentLoaded', loadLoginActivity);
 
 // Refresh every 60 seconds
 setInterval(loadLoginActivity, 60000);
+
+// Login history modal functions
+function showFullLoginHistory() {
+    document.getElementById('loginHistoryModal').classList.remove('hidden');
+    loadFullLoginHistory();
+}
+
+function closeLoginHistoryModal() {
+    document.getElementById('loginHistoryModal').classList.add('hidden');
+}
+
+function refreshLoginHistory() {
+    // Show loading state
+    document.getElementById('fullLoginHistoryTable').innerHTML = `
+        <tr>
+            <td colspan="5" class="px-6 py-10 text-center text-gray-400">
+                <div class="flex flex-col items-center justify-center">
+                    <svg class="w-10 h-10 animate-spin mb-3 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p>Loading login history...</p>
+                </div>
+            </td>
+        </tr>
+    `;
+    
+    // Reload the data
+    loadFullLoginHistory();
+}
+
+function loadFullLoginHistory() {
+    fetch('/security/login-activity/?full=true')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                updateFullHistoryTable(data.data);
+                document.getElementById('historyCount').textContent = data.data.length;
+            } else {
+                document.getElementById('fullLoginHistoryTable').innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-10 text-center text-gray-400">
+                            <div class="flex flex-col items-center justify-center">
+                                <svg class="w-12 h-12 text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <p>No login history available.</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('historyCount').textContent = '0';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading full activity history:', error);
+            document.getElementById('fullLoginHistoryTable').innerHTML = `
+                <tr>
+                    <td colspan="5" class="px-6 py-10 text-center text-gray-400">
+                        <div class="flex flex-col items-center justify-center">
+                            <svg class="w-12 h-12 text-red-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <p>Error loading login history.</p>
+                            <button onclick="refreshLoginHistory()" class="mt-2 text-blue-400 hover:text-blue-300 underline focus:outline-none">
+                                Try again
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+            document.getElementById('historyCount').textContent = '0';
+        });
+}
+
+function updateFullHistoryTable(activities) {
+    const tbody = document.getElementById('fullLoginHistoryTable');
+    if (activities.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="px-6 py-10 text-center text-gray-400">
+                    <div class="flex flex-col items-center justify-center">
+                        <svg class="w-12 h-12 text-gray-600 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p>No login history available.</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tbody.innerHTML = activities.map(activity => `
+        <tr class="transition-colors">
+            <td class="px-6 py-4 text-sm text-gray-300" title="${activity.user_id}">
+                ${activity.user_id}
+            </td>
+            <td class="px-6 py-4 text-sm text-gray-300" title="${activity.user_name}">
+                ${activity.user_name}
+            </td>
+            <td class="px-6 py-4 text-sm">
+                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                    ${activity.user_type === 'employee' ? 'bg-purple-900 text-purple-300' : 'bg-indigo-900 text-indigo-300'}">
+                    ${activity.user_type.toUpperCase()}
+                </span>
+            </td>
+            <td class="px-6 py-4">
+                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                    ${activity.action === 'login' ? 'bg-green-900 text-green-300' : 'bg-blue-900 text-blue-300'}">
+                    ${activity.action.toUpperCase()}
+                </span>
+            </td>
+            <td class="px-6 py-4 text-sm text-gray-300" title="${activity.timestamp}">
+                ${activity.timestamp}
+            </td>
+        </tr>
+    `).join('');
+}
+
+// ...existing code...
 </script>
 
 <style>
@@ -787,33 +845,159 @@ input:checked + .slider {
 input:checked + .slider:before {
     transform: translateX(26px);
 }
-</style>
 
-<style>
-    /* Custom Scrollbar Styles */
-    .custom-scrollbar {
-        scrollbar-width: none; /* Firefox */
-        -ms-overflow-style: none;  /* Internet Explorer 10+ */
-    }
-    .custom-scrollbar::-webkit-scrollbar {
-        display: none; /* Safari and Chrome */
-    }
-    .overflow-y-auto::-webkit-scrollbar {
-        width: 6px;
-    }
-    
-    .overflow-y-auto::-webkit-scrollbar-track {
-        background: #1F2937;
-        border-radius: 3px;
-    }
-    
-    .overflow-y-auto::-webkit-scrollbar-thumb {
-        background-color: #4B5563;
-        border-radius: 3px;
-    }
-    
-    .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-        background-color: #6B7280;
-    }
+/* Modal Design for Login History */
+.modal-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(75, 85, 99, 0.5) rgba(31, 41, 55, 0.5);
+}
+
+.modal-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-track {
+    background: rgba(31, 41, 55, 0.5);
+    border-radius: 3px;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(75, 85, 99, 0.5);
+    border-radius: 3px;
+    transition: background-color 0.2s ease;
+}
+
+.modal-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(107, 114, 128, 0.7);
+}
+
+/* Consistent table layout */
+.login-table-header table,
+.login-table-body table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+
+/* Fixed column widths for consistent alignment */
+.login-table-header th:nth-child(1),
+.login-table-body td:nth-child(1) {
+    width: 15%;
+}
+
+.login-table-header th:nth-child(2),
+.login-table-body td:nth-child(2) {
+    width: 25%;
+}
+
+.login-table-header th:nth-child(3),
+.login-table-body td:nth-child(3),
+.login-table-header th:nth-child(4),
+@login-table-body td:nth-child(4) {
+    width: 15%;
+}
+
+.login-table-header th:nth-child(5),
+.login-table-body td:nth-child(5) {
+    width: 30%;
+}
+
+/* Row hover effect */
+.login-table-body tr:hover {
+    background-color: rgba(55, 65, 81, 0.7);
+    transition: background-color 0.15s ease;
+}
+
+/* Better cell styling */
+.login-table-body td {
+    padding: 1rem 1.5rem;
+    vertical-align: middle;
+}
+
+/* Text truncation with tooltip effect */
+.login-table-body td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Custom Scrollbar Styles */
+.custom-scrollbar {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+}
+.custom-scrollbar::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+}
+.overflow-y-auto::-webkit-scrollbar {
+    width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+    background: #1F2937;
+    border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+    background-color: #4B5563;
+    border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background-color: #6B7280;
+}
+
+/* Styled scrollbar for activity container */
+.activity-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.activity-container::-webkit-scrollbar-track {
+    background: #1F2937;
+    border-radius: 3px;
+}
+
+.activity-container::-webkit-scrollbar-thumb {
+    background-color: #4B5563;
+    border-radius: 3px;
+}
+
+.activity-container::-webkit-scrollbar-thumb:hover {
+    background-color: #6B7280;
+}
+
+/* Ensure consistent table width between header and body */
+.overflow-x-auto table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.overflow-x-auto th:nth-child(1),
+.overflow-x-auto td:nth-child(1) {
+    width: 15%;
+}
+
+.overflow-x-auto th:nth-child(2),
+.overflow-x-auto td:nth-child(2) {
+    width: 25%;
+}
+
+.overflow-x-auto th:nth-child(3),
+.overflow-x-auto td:nth-child(3),
+.overflow-x-auto th:nth-child(4),
+.overflow-x-auto td:nth-child(4) {
+    width: 15%;
+}
+
+.overflow-x-auto th:nth-child(5),
+.overflow-x-auto td:nth-child(5) {
+    width: 30%;
+}
+
+/* Full Login History Modal Styles */
+#fullLoginHistoryTable {
+    max-height: 60vh;
+    overflow-y: auto;
+}
 </style>
 {% endblock %}

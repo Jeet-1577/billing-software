@@ -2599,12 +2599,13 @@ def login_view(request):
             
             # Store additional data based on user type
             if request.session['user_type'] == 'employee':
-                request.session['employee_id'] = user_id
+                request.session['employee_id'] = user.employee_id  # Store the custom employee_id
             elif request.session['user_type'] == 'owner':
-                request.session['owner_id'] = user_id
+                request.session['owner_id'] = user.owner_id  # Store the custom owner_id
             
-            # Record the login activity
-            record_login_activity(user.id, request.session['user_type'], 'login')
+            # Record the login activity with the custom ID (not database ID)
+            custom_id = user.employee_id if request.session['user_type'] == 'employee' else user.owner_id
+            record_login_activity(custom_id, request.session['user_type'], 'login')
             
             # Redirect to home page after successful login
             return redirect('index')
@@ -2621,7 +2622,13 @@ def logout_view(request):
     """
     # Save user type for logging
     user_type = request.session.get('user_type', 'unknown')
-    user_id = request.session.get('user_id', 'unknown')
+    
+    # Get the custom ID based on user type
+    user_id = None
+    if user_type == 'employee':
+        user_id = request.session.get('employee_id')
+    elif user_type == 'owner': 
+        user_id = request.session.get('owner_id')
     
     # Record the logout activity
     if user_id:
@@ -2638,8 +2645,14 @@ def logout_view(request):
 
 def get_login_activity(request):
     """Get login activity for the current user"""
-    user_id = request.session.get('user_id')
     user_type = request.session.get('user_type')
+    
+    # Get user ID based on type
+    user_id = None
+    if user_type == 'employee':
+        user_id = request.session.get('employee_id')
+    elif user_type == 'owner':
+        user_id = request.session.get('owner_id')
     
     if not user_id:
         return JsonResponse({'status': 'error', 'message': 'Not logged in'})
@@ -2650,12 +2663,34 @@ def get_login_activity(request):
         user_type=user_type
     ).order_by('-timestamp')[:20]
     
-    return JsonResponse({
-        'status': 'success',
-        'data': [{
+    activities_data = []
+    for record in activities:
+        # Get user name based on user_type and user_id
+        user_name = None
+        if record.user_type == 'employee':
+            try:
+                employee = Employee.objects.get(employee_id=record.user_id)
+                user_name = employee.name
+            except Employee.DoesNotExist:
+                user_name = "Unknown Employee"
+        else:
+            try:
+                owner = Owner.objects.get(owner_id=record.user_id)
+                user_name = owner.name
+            except Owner.DoesNotExist:
+                user_name = "Unknown Owner"
+                
+        activities_data.append({
+            'user_id': record.user_id,
+            'user_name': user_name,
+            'user_type': record.user_type,
             'action': record.action,
             'timestamp': record.timestamp.strftime('%Y-%m-%d %H:%M:%S')
-        } for record in activities]
+        })
+    
+    return JsonResponse({
+        'status': 'success',
+        'data': activities_data
     })
 
 def record_login_activity(user_id, user_type, action):

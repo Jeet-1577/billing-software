@@ -78,6 +78,5 @@ urlpatterns += [
     path('submit-feedback/', views.submit_feedback, name='submit_feedback'),
     path('api/item-sales/<int:item_id>/realtime/', views.get_realtime_item_sales, name='realtime_item_sales'),
     path('api/item-historical-sales/<int:item_id>/', views.get_item_historical_sales, name='item_historical_sales'),
-    # Add this line
     path('security/login-activity/', views.get_login_activity, name='login_activity'),
 ]
