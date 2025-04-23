@@ -284,7 +284,7 @@
             {% csrf_token %}
             <div>
                 <label class="block text-sm font-medium text-gray-300 mb-1">Owner ID</label>
-                <input type="text" name="owner_id" autocomplete="off" class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
+                <input type="text" name="owner_id" autocomplete="off" required class="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-blue-500 text-sm">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-300 mb-1">Password</label>
@@ -364,6 +364,8 @@
 
 <!-- Add this JavaScript section at the end of your template -->
 <script>
+// ...existing code...
+
 function openHotelProfileModal() {
     document.getElementById('hotelProfileModal').classList.remove('hidden');
 }
@@ -409,6 +411,17 @@ document.getElementById('hotelProfileForm').addEventListener('submit', function(
 
 // Owner Modal Functions
 function openOwnerModal() {
+    // Reset the form completely
+    document.getElementById('ownerForm').reset();
+    document.getElementById('ownerForm').removeAttribute('data-owner-id');
+    // Explicitly clear all fields
+    document.querySelector('#ownerForm [name="owner_id"]').value = '';
+    document.querySelector('#ownerForm [name="password"]').value = '';
+    document.querySelector('#ownerForm [name="name"]').value = '';
+    document.querySelector('#ownerForm [name="email"]').value = '';
+    document.querySelector('#ownerForm [name="phone"]').value = '';
+    // Set modal title
+    document.querySelector('#ownerModal h3').textContent = 'Add New Owner';
     document.getElementById('ownerModal').classList.remove('hidden');
 }
 
@@ -444,12 +457,14 @@ document.getElementById('ownerForm').addEventListener('submit', function(e) {
     e.preventDefault();
     const formData = new FormData(this);
     const ownerId = this.dataset.ownerId;
-    
-    // Choose the correct URL based on whether we're editing or adding
+    const ownerIdValue = document.querySelector('#ownerForm [name="owner_id"]').value;
+    if (!ownerId && !ownerIdValue) {
+        alert('Owner ID is required');
+        return;
+    }
     const url = ownerId ? 
         `/api/owners/edit/${ownerId}/` : 
         '/api/owners/add/';
-
     fetch(url, {
         method: 'POST',
         body: formData,

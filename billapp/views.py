@@ -1996,12 +1996,24 @@ def update_hotel_profile(request):
 def add_owner(request):
     if request.method == 'POST':
         try:
+            # Get form data with owner_id and password
+            owner_id = request.POST.get('owner_id')  # Get the owner_id from the form
+            password = request.POST.get('password')  # Get the password from the form
             name = request.POST.get('name')
             email = request.POST.get('email')
             phone = request.POST.get('phone')
             photo = request.FILES.get('photo')
             
+            # Validate owner_id
+            if not owner_id:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Owner ID is required'
+                }, status=400)
+            
             owner = Owner.objects.create(
+                owner_id=owner_id,  # Use the form owner_id instead of default
+                password=password,  # Set the password
                 name=name,
                 email=email,
                 phone=phone,
