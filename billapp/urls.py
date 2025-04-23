@@ -57,6 +57,10 @@ urlpatterns = [
     path('api/owners/add/', views.add_owner, name='add_owner'),
     path('api/owners/edit/<int:owner_id>/', views.edit_owner, name='edit_owner'),
     path('api/owners/delete/<int:owner_id>/', views.delete_owner, name='delete_owner'),
+    
+    # Add staff/employee management API endpoints
+    path('api/staff/', views.manage_staff, name='manage_staff'),
+    path('api/staff/<int:employee_id>/', views.manage_employee, name='manage_employee'),
 ]
 
 urlpatterns += [

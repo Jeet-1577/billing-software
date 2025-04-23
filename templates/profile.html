@@ -553,15 +553,30 @@ function deleteEmployee(employeeId) {
             method: 'DELETE',
             headers: {
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
             }
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.status === 'success') {
-                location.reload();
+                // Remove the employee element from DOM
+                const employeeElement = document.querySelector(`[data-employee-id="${employeeId}"]`);
+                if (employeeElement) {
+                    employeeElement.remove();
+                }
+                alert('Employee deleted successfully!');
             } else {
                 alert('Error: ' + data.message);
             }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to delete employee. Please try again.');
         });
     }
 }
