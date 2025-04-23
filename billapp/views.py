@@ -11,7 +11,8 @@ from .models import (
     CustomizationCategory,
     CustomizationOption,
     Hotel,  # Add this import
-    Owner   # Add this import too since it's used in profile view
+    Owner,   # Add this import too since it's used in profile view
+    LoginRecord  # Add this import for login activity
 )
 from .forms import CategoryForm, ItemForm, EmployeeForm  # Update this line to only import existing forms
 from django.http import JsonResponse
@@ -2602,6 +2603,9 @@ def login_view(request):
             elif request.session['user_type'] == 'owner':
                 request.session['owner_id'] = user_id
             
+            # Record the login activity
+            record_login_activity(user.id, request.session['user_type'], 'login')
+            
             # Redirect to home page after successful login
             return redirect('index')
         else:
@@ -2619,6 +2623,10 @@ def logout_view(request):
     user_type = request.session.get('user_type', 'unknown')
     user_id = request.session.get('user_id', 'unknown')
     
+    # Record the logout activity
+    if user_id:
+        record_login_activity(user_id, user_type, 'logout')
+    
     # Clear all session data
     request.session.flush()
     
@@ -2627,6 +2635,36 @@ def logout_view(request):
     
     # Redirect to login page
     return redirect('login')
+
+def get_login_activity(request):
+    """Get login activity for the current user"""
+    user_id = request.session.get('user_id')
+    user_type = request.session.get('user_type')
+    
+    if not user_id:
+        return JsonResponse({'status': 'error', 'message': 'Not logged in'})
+    
+    # Get last 20 login records for this user
+    activities = LoginRecord.objects.filter(
+        user_id=user_id,
+        user_type=user_type
+    ).order_by('-timestamp')[:20]
+    
+    return JsonResponse({
+        'status': 'success',
+        'data': [{
+            'action': record.action,
+            'timestamp': record.timestamp.strftime('%Y-%m-%d %H:%M:%S')
+        } for record in activities]
+    })
+
+def record_login_activity(user_id, user_type, action):
+    """Helper function to record login/logout activity"""
+    LoginRecord.objects.create(
+        user_id=user_id,
+        user_type=user_type,
+        action=action
+    )
 
 from django.http import JsonResponse
 from django.utils import timezone

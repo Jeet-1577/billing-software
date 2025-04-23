@@ -317,6 +317,18 @@ class LoginActivity(models.Model):
     def __str__(self):
         return f"{self.user} - {self.ip_address} - {self.login_time}"
 
+class LoginRecord(models.Model):
+    user_id = models.CharField(max_length=100)
+    user_type = models.CharField(max_length=50)  # 'employee' or 'owner'
+    action = models.CharField(max_length=20)  # 'login' or 'logout'
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-timestamp']
+
+    def __str__(self):
+        return f"{self.user_type} {self.user_id} - {self.action} at {self.timestamp}"
+
 class ConnectedDevice(models.Model):
     user = models.ForeignKey('Employee', on_delete=models.CASCADE)
     device_name = models.CharField(max_length=255)
