@@ -284,6 +284,85 @@
         </div>
     </div>
 
+    <!-- Hotel Profile Modal -->
+    <div id="hotelProfileModal" class="fixed inset-0 z-50 hidden overflow-hidden">
+      <div class="fixed inset-0 bg-black bg-opacity-60 backdrop-filter backdrop-blur-sm transition-opacity"></div>
+      
+      <div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[80%] max-w-2xl bg-gray-800 rounded-xl shadow-2xl">
+        <div class="px-6 py-4 border-b border-gray-700 flex justify-between items-center">
+          <h3 class="text-xl font-semibold text-white">Edit Hotel Profile</h3>
+          <button onclick="closeHotelProfileModal()" class="text-gray-400 hover:text-white">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <form id="hotelProfileForm" class="p-6">
+          {% csrf_token %}
+          <div class="space-y-4">
+            <!-- Logo Upload -->
+            <div class="flex items-center space-x-6">
+              <div class="relative">
+                <img id="currentLogo" src="{% if hotel.logo %}{{ hotel.logo.url }}{% else %}{% static 'img/default-avatar.png' %}{% endif %}" 
+                     alt="Hotel Logo" 
+                     class="w-32 h-32 rounded-full object-cover border-4 border-gray-700">
+                <label class="absolute bottom-0 right-0 bg-blue-600 rounded-full p-2 cursor-pointer hover:bg-blue-700 transition-colors">
+                  <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  <input type="file" id="logoInput" name="logo" class="hidden" accept="image/*">
+                </label>
+              </div>
+              <div class="text-sm text-gray-400">
+                <p>Upload a new logo</p>
+                <p>Recommended: 200x200px</p>
+              </div>
+            </div>
+
+            <!-- Hotel Details -->
+            <div>
+              <label class="block text-sm font-medium text-gray-400 mb-2">Hotel Name</label>
+              <input type="text" name="name" value="{{ hotel.name }}" required
+                     class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white">
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-400 mb-2">Address</label>
+              <textarea name="address" required rows="2"
+                        class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white">{{ hotel.address }}</textarea>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-400 mb-2">Email</label>
+                <input type="email" name="email" value="{{ hotel.email }}" required
+                       class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-400 mb-2">Phone</label>
+                <input type="tel" name="phone" value="{{ hotel.phone }}" required
+                       class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 text-white">
+              </div>
+            </div>
+          </div>
+
+          <!-- Form Buttons -->
+          <div class="flex justify-end space-x-3 mt-6">
+            <button type="button" onclick="closeHotelProfileModal()"
+                    class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors text-white">
+              Cancel
+            </button>
+            <button type="submit"
+                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors text-white">
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
   </div>
 </div>
 

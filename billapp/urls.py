@@ -51,6 +51,9 @@ urlpatterns = [
     path('manage-items/get-customization/<int:customization_id>/', views.get_customization, name='get-customization'),
     path('manage-items/get/<int:item_id>/', views.get_item_details, name='get_item_details'),
     
+    # Add this new URL pattern for hotel profile updates
+    path('update-hotel-profile/', views.update_hotel_profile, name='update_hotel_profile'),
+
     # Add these new URL patterns for owner management
     path('api/owners/', views.manage_owners, name='manage_owners'),
     path('api/owners/<int:owner_id>/', views.manage_owner, name='manage_owner'),

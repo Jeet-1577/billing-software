@@ -1940,49 +1940,33 @@ def share_report(request):
 def update_hotel_profile(request):
     if request.method == 'POST':
         try:
-            # Get or create hotel instance
+            # Get or create the hotel object
             hotel = Hotel.objects.first()
             if not hotel:
-                hotel = Hotel()
-
-            # Handle file upload
-            if 'logo' in request.FILES:
-                # Delete old logo if it exists
-                if hotel.logo:
-                    try:
-                        default_storage.delete(hotel.logo.path)
-                    except:
-                        pass  # Ignore if file doesn't exist
-                # Save new logo
-                hotel.logo = request.FILES['logo']
-
-            # Update other fields
+                hotel = Hotel.objects.create()
+            
+            # Update hotel details
             hotel.name = request.POST.get('name', hotel.name)
-            hotel.address = request.POST.get('address', hotel.address)
             hotel.email = request.POST.get('email', hotel.email)
             hotel.phone = request.POST.get('phone', hotel.phone)
-            hotel.gstin = request.POST.get('gstin', hotel.gstin)
+            hotel.address = request.POST.get('address', hotel.address)
             
-            # Save changes
+            # Handle logo upload
+            if 'logo' in request.FILES:
+                if hotel.logo:
+                    # Delete old logo if it exists
+                    if os.path.isfile(hotel.logo.path):
+                        os.remove(hotel.logo.path)
+                hotel.logo = request.FILES['logo']
+            
             hotel.save()
             
-            # Return success response with updated data
             return JsonResponse({
                 'status': 'success',
-                'message': 'Hotel profile updated successfully',
-                'data': {
-                    'name': hotel.name,
-                    'address': hotel.address,
-                    'email': hotel.email,
-                    'phone': hotel.phone,
-                    'gstin': hotel.gstin,
-                    'logo_url': hotel.logo.url if hotel.logo else None
-                }
+                'message': 'Hotel profile updated successfully'
             })
+            
         except Exception as e:
-            import traceback
-            print("Error updating hotel profile:", str(e))
-            print(traceback.format_exc())
             return JsonResponse({
                 'status': 'error',
                 'message': str(e)
