@@ -1,0 +1,18 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "List credentials",
+			"type": "shell",
+			"command": "E:/billmaker/bill/.venv/Scripts/python.exe",
+			"args": [
+				"e:/billmaker/bill/manage.py",
+				"reset_credentials",
+				"--list"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		}
+	]
+}
